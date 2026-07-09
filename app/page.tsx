@@ -51,10 +51,8 @@ export default function Home() {
   const [waitlistEmail, setWaitlistEmail] = useState('');
   const [waitlistPhone, setWaitlistPhone] = useState('');
 
-  // B2B Revenue Potential Calculator State
-  const [b2bHourlyRate, setB2bHourlyRate] = useState(500);
-  const [b2bActiveHours, setB2bActiveHours] = useState(6);
-  const [b2bUtilization, setB2bUtilization] = useState(60);
+  // B2B Efficiency Model state
+  const [b2bModelView, setB2bModelView] = useState<'traditional' | 'nivara'>('nivara');
 
   // General Contact Form state
   const [contactName, setContactName] = useState('');
@@ -151,10 +149,7 @@ export default function Home() {
     return Math.round(base * multiplier);
   };
 
-  // B2B Potential Calculator formula
-  const calculatedMonthlyRevenue = Math.round(
-    b2bHourlyRate * b2bActiveHours * (b2bUtilization / 100) * 30
-  );
+  // No-op calculation logic removed to dashboard
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F8FAFC] text-[#0F172A] font-sans antialiased">
@@ -823,119 +818,183 @@ export default function Home() {
             </section>
           </div>
         )}
-
-        {/* B2B Dynamic Content Block */}
+         {/* B2B Dynamic Content Block */}
         {marketingMode === 'vendor' && (
           <div key="vendor" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* B2B Revenue Potential Calculator */}
-            <section id="revenue-calculator" className="py-24 bg-white border-b border-border">
+            {/* B2B Animated Efficiency Comparison (Stationary vs. Transit) */}
+            <section id="efficiency-comparison" className="py-24 bg-white border-b border-border">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                
+                {/* Header */}
                 <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
                   <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-                    Revenue Calculator
+                    Model Efficiency
                   </span>
                   <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-                    Project Your Fleet <span className="text-gradient">Earnings</span>
+                    Transit vs. <span className="text-gradient">Stationary Cluster</span> Model
                   </h2>
                   <p className="text-[#64748B] text-xs max-w-xl mx-auto">
-                    Adjust the sliders below to estimate your potential monthly earnings per van listed on our marketplace.
+                    Toggle below to compare the operational dynamics and carbon-efficiency of traditional call-and-run mobile services versus Nivara&apos;s parked cluster model.
                   </p>
+                </div>
+
+                {/* Switch Toggle */}
+                <div className="flex justify-center mb-12">
+                  <div className="bg-slate-100 p-1 rounded-full border border-slate-200 flex select-none">
+                    <button
+                      type="button"
+                      onClick={() => setB2bModelView('traditional')}
+                      className={`px-6 py-2 text-xs font-bold rounded-full transition-all cursor-pointer ${
+                        b2bModelView === 'traditional'
+                          ? 'bg-slate-900 text-white shadow-sm'
+                          : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      Traditional Mobile Service
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setB2bModelView('nivara')}
+                      className={`px-6 py-2 text-xs font-bold rounded-full transition-all cursor-pointer ${
+                        b2bModelView === 'nivara'
+                          ? 'bg-primary text-white shadow-sm'
+                          : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      Nivara Clustered Model
+                    </button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch max-w-5xl mx-auto">
                   
-                  {/* Left Column: Sliders */}
-                  <div className="lg:col-span-7 bg-[#F8FAFC] rounded-3xl p-6 sm:p-8 border border-border flex flex-col justify-between space-y-8 shadow-sm">
-                    
-                    {/* Slider 1: Hourly Rate */}
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center text-xs font-bold text-slate-800">
-                        <span>Average Hourly Booking Rate</span>
-                        <span className="text-primary font-black text-sm">₹{b2bHourlyRate} / hour</span>
-                      </div>
-                      <input 
-                        type="range" 
-                        min={100} 
-                        max={2000} 
-                        step={50}
-                        value={b2bHourlyRate}
-                        onChange={(e) => setB2bHourlyRate(Number(e.target.value))}
-                        className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary"
-                      />
-                      <div className="flex justify-between text-[9px] text-slate-400 font-semibold">
-                        <span>₹100/hr</span>
-                        <span>₹2,000/hr</span>
-                      </div>
+                  {/* Left Column: Animated Visualization Map */}
+                  <div className="lg:col-span-7 bg-slate-950 rounded-3xl p-8 border border-slate-800 flex flex-col justify-between relative overflow-hidden min-h-[350px] shadow-lg">
+                    {/* Visualizer Header */}
+                    <div className="z-10">
+                      <h3 className="text-sm font-bold text-white">Route Network Visualization</h3>
+                      <p className="text-[10px] text-slate-400 mt-1">Simulated operational map for 8 daily booking points.</p>
                     </div>
 
-                    {/* Slider 2: Active Hours */}
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center text-xs font-bold text-slate-800">
-                        <span>Active Hours Stationed Per Day</span>
-                        <span className="text-secondary font-black text-sm">{b2bActiveHours} hours</span>
-                      </div>
-                      <input 
-                        type="range" 
-                        min={1} 
-                        max={12} 
-                        step={1}
-                        value={b2bActiveHours}
-                        onChange={(e) => setB2bActiveHours(Number(e.target.value))}
-                        className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-secondary"
-                      />
-                      <div className="flex justify-between text-[9px] text-slate-400 font-semibold">
-                        <span>1 hour</span>
-                        <span>12 hours</span>
-                      </div>
+                    {/* Animated Canvas */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      {b2bModelView === 'traditional' ? (
+                        /* Traditional Route Animation */
+                        <svg className="w-full h-full p-12 max-h-[250px]" viewBox="0 0 400 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          {/* Chaotic Route Path */}
+                          <path d="M30 150 L110 50 L180 160 L240 40 L300 150 L370 70" stroke="#94A3B8" strokeWidth="2" strokeDasharray="4 4" />
+                          
+                          {/* Scattered Booking Pins */}
+                          <circle cx="30" cy="150" r="5" fill="#EF4444" className="animate-ping" />
+                          <circle cx="30" cy="150" r="4" fill="#EF4444" />
+                          <circle cx="110" cy="50" r="4" fill="#EF4444" />
+                          <circle cx="180" cy="160" r="4" fill="#EF4444" />
+                          <circle cx="240" cy="40" r="4" fill="#EF4444" />
+                          <circle cx="300" cy="150" r="4" fill="#EF4444" />
+                          <circle cx="370" cy="70" r="4" fill="#EF4444" />
+
+                          {/* Darting Van Icon */}
+                          <g className="animate-bounce">
+                            <rect x="180" y="80" width="18" height="10" rx="2" fill="#94A3B8" />
+                            <circle cx="184" cy="90" r="2" fill="#000" />
+                            <circle cx="194" cy="90" r="2" fill="#000" />
+                          </g>
+
+                          {/* Traditional Text Legend */}
+                          <text x="10" y="20" fill="#EF4444" fontSize="8" fontWeight="bold">Jittery Route: 82.5 km total travel</text>
+                        </svg>
+                      ) : (
+                        /* Nivara Clustered Route Animation */
+                        <svg className="w-full h-full p-12 max-h-[250px]" viewBox="0 0 400 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          {/* Central Stationed Circle Hub */}
+                          <circle cx="200" cy="100" r="35" fill="none" stroke="#7FD6B5" strokeWidth="1" strokeDasharray="3 3" />
+                          <circle cx="200" cy="100" r="12" fill="#7FD6B5" fillOpacity="0.2" />
+                          <circle cx="200" cy="100" r="6" fill="#7FD6B5" />
+                          
+                          {/* Pulsing Booking Pins around the cluster hub */}
+                          <g className="animate-pulse">
+                            <circle cx="170" cy="80" r="4" fill="#7FD6B5" />
+                            <circle cx="230" cy="70" r="4" fill="#7FD6B5" />
+                            <circle cx="180" cy="125" r="4" fill="#7FD6B5" />
+                            <circle cx="220" cy="120" r="4" fill="#7FD6B5" />
+                          </g>
+
+                          {/* Direct Short Route Path */}
+                          <path d="M40 100 L180 100" stroke="#5B8DEF" strokeWidth="2.5" />
+                          
+                          {/* Stationed Van at Hub */}
+                          <g transform="translate(191, 95)">
+                            <rect width="18" height="10" rx="2" fill="#5B8DEF" />
+                            <circle cx="4" cy="10" r="2" fill="#000" />
+                            <circle cx="14" cy="10" r="2" fill="#000" />
+                          </g>
+
+                          {/* Direct Route Van entering Hub */}
+                          <text x="10" y="20" fill="#7FD6B5" fontSize="8" fontWeight="bold">Optimized Transit: 7.2 km travel to anchor point</text>
+                        </svg>
+                      )}
                     </div>
 
-                    {/* Slider 3: Utilization Rate */}
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center text-xs font-bold text-slate-800">
-                        <span>Average Fleet Utilization Rate</span>
-                        <span className="text-accent font-black text-sm">{b2bUtilization}%</span>
-                      </div>
-                      <input 
-                        type="range" 
-                        min={10} 
-                        max={100} 
-                        step={5}
-                        value={b2bUtilization}
-                        onChange={(e) => setB2bUtilization(Number(e.target.value))}
-                        className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-accent"
-                      />
-                      <div className="flex justify-between text-[9px] text-slate-400 font-semibold">
-                        <span>10% util</span>
-                        <span>100% full capacity</span>
-                      </div>
+                    {/* Status Alert Indicator */}
+                    <div className="z-10 bg-slate-900/90 border border-slate-800 p-3 rounded-2xl flex justify-between items-center text-[10px]">
+                      <span className="text-slate-400">Simulation Status:</span>
+                      <span className={b2bModelView === 'nivara' ? 'text-secondary font-bold' : 'text-rose-500 font-bold'}>
+                        {b2bModelView === 'nivara' ? '✓ High Utilization Stationed' : '✕ High Wear & Fuel Waste'}
+                      </span>
                     </div>
-
                   </div>
 
-                  {/* Right Column: Earnings Projection Card */}
-                  <div className="lg:col-span-5 bg-gradient-to-tr from-slate-900 to-slate-950 text-white rounded-3xl p-8 border border-slate-800 flex flex-col justify-between space-y-8 shadow-xl relative overflow-hidden text-center">
+                  {/* Right Column: Comparative Metrics & Register CTA */}
+                  <div className="lg:col-span-5 bg-gradient-to-tr from-slate-900 to-slate-950 text-white rounded-3xl p-8 border border-slate-800 flex flex-col justify-between space-y-8 shadow-xl relative overflow-hidden">
                     <div className="absolute right-0 top-0 w-48 h-48 bg-secondary/15 rounded-full blur-3xl"></div>
                     
-                    <div className="space-y-2">
-                      <p className="text-[9px] uppercase font-bold tracking-widest text-[#94A3B8]">Calculated Potential Returns</p>
-                      <h4 className="text-xs text-slate-400 font-semibold">Estimated Monthly Revenue</h4>
+                    <div className="space-y-3 text-center">
+                      <h4 className="text-xs text-slate-400 font-bold uppercase tracking-wider">Metrics Breakdown</h4>
+                      <p className="text-[10px] text-slate-400">Comparing operational footprint for a single vehicle daily slot.</p>
                     </div>
 
-                    <div className="space-y-2 py-4">
-                      <p className="text-5xl font-black text-gradient">₹{calculatedMonthlyRevenue.toLocaleString('en-IN')}</p>
-                      <p className="text-[10px] text-slate-400 font-medium">calculated per stress relief van listed</p>
+                    {/* Comparative Counters */}
+                    <div className="space-y-4 pt-4 border-t border-slate-800/80">
+                      <div className="flex justify-between items-center bg-slate-950/50 p-4 rounded-2xl border border-slate-800/50">
+                        <div>
+                          <span className="text-[9px] text-slate-500 block font-bold uppercase tracking-wider">Avg. Daily Transit Distance</span>
+                          <span className="text-xl font-bold font-serif text-slate-100 mt-1 block transition-all duration-300">
+                            {b2bModelView === 'nivara' ? '8 km' : '75 km'}
+                          </span>
+                        </div>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          b2bModelView === 'nivara' ? 'bg-secondary/10 text-secondary' : 'bg-rose-500/10 text-rose-500'
+                        }`}>
+                          {b2bModelView === 'nivara' ? '-89% fuel cost' : 'High wear'}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between items-center bg-slate-950/50 p-4 rounded-2xl border border-slate-800/50">
+                        <div>
+                          <span className="text-[9px] text-slate-500 block font-bold uppercase tracking-wider">Effective Fleet Utilization</span>
+                          <span className="text-xl font-bold font-serif text-slate-100 mt-1 block transition-all duration-300">
+                            {b2bModelView === 'nivara' ? '85%' : '30%'}
+                          </span>
+                        </div>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          b2bModelView === 'nivara' ? 'bg-secondary/10 text-secondary' : 'bg-rose-500/10 text-rose-500'
+                        }`}>
+                          {b2bModelView === 'nivara' ? 'Maximize ROI' : 'Idling gap'}
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="space-y-4 pt-6 border-t border-slate-800/85">
+                    {/* Teaser copy & Sign Up */}
+                    <div className="space-y-4 pt-6 border-t border-slate-800/85 text-center">
+                      <p className="text-[10px] text-slate-400 leading-normal">
+                        <strong>Want to calculate your exact payout?</strong> Host partners get access to our live B2B Revenue calculator tool on their private dashboard, synced to active regional booking metrics.
+                      </p>
                       <Link
                         href="/login?role=vendor"
-                        className="w-full block py-3 rounded-full bg-gradient-to-r from-primary to-secondary text-white font-bold text-xs shadow-md shadow-primary/10 hover:shadow-primary/20 transition-all btn-premium cursor-pointer"
+                        className="w-full block py-3 rounded-full bg-gradient-to-r from-primary to-secondary text-white font-bold text-xs shadow-md shadow-primary/10 hover:shadow-primary/20 transition-all btn-premium-action text-center"
                       >
-                        Register Fleet to Go-Live
+                        Register Fleet to See Calculator
                       </Link>
-                      <p className="text-[9px] text-slate-500 leading-relaxed font-semibold">
-                        * Earnings estimates are based on normal metropolitan traffic indexes and dynamic peak rates.
-                      </p>
                     </div>
                   </div>
 

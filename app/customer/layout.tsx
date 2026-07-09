@@ -30,7 +30,7 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
   // Render spinner wrapper only for protected customer paths that are verifying auth state
   if (!loading && isProtectedRoute && (!user || (user.role !== 'CUSTOMER' && user.role !== 'ADMIN'))) {
     return (
-      <div className="flex flex-col min-h-screen bg-[#F8FAFC]">
+      <div className="flex flex-col min-h-screen bg-gradient-to-tr from-[#5B8DEF]/5 via-[#FAF8F5] to-[#C5B3FF]/5 relative overflow-hidden">
         <Navbar />
         <div className="flex-grow flex items-center justify-center">
           <span className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></span>

@@ -57,6 +57,9 @@ export default function VendorDashboard() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [showPastSessions, setShowPastSessions] = useState(false);
+  const [projectedVans, setProjectedVans] = useState(1);
+  const [projectedRate, setProjectedRate] = useState(500);
+  const [projectedHours, setProjectedHours] = useState(6);
 
   const fetchDashboardData = async () => {
     try {
@@ -499,6 +502,78 @@ export default function VendorDashboard() {
                 <p className="text-[10px] text-muted-foreground leading-normal">
                   Payments are credited directly to your bank account weekly on Tuesdays after session verification completes.
                 </p>
+              </div>
+
+              {/* Revenue Projector Card */}
+              <div className="glass-card space-y-6">
+                <div className="flex items-center gap-2 pb-2 border-b border-[#FAF8F5]">
+                  <BarChart3 className="w-5 h-5 text-primary" />
+                  <h3 className="font-serif text-base font-bold text-primary">Revenue Projector</h3>
+                </div>
+
+                <p className="text-[10px] text-muted-foreground leading-normal">
+                  Estimate expansion earnings using your active fleet utilization rate (**{earnings.utilizationRate || 35}%**) as the baseline.
+                </p>
+
+                <div className="space-y-4">
+                  {/* Slider 1: Active Vans */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs font-semibold text-slate-700">
+                      <span>Vans in Operation</span>
+                      <span className="font-bold text-primary">{projectedVans} Van(s)</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={1}
+                      max={10}
+                      value={projectedVans}
+                      onChange={(e) => setProjectedVans(Number(e.target.value))}
+                      className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary"
+                    />
+                  </div>
+
+                  {/* Slider 2: Average Booking Rate */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs font-semibold text-slate-700">
+                      <span>Average Hourly Rate</span>
+                      <span className="font-bold text-primary">₹{projectedRate} / hr</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={100}
+                      max={2000}
+                      step={50}
+                      value={projectedRate}
+                      onChange={(e) => setProjectedRate(Number(e.target.value))}
+                      className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary"
+                    />
+                  </div>
+
+                  {/* Slider 3: Daily Active Hours */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs font-semibold text-slate-700">
+                      <span>Daily Service Hours</span>
+                      <span className="font-bold text-primary">{projectedHours} hrs</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={1}
+                      max={15}
+                      value={projectedHours}
+                      onChange={(e) => setProjectedHours(Number(e.target.value))}
+                      className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary"
+                    />
+                  </div>
+
+                  {/* Calculation Display */}
+                  <div className="bg-[#FCF9F6] p-4 rounded-xl border border-[#E5E1D8]/60 text-center space-y-1">
+                    <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">Projected Monthly Revenue</span>
+                    <span className="text-2xl font-serif font-black text-secondary block">
+                      ₹{Math.round(projectedVans * projectedRate * projectedHours * ((earnings.utilizationRate || 35) / 100) * 30).toLocaleString('en-IN')}
+                    </span>
+                    <span className="text-[9px] text-slate-400 font-medium block">calculated at {earnings.utilizationRate || 35}% base utilization</span>
+                  </div>
+                </div>
               </div>
 
             </div>
