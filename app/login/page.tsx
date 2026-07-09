@@ -66,43 +66,43 @@ function LoginForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormError(null);
-    setIsSubmitting(true);
+    try {
+      setFormError(null);
+      setIsSubmitting(true);
 
-    // Inline validation error checks (email format, password strength, empty fields)
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setFormError('Invalid email format. Please check your address formatting.');
-      setIsSubmitting(false);
-      return;
-    }
-    if (password.length < 6) {
-      setFormError('Password security constraint: Must be at least 6 characters.');
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (activeTab === 'login') {
-      const res = await login(email, password);
-      if (!res.success) {
-        setFormError(res.error || 'Invalid email or password combination. Try again.');
+      // Inline validation error checks (email format, password strength, empty fields)
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        setFormError('Invalid email format. Please check your address formatting.');
+        setIsSubmitting(false);
+        return;
       }
-      setIsSubmitting(false);
-    } else {
-      // Validate register
-      if (!name) {
-        setFormError('Full name field is required.');
+      if (password.length < 6) {
+        setFormError('Password security constraint: Must be at least 6 characters.');
         setIsSubmitting(false);
         return;
       }
 
-      if (role === 'VENDOR' && !businessName) {
-        setFormError('Business name is required for wellness van hosts.');
+      if (activeTab === 'login') {
+        const res = await login(email, password);
+        if (!res.success) {
+          setFormError(res.error || 'Invalid email or password combination. Try again.');
+        }
         setIsSubmitting(false);
-        return;
-      }
+      } else {
+        // Validate register
+        if (!name) {
+          setFormError('Full name field is required.');
+          setIsSubmitting(false);
+          return;
+        }
 
-      try {
+        if (role === 'VENDOR' && !businessName) {
+          setFormError('Business name is required for wellness van hosts.');
+          setIsSubmitting(false);
+          return;
+        }
+
         const payload = {
           name,
           email,
@@ -130,11 +130,12 @@ function LoginForm() {
         } else {
           setFormError(data.error || 'Failed to create account.');
         }
-      } catch (err: any) {
-        setFormError(err.message || 'An error occurred during registration.');
-      } finally {
         setIsSubmitting(false);
       }
+    } catch (err: any) {
+      console.error('LoginForm onSubmit error:', err);
+      setFormError(err.message || 'An unexpected error occurred during submission.');
+      setIsSubmitting(false);
     }
   };
 
