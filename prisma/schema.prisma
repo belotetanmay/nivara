@@ -151,6 +151,9 @@ model Booking {
   status         BookingStatus @default(PENDING)
   bookingCode    String        @unique // e.g. NV-XXXX-XXXX
   qrCodeUrl      String?
+  scent          String        @default("Lavender")
+  lighting       String        @default("Sunset Copper")
+  audio          String        @default("Binaural Beats")
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   

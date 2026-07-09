@@ -50,7 +50,7 @@ export default function VendorDashboard() {
   
   const [vendorProfile, setVendorProfile] = useState<VendorProfile | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [earnings, setEarnings] = useState({ totalEarnings: 0, completedSessionsCount: 0, payoutDetails: '' });
+  const [earnings, setEarnings] = useState({ totalEarnings: 0, completedSessionsCount: 0, utilizationRate: 0, payoutDetails: '' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -443,14 +443,20 @@ export default function VendorDashboard() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 pt-4 border-t border-[#FAF8F5]">
+                  <div className="grid grid-cols-3 gap-2 pt-4 border-t border-[#FAF8F5] text-center">
                     <div>
-                      <span className="text-[10px] text-muted-foreground block">Completed Sessions</span>
-                      <span className="text-lg font-serif font-bold text-primary mt-0.5 block">{earnings.completedSessionsCount}</span>
+                      <span className="text-[9px] text-slate-400 block font-bold">Sessions</span>
+                      <span className="text-sm font-serif font-extrabold text-slate-900 mt-0.5 block">{earnings.completedSessionsCount}</span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-muted-foreground block">Partner Rating</span>
-                      <span className="text-lg font-serif font-bold text-primary mt-0.5 block">
+                      <span className="text-[9px] text-slate-400 block font-bold">Utilization</span>
+                      <span className="text-sm font-serif font-extrabold text-secondary mt-0.5 block">
+                        {earnings.utilizationRate || 0}%
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-slate-400 block font-bold">Rating</span>
+                      <span className="text-sm font-serif font-extrabold text-primary mt-0.5 block">
                         {vendorProfile?.ratingAvg ? vendorProfile.ratingAvg.toFixed(1) : '0.0'} ★
                       </span>
                     </div>

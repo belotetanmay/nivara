@@ -66,6 +66,24 @@ export async function GET() {
       },
     });
 
+    // 1. Get all vans owned by this vendor
+    const vans = await db.van.findMany({
+      where: { vendorId: vendorProfile.id },
+      select: { id: true },
+    });
+    const vanIds = vans.map((v) => v.id);
+
+    // 2. Count slots
+    const totalSlots = await db.availability.count({
+      where: { vanId: { in: vanIds } },
+    });
+    const bookedSlots = await db.availability.count({
+      where: { vanId: { in: vanIds }, isBooked: true },
+    });
+
+    // 3. Calculate utilization percentage
+    const utilizationRate = totalSlots > 0 ? Math.round((bookedSlots / totalSlots) * 100) : 0;
+
     // Calculate earnings details
     const successPayments = bookings
       .filter((b) => b.payment && b.payment.status === PaymentStatus.SUCCESS)
@@ -81,6 +99,7 @@ export async function GET() {
       earnings: {
         totalEarnings,
         completedSessionsCount,
+        utilizationRate,
         payoutDetails: vendorProfile.payoutDetails,
       },
     });

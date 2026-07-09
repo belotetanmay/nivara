@@ -97,6 +97,20 @@ export default function CustomerDashboard() {
     }
   };
 
+  // Real-time computed metrics based on database records
+  const totalMinutesRelaxed = bookings
+    .filter((b) => b.status === 'COMPLETED')
+    .reduce((sum, b) => sum + b.sessionLength, 0);
+
+  const upcomingCount = bookings
+    .filter((b) => b.status === 'PENDING' || b.status === 'CONFIRMED')
+    .length;
+
+  const spent = bookings
+    .filter((b) => b.status === 'CONFIRMED' || b.status === 'COMPLETED')
+    .reduce((sum, b) => sum + (b.payment?.amount || 0), 0);
+  const walletBalance = Math.max(0, 2500 - spent);
+
   // Filter bookings based on activeTab
   const filteredBookings = bookings.filter((b) => {
     if (activeTab === 'upcoming') {
@@ -217,6 +231,39 @@ export default function CustomerDashboard() {
             >
               Book New Session
             </Link>
+          </div>
+
+          {/* Metrics Pane */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 flex items-center justify-between shadow-sm">
+              <div>
+                <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400 font-bold">Total Time Relaxed</p>
+                <p className="text-3xl font-black text-primary mt-1">{totalMinutesRelaxed} mins</p>
+              </div>
+              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                <Clock className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 flex items-center justify-between shadow-sm">
+              <div>
+                <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400 font-bold">Upcoming Bookings</p>
+                <p className="text-3xl font-black text-secondary mt-1">{upcomingCount} sessions</p>
+              </div>
+              <div className="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center text-secondary">
+                <Calendar className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 flex items-center justify-between shadow-sm">
+              <div>
+                <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400 font-bold">Virtual Wallet</p>
+                <p className="text-3xl font-black text-slate-900 mt-1">₹{walletBalance.toLocaleString('en-IN')}</p>
+              </div>
+              <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-slate-600">
+                <Receipt className="w-5 h-5" />
+              </div>
+            </div>
           </div>
 
           {/* Messages */}

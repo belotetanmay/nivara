@@ -64,6 +64,28 @@ export default function VanDetailPage({ params }: { params: Promise<{ id: string
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Sensory Customizer Preset State
+  const [scent, setScent] = useState('Lavender');
+  const [lighting, setLighting] = useState('Sunset Copper');
+  const [audio, setAudio] = useState('Binaural Beats');
+
+  // Hydrate preset from landing page local cache on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('nivara_calm_preset');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.scent) setScent(parsed.scent);
+          if (parsed.lighting) setLighting(parsed.lighting);
+          if (parsed.audio) setAudio(parsed.audio);
+        } catch (e) {
+          console.error('Error parsing cached presets:', e);
+        }
+      }
+    }
+  }, []);
+
   // Set default date to today
   useEffect(() => {
     const today = new Date();
@@ -143,6 +165,9 @@ export default function VanDetailPage({ params }: { params: Promise<{ id: string
           vanId: id,
           slotId: selectedSlotId,
           sessionLength,
+          scent,
+          lighting,
+          audio,
         }),
       });
 
@@ -377,6 +402,55 @@ export default function VanDetailPage({ params }: { params: Promise<{ id: string
                     45 Min
                     <span className="block text-[10px] font-normal text-muted-foreground mt-0.5">₹{van.price45}</span>
                   </button>
+                </div>
+              </div>
+
+              {/* Sensory Customizer Preset Selectors inside the booking card */}
+              <div className="space-y-3 pt-3 border-t border-[#E5E1D8]/50">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Sensory Presets
+                </label>
+                
+                {/* Scent selector */}
+                <div className="space-y-1">
+                  <span className="text-[10px] text-slate-500 font-bold block">Aromatherapy Diffuser</span>
+                  <select 
+                    value={scent}
+                    onChange={(e) => setScent(e.target.value)}
+                    className="w-full p-2 border border-[#E5E1D8] rounded bg-white text-xs text-primary font-medium focus:outline-none"
+                  >
+                    <option value="Lavender">Lavender (Deep Relaxation)</option>
+                    <option value="Eucalyptus">Eucalyptus (Mental Focus)</option>
+                    <option value="Citrus">Citrus (Mood Energizer)</option>
+                  </select>
+                </div>
+
+                {/* Lighting selector */}
+                <div className="space-y-1">
+                  <span className="text-[10px] text-slate-500 font-bold block">Cabin Ambient Lighting</span>
+                  <select 
+                    value={lighting}
+                    onChange={(e) => setLighting(e.target.value)}
+                    className="w-full p-2 border border-[#E5E1D8] rounded bg-white text-xs text-primary font-medium focus:outline-none"
+                  >
+                    <option value="Sunset Copper">Sunset Copper (Warm Glow)</option>
+                    <option value="Ocean Deep">Ocean Deep (Indigo Calm)</option>
+                    <option value="Forest Neon">Forest Neon (Green Energy)</option>
+                  </select>
+                </div>
+
+                {/* Audio selector */}
+                <div className="space-y-1">
+                  <span className="text-[10px] text-slate-500 font-bold block">Acoustic Soundscapes</span>
+                  <select 
+                    value={audio}
+                    onChange={(e) => setAudio(e.target.value)}
+                    className="w-full p-2 border border-[#E5E1D8] rounded bg-white text-xs text-primary font-medium focus:outline-none"
+                  >
+                    <option value="Binaural Beats">Binaural Beats (Theta Sync)</option>
+                    <option value="Rain Over Cabin">Rain Over Cabin (Pink Noise)</option>
+                    <option value="Guided Decompression">Guided Decompression (Mindfulness)</option>
+                  </select>
                 </div>
               </div>
 

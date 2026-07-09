@@ -88,7 +88,7 @@ export async function POST(request: Request) {
       }, { status: 403 });
     }
 
-    const { vanId, slotId, sessionLength } = await request.json();
+    const { vanId, slotId, sessionLength, scent, lighting, audio } = await request.json();
     if (!vanId || !slotId || !sessionLength) {
       return NextResponse.json({ error: 'Van ID, slot ID, and session length are required' }, { status: 400 });
     }
@@ -139,6 +139,9 @@ export async function POST(request: Request) {
           sessionLength,
           status: BookingStatus.PENDING,
           bookingCode,
+          scent: scent || 'Lavender',
+          lighting: lighting || 'Sunset Copper',
+          audio: audio || 'Binaural Beats',
         },
       });
 
