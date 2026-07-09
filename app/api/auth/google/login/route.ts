@@ -13,7 +13,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/login?error=google_config_missing', request.url));
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const host = request.headers.get('host') || 'localhost:3000';
+  const protocol = host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https';
+  const appUrl = `${protocol}://${host}`;
   const redirectUri = `${appUrl}/api/auth/google/callback`;
 
   // Construct Google Auth URL
