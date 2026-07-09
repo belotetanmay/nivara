@@ -1,0 +1,395 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/components/AuthContext';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Calendar, Clock, MapPin, Receipt, MessageSquare, AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react';
+
+interface Booking {
+  id: string;
+  bookingCode: string;
+  sessionLength: number;
+  status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
+  createdAt: string;
+  van: {
+    title: string;
+    address: string;
+    hasAttendant: boolean;
+    attendantName: string | null;
+  };
+  availability: {
+    startTime: string;
+    endTime: string;
+  };
+  payment: {
+    amount: number;
+    status: 'INITIATED' | 'SUCCESS' | 'FAILED' | 'REFUNDED';
+    currency: string;
+  } | null;
+  review: {
+    id: string;
+  } | null;
+}
+
+export default function CustomerDashboard() {
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'upcoming' | 'past' | 'cancelled'>('upcoming');
+  const [error, setError] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+
+  const fetchBookings = async () => {
+    try {
+      const res = await fetch('/api/customer/bookings');
+      if (res.ok) {
+        const data = await res.json();
+        setBookings(data.bookings || []);
+      } else {
+        setError('Failed to fetch bookings list.');
+      }
+    } catch (e) {
+      setError('An error occurred loading bookings.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!authLoading) {
+      if (user) {
+        fetchBookings();
+      } else {
+        router.push('/login');
+      }
+    }
+  }, [user, authLoading]);
+
+  const handleCancelBooking = async (bookingId: string) => {
+    if (!confirm('Are you sure you want to cancel this wellness pod session? This action cannot be undone.')) {
+      return;
+    }
+
+    setCancellingId(bookingId);
+    setError(null);
+    setActionSuccess(null);
+
+    try {
+      const res = await fetch(`/api/customer/bookings/${bookingId}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setActionSuccess('Booking cancelled and slot released successfully.');
+        await fetchBookings();
+      } else {
+        setError(data.error || 'Failed to cancel booking.');
+      }
+    } catch (err: any) {
+      setError('Error while cancelling session.');
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
+  // Filter bookings based on activeTab
+  const filteredBookings = bookings.filter((b) => {
+    if (activeTab === 'upcoming') {
+      return b.status === 'PENDING' || b.status === 'CONFIRMED';
+    } else if (activeTab === 'past') {
+      return b.status === 'COMPLETED';
+    } else {
+      return b.status === 'CANCELLED';
+    }
+  });
+
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const formatTime = (dateStr: string) => {
+    return new Date(dateStr).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+  };
+
+  const getStatusClass = (status: string) => {
+    switch (status) {
+      case 'CONFIRMED':
+        return 'bg-secondary/15 text-secondary border border-secondary/20';
+      case 'PENDING':
+        return 'bg-accent/15 text-accent border border-[#E5E1D8]';
+      case 'COMPLETED':
+        return 'bg-gray-100 text-gray-700 border border-gray-200';
+      case 'CANCELLED':
+        return 'bg-red-50 text-red-700 border border-red-200';
+      default:
+        return 'bg-gray-50 text-gray-500';
+    }
+  };
+
+  const handlePrintReceipt = (booking: Booking) => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Nivara Receipt - ${booking.bookingCode}</title>
+          <style>
+            body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #0A2540; padding: 40px; line-height: 1.6; }
+            .header { border-bottom: 2px solid #2C5234; padding-bottom: 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+            .logo { font-size: 24px; font-weight: bold; }
+            .details { margin-bottom: 30px; }
+            .details table { width: 100%; border-collapse: collapse; }
+            .details td { padding: 8px 0; border-bottom: 1px solid #E5E1D8; }
+            .details td.label { font-weight: bold; }
+            .total { font-size: 18px; font-weight: bold; margin-top: 20px; text-align: right; }
+            .footer { text-align: center; margin-top: 50px; font-size: 12px; color: #8F8C87; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="logo">NIVARA</div>
+            <div>Official Payment Receipt</div>
+          </div>
+          <div class="details">
+            <table>
+              <tr><td class="label">Booking Code</td><td>${booking.bookingCode}</td></tr>
+              <tr><td class="label">Wellness Pod</td><td>${booking.van.title}</td></tr>
+              <tr><td class="label">Location</td><td>${booking.van.address}</td></tr>
+              <tr><td class="label">Date</td><td>${formatDate(booking.availability.startTime)}</td></tr>
+              <tr><td class="label">Time Slot</td><td>${formatTime(booking.availability.startTime)} - ${formatTime(booking.availability.endTime)}</td></tr>
+              <tr><td class="label">Duration</td><td>${booking.sessionLength} Minutes</td></tr>
+              <tr><td class="label">Payment Status</td><td>${booking.payment?.status || 'Paid'}</td></tr>
+              <tr><td class="label">Attendant Status</td><td>${booking.van.hasAttendant ? booking.van.attendantName : 'Self Service'}</td></tr>
+            </table>
+          </div>
+          <div class="total">Total Paid: INR ${booking.payment?.amount || 0}</div>
+          <div class="footer">Thank you for letting us help you escape the chaos. If you have any inquiries, email contact@nivara.com</div>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
+  if (authLoading || loading) {
+    return (
+      <div className="flex flex-col min-h-screen bg-[#FAF8F5]">
+        <Navbar />
+        <div className="flex-grow flex items-center justify-center">
+          <span className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></span>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col min-h-screen bg-[#FAF8F5]">
+      <Navbar />
+
+      <main className="flex-grow max-w-7xl mx-auto w-full px-4 py-12 sm:px-6 lg:px-8">
+        <div className="space-y-8">
+          
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[#E5E1D8] pb-6">
+            <div>
+              <h1 className="font-serif text-3xl font-bold tracking-tight text-primary">My Wellness Sessions</h1>
+              <p className="text-sm text-muted-foreground">Manage your upcoming pods and review past recovery logs.</p>
+            </div>
+            <Link
+              href="/customer/search"
+              className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-md text-primary-foreground bg-primary hover:bg-primary/95 shadow transition-all"
+            >
+              Book New Session
+            </Link>
+          </div>
+
+          {/* Messages */}
+          {error && (
+            <div className="flex gap-2.5 items-start p-4 bg-red-50 text-red-700 border border-red-200 rounded-md text-sm">
+              <AlertTriangle className="w-5 h-5 flex-shrink-0 text-red-500" />
+              <div>{error}</div>
+            </div>
+          )}
+          {actionSuccess && (
+            <div className="flex gap-2.5 items-start p-4 bg-green-50 text-green-700 border border-green-200 rounded-md text-sm">
+              <CheckCircle className="w-5 h-5 flex-shrink-0 text-green-500" />
+              <div>{actionSuccess}</div>
+            </div>
+          )}
+
+          {/* Navigation Tabs */}
+          <div className="flex border-b border-[#E5E1D8]">
+            <button
+              onClick={() => setActiveTab('upcoming')}
+              className={`pb-3 text-sm font-semibold border-b-2 px-4 transition-all ${
+                activeTab === 'upcoming'
+                  ? 'border-secondary text-primary font-bold'
+                  : 'border-transparent text-muted-foreground hover:text-primary'
+              }`}
+            >
+              Upcoming
+            </button>
+            <button
+              onClick={() => setActiveTab('past')}
+              className={`pb-3 text-sm font-semibold border-b-2 px-4 transition-all ${
+                activeTab === 'past'
+                  ? 'border-secondary text-primary font-bold'
+                  : 'border-transparent text-muted-foreground hover:text-primary'
+              }`}
+            >
+              Past Sessions
+            </button>
+            <button
+              onClick={() => setActiveTab('cancelled')}
+              className={`pb-3 text-sm font-semibold border-b-2 px-4 transition-all ${
+                activeTab === 'cancelled'
+                  ? 'border-secondary text-primary font-bold'
+                  : 'border-transparent text-muted-foreground hover:text-primary'
+              }`}
+            >
+              Cancelled
+            </button>
+          </div>
+
+          {/* Bookings List */}
+          {filteredBookings.length === 0 ? (
+            <div className="bg-white border border-[#E5E1D8] rounded-xl p-12 text-center space-y-4 shadow-sm">
+              <div className="w-12 h-12 rounded-full bg-[#FCF9F6] flex items-center justify-center mx-auto text-muted-foreground">
+                <Calendar className="w-6 h-6" />
+              </div>
+              <h3 className="font-serif text-lg font-bold text-primary">No sessions found</h3>
+              <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">
+                {activeTab === 'upcoming' 
+                  ? 'You do not have any upcoming wellness van slots booked. Find a pod nearby and escape the noise.'
+                  : activeTab === 'past'
+                  ? 'You do not have any past recovery logs. Book a zero-gravity cabin to begin.'
+                  : 'No cancelled bookings.'}
+              </p>
+              {activeTab === 'upcoming' && (
+                <div className="pt-2">
+                  <Link
+                    href="/customer/search"
+                    className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-md text-primary bg-[#FCF9F6] border border-[#E5E1D8] hover:bg-gray-50 transition-all"
+                  >
+                    Locate Vans Nearby
+                  </Link>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredBookings.map((booking) => (
+                <div
+                  key={booking.id}
+                  className="bg-white rounded-xl border border-[#E5E1D8] shadow-sm flex flex-col hover:shadow-md transition-all"
+                >
+                  {/* Card Header */}
+                  <div className="p-5 border-b border-[#FAF8F5] flex justify-between items-start gap-2">
+                    <div>
+                      <h3 className="font-serif text-base font-bold text-primary leading-tight">{booking.van.title}</h3>
+                      <p className="text-[10px] text-muted-foreground tracking-widest uppercase mt-1">{booking.bookingCode}</p>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${getStatusClass(booking.status)}`}>
+                      {booking.status}
+                    </span>
+                  </div>
+
+                  {/* Card Body */}
+                  <div className="p-5 flex-grow space-y-3.5 text-xs text-primary">
+                    <div className="flex items-start gap-2">
+                      <MapPin className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                      <span className="leading-relaxed text-muted-foreground">{booking.van.address}</span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      <span>{formatDate(booking.availability.startTime)}</span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      <span className="font-semibold">
+                        {formatTime(booking.availability.startTime)} - {formatTime(booking.availability.endTime)}
+                        <span className="text-muted-foreground font-normal ml-1">({booking.sessionLength} min)</span>
+                      </span>
+                    </div>
+
+                    {booking.payment && (
+                      <div className="pt-2 border-t border-[#FAF8F5] flex justify-between items-center text-xs">
+                        <span className="text-muted-foreground">Amount Paid:</span>
+                        <span className="font-bold text-primary">
+                          INR {booking.payment.amount}
+                        </span>
+                      </div>
+                    )}
+
+                    {booking.van.hasAttendant && (
+                      <div className="text-[11px] bg-[#FCF9F6] p-2 rounded border border-[#E5E1D8]/40 text-muted-foreground flex justify-between">
+                        <span>Van Attendant:</span>
+                        <span className="font-medium text-primary">{booking.van.attendantName}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Card Actions */}
+                  <div className="p-5 border-t border-[#FAF8F5] bg-[#FCF9F6]/40 rounded-b-xl flex gap-3">
+                    {/* Cancellation Action */}
+                    {(booking.status === 'PENDING' || booking.status === 'CONFIRMED') && (
+                      <button
+                        onClick={() => handleCancelBooking(booking.id)}
+                        disabled={cancellingId === booking.id}
+                        className="flex-1 py-2 border border-red-200 text-red-600 rounded text-xs font-semibold hover:bg-red-50 transition-all text-center flex items-center justify-center gap-1 disabled:opacity-50"
+                      >
+                        {cancellingId === booking.id ? (
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        ) : 'Cancel Session'}
+                      </button>
+                    )}
+
+                    {/* Receipt Action */}
+                    {booking.payment?.status === 'SUCCESS' && (
+                      <button
+                        onClick={() => handlePrintReceipt(booking)}
+                        className="flex-1 py-2 bg-white border border-[#E5E1D8] text-primary rounded text-xs font-semibold hover:bg-gray-50 transition-all flex items-center justify-center gap-1"
+                      >
+                        <Receipt className="w-3.5 h-3.5" /> Receipt
+                      </button>
+                    )}
+
+                    {/* Review Action */}
+                    {booking.status === 'COMPLETED' && !booking.review && (
+                      <Link
+                        href={`/customer/review/${booking.id}`}
+                        className="flex-1 py-2 bg-secondary text-primary-foreground rounded text-xs font-semibold hover:bg-secondary/95 transition-all text-center flex items-center justify-center gap-1"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" /> Leave Review
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </main>
+
+      <Footer />
+    </div>
+  );
+}

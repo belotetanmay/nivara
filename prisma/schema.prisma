@@ -1,0 +1,202 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  CUSTOMER
+  VENDOR
+  ADMIN
+}
+
+enum KYCStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum VendorStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum VanStatus {
+  UNDER_REVIEW
+  ACTIVE
+  INACTIVE
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  INITIATED
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+model User {
+  id            String        @id @default(uuid())
+  name          String
+  email         String        @unique
+  phone         String?
+  passwordHash  String
+  role          Role          @default(CUSTOMER)
+  kycStatus     KYCStatus     @default(UNVERIFIED)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  kycDocuments  KYCDocument[]
+  vendorProfile VendorProfile?
+  bookings      Booking[]     @relation("CustomerBookings")
+  reviews       Review[]
+  auditLogs     AdminAuditLog[] @relation("AdminActions")
+}
+
+model KYCDocument {
+  id              String    @id @default(uuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  docType         String    // "ID_CARD", "PASSPORT", "DRIVER_LICENSE"
+  docNumber       String    // Masked/encrypted
+  fileUrl         String
+  status          KYCStatus @default(PENDING)
+  rejectionReason String?
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  createdAt       DateTime  @default(now())
+}
+
+model VendorProfile {
+  id                 String       @id @default(uuid())
+  userId             String       @unique
+  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessName       String
+  bio                String
+  verificationStatus VendorStatus @default(PENDING)
+  rejectionReason    String?
+  payoutDetails      String       // Text or JSON
+  ratingAvg          Float        @default(0.0)
+  totalBookings      Int          @default(0)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  
+  vans               Van[]
+  bookings           Booking[]    @relation("VendorBookings")
+}
+
+model Van {
+  id             String         @id @default(uuid())
+  vendorId       String
+  vendor         VendorProfile  @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  title          String
+  description    String
+  amenities      String[]       // e.g. ["Aromatherapy", "Zero Gravity Chair", "Soundproofing"]
+  photos         String[]
+  latitude       Float
+  longitude      Float
+  address        String
+  serviceRadius  Float          // in km
+  price15        Float          // 15-min price tier
+  price30        Float          // 30-min price tier
+  price45        Float          // 45-min price tier
+  status         VanStatus      @default(UNDER_REVIEW)
+  hasAttendant   Boolean        @default(false)
+  attendantName  String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  
+  availabilities Availability[]
+  bookings       Booking[]
+  reviews        Review[]
+}
+
+model Availability {
+  id             String   @id @default(uuid())
+  vanId          String
+  van            Van      @relation(fields: [vanId], references: [id], onDelete: Cascade)
+  date           DateTime // Date of availability
+  startTime      DateTime // Start time slot
+  endTime        DateTime // End time slot
+  isBooked       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  
+  booking        Booking?
+}
+
+model Booking {
+  id             String        @id @default(uuid())
+  customerId     String
+  customer       User          @relation("CustomerBookings", fields: [customerId], references: [id], onDelete: Cascade)
+  vanId          String
+  van            Van           @relation(fields: [vanId], references: [id], onDelete: Cascade)
+  vendorId       String
+  vendor         VendorProfile @relation("VendorBookings", fields: [vendorId], references: [id], onDelete: Cascade)
+  slotId         String        @unique
+  availability   Availability  @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  sessionLength  Int           // 15 | 30 | 45
+  status         BookingStatus @default(PENDING)
+  bookingCode    String        @unique // e.g. NV-XXXX-XXXX
+  qrCodeUrl      String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  
+  payment        Payment?
+  review         Review?
+}
+
+model Payment {
+  id          String        @id @default(uuid())
+  bookingId   String        @unique
+  booking     Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  amount      Float
+  currency    String        @default("INR")
+  gatewayRef  String?       // Gateway checkout session or charge ID
+  status      PaymentStatus @default(INITIATED)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  bookingId  String   @unique
+  booking    Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  vanId      String
+  van        Van      @relation(fields: [vanId], references: [id], onDelete: Cascade)
+  rating     Int      // 1 to 5
+  comment    String
+  createdAt  DateTime @default(now())
+}
+
+model AdminAuditLog {
+  id           String   @id @default(uuid())
+  adminId      String
+  admin        User     @relation("AdminActions", fields: [adminId], references: [id], onDelete: Cascade)
+  action       String   // e.g. "APPROVE_KYC", "REJECT_VENDOR", "REFUND_PAYMENT"
+  targetEntity String   // e.g. "User:123", "VendorProfile:456"
+  details      String?  // JSON or description
+  timestamp    DateTime @default(now())
+}
+
+model ContactMessage {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  message   String
+  createdAt DateTime @default(now())
+}
