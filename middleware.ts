@@ -34,8 +34,9 @@ export function middleware(request: NextRequest) {
 
   if (token) {
     const payload = parseJwt(token);
-    if (!payload || !payload.role || !payload.userId) {
-      // Clear invalid token
+    const currentTime = Math.floor(Date.now() / 1000);
+    if (!payload || !payload.role || !payload.userId || (payload.exp && currentTime >= payload.exp)) {
+      // Clear invalid or expired token
       const response = NextResponse.redirect(new URL('/login', request.url));
       response.cookies.delete('auth_token');
       return response;

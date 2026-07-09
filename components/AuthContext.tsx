@@ -47,6 +47,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } else {
         setUser(null);
+        if (res.status === 401) {
+          await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+        }
       }
     } catch (e) {
       console.error('Error fetching user auth state:', e);
