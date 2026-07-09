@@ -465,7 +465,7 @@ function LoginForm() {
                     <button
                       type="button"
                       onClick={() => {
-                        setEmail('vikas@wellnessvans.com');
+                        setEmail('host@nivara.com');
                         setPassword('password123');
                       }}
                       className="underline text-primary font-medium hover:text-secondary"
