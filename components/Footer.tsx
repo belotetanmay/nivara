@@ -13,11 +13,11 @@ export default function Footer() {
           <div className="md:col-span-2 space-y-4">
             <div className="flex items-center">
               <Image
-                src="/logonew.png"
+                src="/nivara_logo_transparent.png"
                 alt="Nivara Logo"
                 width={160}
                 height={56}
-                className="h-12 w-auto object-contain block"
+                className="h-12 w-auto object-contain block brightness-0 invert"
               />
             </div>
             <p className="text-slate-400 text-sm max-w-sm font-sans font-light leading-relaxed">

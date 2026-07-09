@@ -22,7 +22,7 @@ export default function Navbar() {
             {/* Logo */}
             <LinkComponent href="/" className="flex-shrink-0 flex items-center">
               <Image
-                src="/logonew.png"
+                src="/nivara_logo_transparent.png"
                 alt="Nivara Logo"
                 width={160}
                 height={56}

@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   title: "Nivara | Escape the Chaos, Find Your Calm",
   description: "Next-gen Immersive Vehicle for Active Recovery & Awareness. Discover and book premium wellness vans near you.",
   icons: {
-    icon: "/logonew.png",
+    icon: "/nivara_logo_transparent.png",
   },
 };
 
