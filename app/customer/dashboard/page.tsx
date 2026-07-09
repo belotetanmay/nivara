@@ -202,11 +202,38 @@ export default function CustomerDashboard() {
 
   if (authLoading || loading) {
     return (
-      <div className="flex flex-col min-h-screen bg-[#FAF8F5]">
+      <div className="flex flex-col min-h-screen bg-gradient-to-tr from-[#5B8DEF]/5 via-[#FAF8F5] to-[#C5B3FF]/5 relative overflow-hidden">
         <Navbar />
-        <div className="flex-grow flex items-center justify-center">
-          <span className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></span>
-        </div>
+        <main className="flex-grow max-w-7xl mx-auto w-full px-4 py-12 sm:px-6 lg:px-8 space-y-8">
+          {/* Header Skeleton */}
+          <div className="flex justify-between items-center border-b border-[#E5E1D8] pb-6">
+            <div className="space-y-2">
+              <div className="h-8 w-48 shimmer-skeleton"></div>
+              <div className="h-4 w-64 shimmer-skeleton"></div>
+            </div>
+            <div className="h-10 w-32 shimmer-skeleton"></div>
+          </div>
+
+          {/* Metrics Pane Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="h-28 w-full shimmer-skeleton"></div>
+            <div className="h-28 w-full shimmer-skeleton"></div>
+            <div className="h-28 w-full shimmer-skeleton"></div>
+          </div>
+
+          {/* Navigation Tabs Skeleton */}
+          <div className="flex gap-4 border-b border-[#E5E1D8] pb-1">
+            <div className="h-8 w-24 shimmer-skeleton"></div>
+            <div className="h-8 w-24 shimmer-skeleton"></div>
+            <div className="h-8 w-24 shimmer-skeleton"></div>
+          </div>
+
+          {/* Cards List Skeleton */}
+          <div className="space-y-4">
+            <div className="h-32 w-full shimmer-skeleton"></div>
+            <div className="h-32 w-full shimmer-skeleton"></div>
+          </div>
+        </main>
         <Footer />
       </div>
     );
@@ -217,7 +244,7 @@ export default function CustomerDashboard() {
       <Navbar />
 
       <main className="flex-grow max-w-7xl mx-auto w-full px-4 py-12 sm:px-6 lg:px-8">
-        <div className="space-y-8">
+        <div className="space-y-8 page-entrance">
           
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[#E5E1D8] pb-6">
@@ -235,9 +262,9 @@ export default function CustomerDashboard() {
 
           {/* Metrics Pane */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 flex items-center justify-between shadow-sm">
+            <div className="glass-card flex items-center justify-between">
               <div>
-                <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400 font-bold">Total Time Relaxed</p>
+                <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Total Time Relaxed</p>
                 <p className="text-3xl font-black text-primary mt-1">{totalMinutesRelaxed} mins</p>
               </div>
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
@@ -245,9 +272,9 @@ export default function CustomerDashboard() {
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 flex items-center justify-between shadow-sm">
+            <div className="glass-card flex items-center justify-between">
               <div>
-                <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400 font-bold">Upcoming Bookings</p>
+                <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Upcoming Bookings</p>
                 <p className="text-3xl font-black text-secondary mt-1">{upcomingCount} sessions</p>
               </div>
               <div className="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center text-secondary">
@@ -255,9 +282,9 @@ export default function CustomerDashboard() {
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 flex items-center justify-between shadow-sm">
+            <div className="glass-card flex items-center justify-between">
               <div>
-                <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400 font-bold">Virtual Wallet</p>
+                <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Virtual Wallet</p>
                 <p className="text-3xl font-black text-slate-900 mt-1">₹{walletBalance.toLocaleString('en-IN')}</p>
               </div>
               <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-slate-600">
@@ -316,7 +343,7 @@ export default function CustomerDashboard() {
 
           {/* Bookings List */}
           {filteredBookings.length === 0 ? (
-            <div className="bg-white border border-[#E5E1D8] rounded-xl p-12 text-center space-y-4 shadow-sm">
+            <div className="glass-card text-center space-y-4 p-12">
               <div className="w-12 h-12 rounded-full bg-[#FCF9F6] flex items-center justify-center mx-auto text-muted-foreground">
                 <Calendar className="w-6 h-6" />
               </div>
@@ -344,7 +371,7 @@ export default function CustomerDashboard() {
               {filteredBookings.map((booking) => (
                 <div
                   key={booking.id}
-                  className="bg-white rounded-xl border border-[#E5E1D8] shadow-sm flex flex-col hover:shadow-md transition-all"
+                  className="glass-card flex flex-col hover:shadow-md transition-all"
                 >
                   {/* Card Header */}
                   <div className="p-5 border-b border-[#FAF8F5] flex justify-between items-start gap-2">

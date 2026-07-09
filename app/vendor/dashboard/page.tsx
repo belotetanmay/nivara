@@ -155,11 +155,31 @@ export default function VendorDashboard() {
 
   if (authLoading || loading) {
     return (
-      <div className="flex flex-col min-h-screen bg-[#FAF8F5]">
+      <div className="flex flex-col min-h-screen bg-gradient-to-tr from-[#5B8DEF]/5 via-[#FAF8F5] to-[#C5B3FF]/5 relative overflow-hidden">
         <Navbar />
-        <div className="flex-grow flex items-center justify-center">
-          <span className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></span>
-        </div>
+        <main className="flex-grow max-w-7xl mx-auto w-full px-4 py-12 sm:px-6 lg:px-8 space-y-8">
+          {/* Header Skeleton */}
+          <div className="flex justify-between items-center border-b border-[#E5E1D8] pb-6">
+            <div className="space-y-2">
+              <div className="h-8 w-48 shimmer-skeleton"></div>
+              <div className="h-4 w-64 shimmer-skeleton"></div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Inbox column skeleton */}
+            <div className="lg:col-span-8 space-y-4">
+              <div className="h-44 w-full shimmer-skeleton"></div>
+              <div className="h-44 w-full shimmer-skeleton"></div>
+            </div>
+            
+            {/* Earnings column skeleton */}
+            <div className="lg:col-span-4 space-y-6">
+              <div className="h-56 w-full shimmer-skeleton"></div>
+              <div className="h-44 w-full shimmer-skeleton"></div>
+            </div>
+          </div>
+        </main>
         <Footer />
       </div>
     );
@@ -168,10 +188,10 @@ export default function VendorDashboard() {
   // Account not approved view
   if (vendorProfile && vendorProfile.verificationStatus !== 'APPROVED') {
     return (
-      <div className="flex flex-col min-h-screen bg-[#FAF8F5]">
+      <div className="flex flex-col min-h-screen bg-gradient-to-tr from-[#5B8DEF]/5 via-[#FAF8F5] to-[#C5B3FF]/5 relative overflow-hidden">
         <Navbar />
-        <main className="flex-grow max-w-4xl mx-auto w-full px-4 py-16 sm:px-6">
-          <div className="bg-white border border-[#E5E1D8] p-8 sm:p-12 rounded-xl text-center space-y-6 shadow-sm">
+        <main className="flex-grow max-w-4xl mx-auto w-full px-4 py-16 sm:px-6 z-10">
+          <div className="glass-card text-center space-y-6 p-8 sm:p-12">
             
             {vendorProfile.verificationStatus === 'PENDING' && (
               <>
@@ -250,7 +270,7 @@ export default function VendorDashboard() {
       <Navbar />
 
       <main className="flex-grow max-w-7xl mx-auto w-full px-4 py-12 sm:px-6 lg:px-8">
-        <div className="space-y-8">
+        <div className="space-y-8 page-entrance">
           
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[#E5E1D8] pb-6">
@@ -294,7 +314,7 @@ export default function VendorDashboard() {
             
             {/* Left bookings inbox */}
             <div className="lg:col-span-8 space-y-6">
-              <div className="bg-white border border-[#E5E1D8] rounded-xl p-6 shadow-sm space-y-4">
+              <div className="glass-card space-y-4">
                 <div className="flex items-center gap-2 pb-3 border-b border-[#FAF8F5]">
                   <Inbox className="w-5 h-5 text-secondary" />
                   <h2 className="font-serif text-lg font-bold text-primary">Bookings Inbox</h2>
@@ -383,7 +403,7 @@ export default function VendorDashboard() {
               </div>
 
               {/* Collapsible Past Bookings logs */}
-              <div className="bg-white border border-[#E5E1D8] rounded-xl p-6 shadow-sm space-y-4">
+              <div className="glass-card space-y-4">
                 <button
                   onClick={() => setShowPastSessions(!showPastSessions)}
                   className="w-full flex justify-between items-center text-primary font-bold"
@@ -429,7 +449,7 @@ export default function VendorDashboard() {
             <div className="lg:col-span-4 space-y-6">
               
               {/* Earnings Overview */}
-              <div className="bg-white border border-[#E5E1D8] rounded-xl p-6 shadow-sm space-y-6">
+              <div className="glass-card space-y-6">
                 <div className="flex items-center gap-2 pb-3 border-b border-[#FAF8F5]">
                   <BarChart3 className="w-5 h-5 text-secondary" />
                   <h2 className="font-serif text-lg font-bold text-primary">Earnings Ledger</h2>
@@ -465,7 +485,7 @@ export default function VendorDashboard() {
               </div>
 
               {/* Payout banking info card */}
-              <div className="bg-white border border-[#E5E1D8] rounded-xl p-6 shadow-sm space-y-4">
+              <div className="glass-card space-y-4">
                 <div className="flex items-center gap-2 pb-2 border-b border-[#FAF8F5]">
                   <CreditCard className="w-5 h-5 text-secondary" />
                   <h3 className="font-serif text-base font-bold text-primary">Payout Account</h3>

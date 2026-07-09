@@ -90,7 +90,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 page-entrance">
       
       {/* Welcome Head */}
       <div>
@@ -102,7 +102,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         
         {/* GMV */}
-        <div className="bg-white border border-[#E5E1D8] p-5 rounded-xl shadow-sm space-y-2">
+        <div className="glass-card space-y-2">
           <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block">Gross Merchandise Value</span>
           <div className="flex justify-between items-baseline">
             <span className="text-2xl font-serif font-bold text-primary">₹{stats.gmv.toLocaleString('en-IN')}</span>
@@ -111,7 +111,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Users */}
-        <div className="bg-white border border-[#E5E1D8] p-5 rounded-xl shadow-sm space-y-2">
+        <div className="glass-card space-y-2">
           <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block">Registered Customers</span>
           <div className="flex justify-between items-baseline">
             <span className="text-2xl font-serif font-bold text-primary">{stats.totalUsers}</span>
@@ -120,7 +120,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Vendors */}
-        <div className="bg-white border border-[#E5E1D8] p-5 rounded-xl shadow-sm space-y-2">
+        <div className="glass-card space-y-2">
           <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block">Registered Hosts</span>
           <div className="flex justify-between items-baseline">
             <span className="text-2xl font-serif font-bold text-primary">{stats.totalVendors}</span>
@@ -129,7 +129,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Vans */}
-        <div className="bg-white border border-[#E5E1D8] p-5 rounded-xl shadow-sm space-y-2">
+        <div className="glass-card space-y-2">
           <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block">Wellness Vehicles Fleet</span>
           <div className="flex justify-between items-baseline">
             <span className="text-2xl font-serif font-bold text-primary">{stats.totalVans}</span>
@@ -142,7 +142,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
         {/* KYC queue card */}
-        <div className="bg-white border border-[#E5E1D8] p-6 rounded-xl shadow-sm flex justify-between items-center gap-4">
+        <div className="glass-card flex justify-between items-center gap-4">
           <div className="space-y-1">
             <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block">KYC Verification Inbox</span>
             <span className="text-xl font-serif font-bold text-primary block">{stats.pendingKycCount} users pending verification</span>
@@ -160,7 +160,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Vendor queue card */}
-        <div className="bg-white border border-[#E5E1D8] p-6 rounded-xl shadow-sm flex justify-between items-center gap-4">
+        <div className="glass-card flex justify-between items-center gap-4">
           <div className="space-y-1">
             <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block">Host Vetting Inbox</span>
             <span className="text-xl font-serif font-bold text-primary block">{stats.pendingVendorCount} partners pending review</span>
@@ -179,7 +179,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Recent bookings activity logs */}
-      <div className="bg-white border border-[#E5E1D8] rounded-xl p-6 shadow-sm space-y-4">
+      <div className="glass-card space-y-4">
         <div>
           <h2 className="font-serif text-lg font-bold text-primary">Recent Booking Activity</h2>
           <p className="text-[10px] text-muted-foreground mt-0.5">Real-time listing logs of traveler reservations.</p>
