@@ -6,9 +6,11 @@ import Image from 'next/image';
 import { useAuth } from './AuthContext';
 import { ShieldCheck, User as UserIcon, LogOut, CheckCircle2, AlertCircle, Menu, X } from 'lucide-react';
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 
 export default function Navbar() {
   const { user, logout, loading } = useAuth();
+  const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<'customer' | 'vendor'>('customer');
 
@@ -170,42 +172,46 @@ export default function Navbar() {
 
             {!loading && !user && (
               <div className="flex items-center gap-3">
-                <div className="flex items-center glass rounded-full p-1 relative border border-white/50 bg-white/20 select-none">
-                  {/* Sliding Pill Background */}
-                  <div 
-                    className="absolute top-1 bottom-1 rounded-full bg-gradient-to-r from-primary to-secondary transition-all duration-305 shadow-sm"
-                    style={{
-                      left: selectedRole === 'customer' ? '4px' : 'calc(50% - 2px)',
-                      width: 'calc(50% - 2px)'
-                    }}
-                  />
-                  
-                  <button 
-                    type="button"
-                    onClick={() => setSelectedRole('customer')}
-                    className={`relative z-10 px-4 py-1.5 text-xs font-bold rounded-full transition-colors whitespace-nowrap cursor-pointer ${
-                      selectedRole === 'customer' ? 'text-white' : 'text-slate-500 hover:text-slate-700'
-                    }`}
-                  >
-                    Individuals
-                  </button>
-                  <button 
-                    type="button"
-                    onClick={() => setSelectedRole('vendor')}
-                    className={`relative z-10 px-4 py-1.5 text-xs font-bold rounded-full transition-colors whitespace-nowrap cursor-pointer ${
-                      selectedRole === 'vendor' ? 'text-white' : 'text-slate-500 hover:text-slate-700'
-                    }`}
-                  >
-                    Vendors
-                  </button>
-                </div>
+                {pathname === '/' && (
+                  <div className="flex items-center glass rounded-full p-1 relative border border-white/50 bg-white/20 select-none">
+                    {/* Sliding Pill Background */}
+                    <div 
+                      className="absolute top-1 bottom-1 rounded-full bg-gradient-to-r from-primary to-secondary transition-all duration-305 shadow-sm"
+                      style={{
+                        left: selectedRole === 'customer' ? '4px' : 'calc(50% - 2px)',
+                        width: 'calc(50% - 2px)'
+                      }}
+                    />
+                    
+                    <button 
+                      type="button"
+                      onClick={() => setSelectedRole('customer')}
+                      className={`relative z-10 px-4 py-1.5 text-xs font-bold rounded-full transition-colors whitespace-nowrap cursor-pointer ${
+                        selectedRole === 'customer' ? 'text-white' : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      Individuals
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setSelectedRole('vendor')}
+                      className={`relative z-10 px-4 py-1.5 text-xs font-bold rounded-full transition-colors whitespace-nowrap cursor-pointer ${
+                        selectedRole === 'vendor' ? 'text-white' : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      Vendors
+                    </button>
+                  </div>
+                )}
                 
-                <LinkComponent
-                  href={selectedRole === 'vendor' ? '/login?role=vendor' : '/login'}
-                  className="flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-secondary px-5 py-2 text-xs font-bold text-white shadow-lg shadow-primary/20 hover:shadow-primary/35 transition-shadow"
-                >
-                  Sign In
-                </LinkComponent>
+                {pathname !== '/login' && (
+                  <LinkComponent
+                    href={selectedRole === 'vendor' ? '/login?role=vendor' : '/login'}
+                    className="flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-secondary px-5 py-2 text-xs font-bold text-white shadow-lg shadow-primary/20 hover:shadow-primary/35 transition-shadow"
+                  >
+                    Sign In
+                  </LinkComponent>
+                )}
               </div>
             )}
           </div>

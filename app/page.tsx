@@ -283,9 +283,9 @@ export default function Home() {
 
         {/* B2C Dynamic Content Block */}
         {marketingMode === 'individual' && (
-          <>
+          <div key="individual" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* 2. Choose Your Calm Widget */}
-            <section className="py-24 bg-white border-b border-border">
+            <section id="about" className="py-24 bg-white border-b border-border">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
                   <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
@@ -589,7 +589,7 @@ export default function Home() {
             </section>
 
             {/* 4. Pathway Timeline Steps */}
-            <section className="py-24 bg-white border-b border-border">
+            <section id="how-it-works" className="py-24 bg-white border-b border-border">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
                   <h2 className="text-3xl font-extrabold tracking-tight">
@@ -821,12 +821,12 @@ export default function Home() {
                 </div>
               </div>
             </section>
-          </>
+          </div>
         )}
 
         {/* B2B Dynamic Content Block */}
         {marketingMode === 'vendor' && (
-          <>
+          <div key="vendor" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* B2B Revenue Potential Calculator */}
             <section id="revenue-calculator" className="py-24 bg-white border-b border-border">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -944,7 +944,7 @@ export default function Home() {
             </section>
 
             {/* B2B How it Works (4 Steps) */}
-            <section className="py-24 bg-[#F8FAFC] border-b border-border">
+            <section id="how-it-works" className="py-24 bg-[#F8FAFC] border-b border-border">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
                   <h2 className="text-3xl font-extrabold tracking-tight">
@@ -973,7 +973,7 @@ export default function Home() {
             </section>
 
             {/* B2B Advantage Grid */}
-            <section className="py-24 bg-white border-b border-border">
+            <section id="about" className="py-24 bg-white border-b border-border">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
                   <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-secondary/15 text-slate-900 border border-secondary/20">
@@ -1006,7 +1006,7 @@ export default function Home() {
                 </div>
               </div>
             </section>
-          </>
+          </div>
         )}
 
         {/* 6. FAQ Section */}

@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useAuth } from '@/components/AuthContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { LogIn, UserPlus, ShieldAlert, ArrowRight, ShieldCheck } from 'lucide-react';
+import { LogIn, UserPlus, ShieldAlert, ArrowRight, ShieldCheck, Eye, EyeOff, Mail, Lock, User, Phone } from 'lucide-react';
 
 function LoginForm() {
   const { login, user, loading } = useAuth();
@@ -15,6 +15,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
+  const [showPassword, setShowPassword] = useState(false);
   
   // Form fields
   const [name, setName] = useState('');
@@ -68,23 +69,29 @@ function LoginForm() {
     setFormError(null);
     setIsSubmitting(true);
 
-    if (activeTab === 'login') {
-      // Validate login
-      if (!email || !password) {
-        setFormError('Please enter both email and password.');
-        setIsSubmitting(false);
-        return;
-      }
+    // Inline validation error checks (email format, password strength, empty fields)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setFormError('Invalid email format. Please check your address formatting.');
+      setIsSubmitting(false);
+      return;
+    }
+    if (password.length < 6) {
+      setFormError('Password security constraint: Must be at least 6 characters.');
+      setIsSubmitting(false);
+      return;
+    }
 
+    if (activeTab === 'login') {
       const res = await login(email, password);
       if (!res.success) {
-        setFormError(res.error || 'Invalid credentials. Please try again.');
+        setFormError(res.error || 'Invalid email or password combination. Try again.');
       }
       setIsSubmitting(false);
     } else {
       // Validate register
-      if (!name || !email || !password) {
-        setFormError('Name, email, and password are required fields.');
+      if (!name) {
+        setFormError('Full name field is required.');
         setIsSubmitting(false);
         return;
       }
@@ -132,11 +139,14 @@ function LoginForm() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#FAF8F5]">
+    <div className="flex flex-col min-h-screen bg-gradient-to-tr from-[#5B8DEF]/10 via-[#FAF8F5] to-[#C5B3FF]/10 relative overflow-hidden">
+      {/* Dynamic ambient backgrounds */}
+      <div className="absolute top-10 left-10 w-72 h-72 bg-[#5B8DEF]/10 rounded-full blur-3xl -z-10 pointer-events-none animate-pulse"></div>
+      <div className="absolute bottom-10 right-10 w-96 h-96 bg-[#C5B3FF]/10 rounded-full blur-3xl -z-10 pointer-events-none animate-pulse"></div>
       <Navbar />
 
-      <main className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl border border-[#E5E1D8] shadow-md transition-all duration-300">
+      <main className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 z-10">
+        <div className="max-w-md w-full space-y-8 bg-white/80 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl transition-all duration-300 animate-in fade-in slide-in-from-bottom-6 duration-500">
           
           {/* Logo Heading */}
           <div className="text-center">
@@ -261,69 +271,88 @@ function LoginForm() {
 
                     {/* Name */}
                     <div>
-                      <label htmlFor="name" className="block text-sm font-semibold text-primary mb-1">
+                      <label htmlFor="name" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
                         Full Name <span className="text-red-500">*</span>
                       </label>
-                      <input
-                        id="name"
-                        type="text"
-                        required
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="John Doe"
-                        className="w-full px-3 py-2 border border-[#E5E1D8] rounded-md text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all"
-                      />
+                      <div className="relative">
+                        <User className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+                        <input
+                          id="name"
+                          type="text"
+                          required
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          placeholder="John Doe"
+                          className="w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white"
+                        />
+                      </div>
                     </div>
                   </>
                 )}
 
                 {/* Email Address */}
                 <div>
-                  <label htmlFor="email" className="block text-sm font-semibold text-primary mb-1">
+                  <label htmlFor="email" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
                     Email Address <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    id="email"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="john@example.com"
-                    className="w-full px-3 py-2 border border-[#E5E1D8] rounded-md text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all"
-                  />
+                  <div className="relative">
+                    <Mail className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+                    <input
+                      id="email"
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="john@example.com"
+                      className="w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white"
+                    />
+                  </div>
                 </div>
 
                 {/* Phone Number (Optional for login, recommended for signup) */}
                 {activeTab === 'register' && (
                   <div>
-                    <label htmlFor="phone" className="block text-sm font-semibold text-primary mb-1">
+                    <label htmlFor="phone" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
                       Phone Number
                     </label>
-                    <input
-                      id="phone"
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+91 99999 99999"
-                      className="w-full px-3 py-2 border border-[#E5E1D8] rounded-md text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all"
-                    />
+                    <div className="relative">
+                      <Phone className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+                      <input
+                        id="phone"
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="+91 99999 99999"
+                        className="w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white"
+                      />
+                    </div>
                   </div>
                 )}
 
                 {/* Password */}
                 <div>
-                  <label htmlFor="password" className="block text-sm font-semibold text-primary mb-1">
+                  <label htmlFor="password" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
                     Password <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    id="password"
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full px-3 py-2 border border-[#E5E1D8] rounded-md text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all"
-                  />
+                  <div className="relative">
+                    <Lock className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+                    <input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full pl-10 pr-10 py-3 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600 focus:outline-none"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Vendor Onboarding Info */}
@@ -405,10 +434,10 @@ function LoginForm() {
                 </button>
               </div>
 
-              {/* Helper Links */}
-              {activeTab === 'login' && (
-                <div className="text-center pt-2 text-xs text-muted-foreground">
-                  <span>Demo Accounts: </span>
+              {/* Helper Links - environment gated for development only */}
+              {process.env.NODE_ENV === 'development' && activeTab === 'login' && (
+                <div className="text-center pt-2 text-xs text-muted-foreground bg-slate-50 border border-slate-100 p-3 rounded-2xl">
+                  <span className="font-bold text-[9px] uppercase tracking-wider text-slate-400">Local Dev Presets</span>
                   <div className="flex flex-wrap justify-center gap-2 mt-1">
                     <button
                       type="button"
