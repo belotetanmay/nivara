@@ -248,12 +248,12 @@ export default function Home() {
                   >
                     Become a Partner
                   </Link>
-                  <a
-                    href="#revenue-calculator"
+                  <Link
+                    href="/login?role=vendor"
                     className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 rounded-full text-xs font-bold text-white border border-white/30 bg-white/5 hover:bg-white/10 transition-all gap-2"
                   >
                     Calculate Revenue
-                  </a>
+                  </Link>
                 </>
               )}
             </div>

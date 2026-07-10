@@ -11,7 +11,14 @@ export async function GET(
 
     const vendorProfile = await db.vendorProfile.findUnique({
       where: { id: vendorId },
-      include: {
+      select: {
+        id: true,
+        businessName: true,
+        bio: true,
+        verificationStatus: true,
+        ratingAvg: true,
+        totalBookings: true,
+        createdAt: true,
         user: {
           select: {
             name: true,
