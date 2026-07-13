@@ -63,6 +63,7 @@ export default function VanDetailPage({ params }: { params: Promise<{ id: string
   const [sessionLength, setSessionLength] = useState<15 | 30 | 45>(30);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [initialSlotPopulated, setInitialSlotPopulated] = useState(false);
 
   // Sensory Customizer Preset State
   const [scent, setScent] = useState('Lavender');
@@ -86,13 +87,35 @@ export default function VanDetailPage({ params }: { params: Promise<{ id: string
     }
   }, []);
 
-  // Set default date to today
+  // Hydrate initial selection from URL query parameters (e.g. from chatbot link) or fallback to today
   useEffect(() => {
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    setSelectedDate(`${yyyy}-${mm}-${dd}`);
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const urlDate = params.get('date');
+      const urlSlotId = params.get('slotId');
+      const urlLength = params.get('sessionLength');
+
+      if (urlDate) {
+        setSelectedDate(urlDate);
+      } else {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        setSelectedDate(`${yyyy}-${mm}-${dd}`);
+      }
+
+      if (urlSlotId) {
+        setSelectedSlotId(urlSlotId);
+      }
+
+      if (urlLength) {
+        const len = parseInt(urlLength);
+        if (len === 15 || len === 30 || len === 45) {
+          setSessionLength(len as 15 | 30 | 45);
+        }
+      }
+    }
   }, []);
 
   const fetchVanDetails = async () => {
@@ -134,7 +157,11 @@ export default function VanDetailPage({ params }: { params: Promise<{ id: string
   useEffect(() => {
     if (selectedDate) {
       fetchSlots(selectedDate);
-      setSelectedSlotId(null);
+      if (initialSlotPopulated) {
+        setSelectedSlotId(null);
+      } else {
+        setInitialSlotPopulated(true);
+      }
     }
   }, [selectedDate, id]);
 

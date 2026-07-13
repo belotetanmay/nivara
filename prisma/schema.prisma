@@ -64,6 +64,7 @@ model User {
   bookings      Booking[]     @relation("CustomerBookings")
   reviews       Review[]
   auditLogs     AdminAuditLog[] @relation("AdminActions")
+  conversations ChatConversation[] @relation("UserConversations")
 }
 
 model KYCDocument {
@@ -202,4 +203,22 @@ model ContactMessage {
   email     String
   message   String
   createdAt DateTime @default(now())
+}
+
+model ChatConversation {
+  id        String        @id @default(uuid())
+  userId    String?
+  user      User?         @relation("UserConversations", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  messages  ChatMessage[]
+}
+
+model ChatMessage {
+  id             String           @id @default(uuid())
+  conversationId String
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         String           // "user" | "bot"
+  content        String
+  timestamp      DateTime         @default(now())
 }
