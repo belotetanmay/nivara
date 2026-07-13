@@ -240,18 +240,22 @@ RULES:
 
     if (lastError) {
       // Try to query Google REST API to retrieve list of active models for this key to diagnose
+      let diagnosticError = null;
       try {
         const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
         const listData = await listRes.json();
         if (listData && listData.models) {
           const names = listData.models.map((m: any) => m.name.replace('models/', ''));
-          console.error('All model candidates failed. Active models on this key:', names);
-          throw new Error(`All candidate models failed. Available models on your API key: ${names.slice(0, 10).join(', ')}. Last error: ${lastError.message}`);
+          diagnosticError = new Error(`All candidate models failed. Available models on your API key: ${names.slice(0, 10).join(', ')}. Last error: ${lastError.message}`);
         } else if (listData && listData.error) {
-          throw new Error(`API key authorization failed: ${listData.error.message}. Last error: ${lastError.message}`);
+          diagnosticError = new Error(`API key authorization failed: ${listData.error.message}. Last error: ${lastError.message}`);
         }
       } catch (innerListErr: any) {
         console.error('Diagnostic model list fetch failed:', innerListErr);
+      }
+      
+      if (diagnosticError) {
+        throw diagnosticError;
       }
       throw lastError; // Re-throw if all models in our candidate list failed
     }
