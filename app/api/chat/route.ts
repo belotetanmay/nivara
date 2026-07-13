@@ -176,15 +176,6 @@ RULES:
    - Support contact: support.nivara@gmail.com
     `;
 
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
-      generationConfig: {
-        temperature: 0.1, // keep responses consistent and factual
-      },
-      systemInstruction,
-      tools: [{ functionDeclarations: [searchVansTool, getBookingStatusTool, getKycStatusTool, startBookingDraftTool] }]
-    });
-
     // 4. Initialize Gemini Chat session with historic log (if provided)
     // Structure history into Google Content formats.
     // Google Gemini requires the first message in the chat history array to be from 'user'.
@@ -197,14 +188,59 @@ RULES:
       parts: [{ text: h.content }]
     }));
 
-    const chat = model.startChat({
-      history: formattedHistory,
-    });
+    // List of model candidates in order of preference (newer stable versions to older stable versions)
+    const MODEL_CANDIDATES = [
+      "gemini-2.5-flash",
+      "gemini-2.0-flash",
+      "gemini-1.5-flash",
+      "gemini-2.5-flash-8b",
+      "gemini-1.5-flash-8b",
+      "gemini-2.5-pro",
+      "gemini-1.5-pro"
+    ];
 
-    // 5. Send message and await generation
-    let result = await chat.sendMessage(message);
+    let model: any = null;
+    let chat: any = null;
+    let result: any = null;
     let responseText = '';
-    const functionCalls = result.response.functionCalls();
+    let functionCalls: any = null;
+    let lastError: any = null;
+    let workingModelName = '';
+
+    for (const modelName of MODEL_CANDIDATES) {
+      try {
+        console.log(`Checking backend compatibility for Gemini model: ${modelName}`);
+        model = genAI.getGenerativeModel({
+          model: modelName,
+          generationConfig: {
+            temperature: 0.1, // keep responses consistent and factual
+          },
+          systemInstruction,
+          tools: [{ functionDeclarations: [searchVansTool, getBookingStatusTool, getKycStatusTool, startBookingDraftTool] }]
+        });
+
+        chat = model.startChat({
+          history: formattedHistory,
+        });
+
+        // Test sending the message to verify if the model is active and found
+        result = await chat.sendMessage(message);
+        functionCalls = result.response.functionCalls();
+        responseText = result.response.text();
+
+        workingModelName = modelName;
+        console.log(`Successfully verified and loaded active model: ${modelName}`);
+        lastError = null;
+        break; // Successfully handled message, exit loop!
+      } catch (err: any) {
+        console.warn(`Gemini model ${modelName} returned connection error:`, err.message);
+        lastError = err;
+      }
+    }
+
+    if (lastError) {
+      throw lastError; // Re-throw if all models in our candidate list failed
+    }
 
     // 6. Handle Function Calls
     if (functionCalls && functionCalls.length > 0) {
