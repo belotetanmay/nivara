@@ -211,7 +211,7 @@ export default function ChatWidget() {
       {/* Floating Action Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 p-4 rounded-full bg-gradient-to-r from-primary to-secondary text-white shadow-xl hover:shadow-primary/20 hover:scale-105 transition-all cursor-pointer flex items-center justify-center border border-white/10"
+        className="fixed bottom-24 sm:bottom-6 right-6 z-50 p-4 rounded-full bg-gradient-to-r from-primary to-secondary text-white shadow-xl hover:shadow-primary/20 hover:scale-105 transition-all cursor-pointer flex items-center justify-center border border-white/10"
         title="Nivara Calm Assistant"
       >
         {isOpen ? <X className="w-6 h-6 animate-in spin-in-180 duration-200" /> : <MessageSquare className="w-6 h-6" />}
@@ -219,7 +219,7 @@ export default function ChatWidget() {
 
       {/* Floating Chat Panel */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 w-[calc(100vw-3rem)] sm:w-96 h-[520px] flex flex-col rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl text-slate-100 font-sans overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-300">
+        <div className="fixed bottom-40 sm:bottom-24 right-6 z-50 w-[calc(100vw-3rem)] sm:w-96 h-[520px] flex flex-col rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl text-slate-100 font-sans overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-300">
           
           {/* Header Panel */}
           <div className="p-4 bg-slate-950 border-b border-slate-800/80 flex items-center justify-between">

@@ -28,11 +28,46 @@ export async function GET() {
     
     const averageRating = reviews._avg.rating ? Number(reviews._avg.rating.toFixed(1)) : 0.0;
 
+    // 4. Get last 3 high-rating reviews from database for lander feedback section
+    const dbReviews = await db.review.findMany({
+      where: {
+        rating: { gte: 4 }
+      },
+      take: 3,
+      orderBy: {
+        id: 'desc'
+      },
+      include: {
+        booking: {
+          include: {
+            customer: {
+              select: {
+                name: true
+              }
+            }
+          }
+        },
+        van: {
+          select: {
+            address: true
+          }
+        }
+      }
+    });
+
+    const reviewsList = dbReviews.map((r: any) => ({
+      quote: r.comment,
+      name: r.booking.customer.name,
+      roleCity: r.van.address.split(',')[1]?.trim() || 'Mumbai',
+      rating: r.rating
+    }));
+
     return NextResponse.json({
       success: true,
       activeVans: activeVansCount,
       completedSessions: completedSessionsCount,
-      averageRating: averageRating
+      averageRating: averageRating,
+      reviews: reviewsList
     });
   } catch (error: any) {
     console.error('Error fetching public stats:', error);
@@ -41,7 +76,8 @@ export async function GET() {
       success: false,
       activeVans: 0,
       completedSessions: 0,
-      averageRating: 0.0
+      averageRating: 0.0,
+      reviews: []
     });
   }
 }

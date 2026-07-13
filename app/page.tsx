@@ -49,6 +49,7 @@ export default function Home() {
     activeVans: 0,
     completedSessions: 0,
     averageRating: 0.0,
+    reviews: [] as Array<{ quote: string; name: string; roleCity: string; rating: number }>,
     loaded: false
   });
 
@@ -60,6 +61,7 @@ export default function Home() {
           activeVans: data.activeVans || 0,
           completedSessions: data.completedSessions || 0,
           averageRating: data.averageRating || 0.0,
+          reviews: data.reviews || [],
           loaded: true
         });
       })
@@ -281,20 +283,29 @@ export default function Home() {
             </div>
 
             {/* Social proof metric chips */}
-            <div className="flex flex-wrap justify-center items-center gap-4 pt-4 opacity-95 text-yellow-100/90 text-[10px] font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]">
-              <div className="flex items-center gap-2 bg-slate-950/70 px-4 py-2 rounded-full border border-yellow-400/20 backdrop-blur-sm shadow-md">
-                <span className="flex h-2 w-2 rounded-full bg-[#7FD6B5] animate-ping"></span>
-                <span>{stats.completedSessions} sessions completed</span>
+            {stats.loaded && (stats.completedSessions > 0 || stats.activeVans > 0) ? (
+              <div className="flex flex-wrap justify-center items-center gap-4 pt-4 opacity-95 text-yellow-100/90 text-[10px] font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]">
+                <div className="flex items-center gap-2 bg-slate-950/70 px-4 py-2 rounded-full border border-yellow-400/20 backdrop-blur-sm shadow-md">
+                  <span className="flex h-2 w-2 rounded-full bg-[#7FD6B5] animate-ping"></span>
+                  <span>{stats.completedSessions} sessions completed</span>
+                </div>
+                <div className="flex items-center gap-1.5 bg-slate-950/70 px-4 py-2 rounded-full border border-yellow-400/20 backdrop-blur-sm shadow-md">
+                  <div className="flex text-amber-400">★★★★★</div>
+                  <span>{stats.averageRating > 0 ? `Avg. rating: ${stats.averageRating}/5` : 'No ratings yet'}</span>
+                </div>
+                <div className="flex items-center gap-2 bg-slate-950/70 px-4 py-2 rounded-full border border-yellow-400/20 backdrop-blur-sm shadow-md">
+                  <Compass className="w-3 h-3 text-primary animate-spin-slow" />
+                  <span>{stats.activeVans} active vans stationed</span>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5 bg-slate-950/70 px-4 py-2 rounded-full border border-yellow-400/20 backdrop-blur-sm shadow-md">
-                <div className="flex text-amber-400">★★★★★</div>
-                <span>{stats.averageRating > 0 ? `Avg. rating: ${stats.averageRating}/5` : 'No ratings yet'}</span>
+            ) : (
+              <div className="pt-4 text-center">
+                <span className="inline-flex items-center gap-2 bg-slate-950/70 text-yellow-100/90 text-xs font-bold px-5 py-2 rounded-full border border-yellow-400/20 backdrop-blur-sm shadow-md drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]">
+                  <span className="flex h-2 w-2 rounded-full bg-[#7FD6B5] animate-ping"></span>
+                  Now onboarding our first wellness partners in Mumbai & Thane
+                </span>
               </div>
-              <div className="flex items-center gap-2 bg-slate-950/70 px-4 py-2 rounded-full border border-yellow-400/20 backdrop-blur-sm shadow-md">
-                <Compass className="w-3 h-3 text-primary animate-spin-slow" />
-                <span>{stats.activeVans} active vans stationed</span>
-              </div>
-            </div>
+            )}
           </div>
         </section>
 
@@ -628,6 +639,114 @@ export default function Home() {
                       <span className="text-2xl font-black text-[#5B8DEF]/30">{s.step}</span>
                       <h4 className="text-sm font-bold text-slate-900">{s.title}</h4>
                       <p className="text-[10px] text-slate-500 leading-relaxed">{s.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            {/* Before/After Visual Contrast Section */}
+            <section className="py-24 bg-white border-b border-border">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
+                  <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-[#2C5234]/10 text-[#2C5234] border border-[#2C5234]/20">
+                    Why Nivara?
+                  </span>
+                  <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">
+                    Your Day: <span className="text-gradient">Redefined</span>
+                  </h2>
+                  <p className="text-slate-500 text-xs">
+                    A brief look at how Nivara restores calm to chaotic modern routines.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto items-stretch">
+                  {/* Without Nivara */}
+                  <div className="bg-[#F8FAFC] border border-slate-200/80 p-8 rounded-3xl flex flex-col justify-between space-y-6 shadow-sm hover:translate-y-[-2px] transition-all">
+                    <div className="space-y-4">
+                      <div className="w-12 h-12 rounded-2xl bg-red-100/60 border border-red-200/50 flex items-center justify-center text-red-500">
+                        <ShieldAlert className="w-6 h-6" />
+                      </div>
+                      <h3 className="font-serif text-xl font-bold text-slate-800">Your Day Without Nivara</h3>
+                      <p className="text-xs text-slate-500 leading-relaxed">
+                        Constant notifications, chaotic traffic hums, office noise, and zero personal space. Fatigue accumulates with no opportunity to reset.
+                      </p>
+                    </div>
+                    <div className="text-xs font-bold text-red-500/80 tracking-wider uppercase">
+                      ✕ Chaotic & Exhausting
+                    </div>
+                  </div>
+
+                  {/* With Nivara */}
+                  <div className="bg-[#2C5234]/5 border border-[#2C5234]/15 p-8 rounded-3xl flex flex-col justify-between space-y-6 shadow-sm hover:translate-y-[-2px] transition-all">
+                    <div className="space-y-4">
+                      <div className="w-12 h-12 rounded-2xl bg-[#2C5234]/10 border border-[#2C5234]/20 flex items-center justify-center text-[#2C5234]">
+                        <Sparkles className="w-6 h-6" />
+                      </div>
+                      <h3 className="font-serif text-xl font-bold text-primary">Your Day With Nivara</h3>
+                      <p className="text-xs text-slate-500 leading-relaxed">
+                        A silent, climate-controlled cabin steps away. Custom aromatherapies, gentle spatial audios, and zero-gravity seating for an absolute recovery reset.
+                      </p>
+                    </div>
+                    <div className="text-xs font-bold text-[#2C5234] tracking-wider uppercase">
+                      ✓ Calm & Restored
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Testimonials Feedback Section */}
+            <section className="py-24 bg-white border-b border-border">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
+                  <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                    Community Reviews
+                  </span>
+                  <h2 className="text-3xl font-extrabold tracking-tight">
+                    Real Resets from <span className="text-gradient">Real People</span>
+                  </h2>
+                  <p className="text-slate-400 text-xs">
+                    Illustrative testimonials. Database reviews will load dynamically as users complete booking resets.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+                  {(stats.reviews && stats.reviews.length > 0 ? stats.reviews : [
+                    {
+                      quote: "Booked a 30-min slot during my lunch break near my office in BKC. Walked in, no queue, and I was back at my desk actually feeling human again. This is exactly what busy weekdays needed.",
+                      name: "Priya M.",
+                      roleCity: "Marketing Professional, Mumbai",
+                      rating: 5
+                    },
+                    {
+                      quote: "Between back-to-back lectures and assignment deadlines, finding a quiet space on campus is impossible. Nivara's van near my college was a 15-minute reset that actually worked.",
+                      name: "Arjun K.",
+                      roleCity: "Engineering Student, Pune",
+                      rating: 5
+                    },
+                    {
+                      quote: "I work from cafes most days and the noise gets to me by 3pm. Found a van two streets away, booked it in seconds, and got 45 minutes of real quiet. Already a regular now.",
+                      name: "Sanya R.",
+                      roleCity: "Freelance Designer, Bangalore",
+                      rating: 5
+                    }
+                  ]).map((t, index) => (
+                    <div key={index} className="bg-white border border-slate-200/80 p-8 rounded-3xl shadow-sm hover:translate-y-[-2px] transition-all flex flex-col justify-between space-y-6">
+                      <div className="space-y-4">
+                        <div className="flex text-amber-400 text-xs">
+                          {Array.from({ length: t.rating }).map((_, i) => (
+                            <span key={i}>★</span>
+                          ))}
+                        </div>
+                        <p className="text-[11px] text-slate-500 italic leading-relaxed font-sans font-medium">
+                          &ldquo;{t.quote}&rdquo;
+                        </p>
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-900">{t.name}</h4>
+                        <p className="text-[9px] text-slate-400 font-semibold">{t.roleCity}</p>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1240,6 +1359,17 @@ export default function Home() {
       </main>
 
       <Footer />
+
+      {/* Sticky Mobile CTA */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 p-4 z-40 shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+        <Link
+          href="/customer/search"
+          className="w-full py-3 rounded-full bg-primary hover:bg-secondary text-white font-bold transition-all shadow-md shadow-primary/10 flex items-center justify-center gap-2 text-xs uppercase tracking-wider cursor-pointer"
+        >
+          <Compass className="w-4 h-4 text-white animate-spin-slow" />
+          Find Nearest Van
+        </Link>
+      </div>
     </div>
   );
 }

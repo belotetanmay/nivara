@@ -60,10 +60,10 @@ export default function Footer() {
             <h3 className="font-sans text-sm font-extrabold tracking-wide mb-4 text-white uppercase">Support</h3>
             <ul className="space-y-2 text-xs text-slate-400">
               <li>
-                <span className="block">Email: contact@nivara.com</span>
+                <span className="block">Email: support.nivara@gmail.com</span>
               </li>
               <li>
-                <span className="block">Phone: +91 99999 99999</span>
+                <span className="block">Phone: coming soon</span>
               </li>
               <li>
                 <Link href="/terms" className="hover:text-white transition-colors">
@@ -80,7 +80,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-slate-800 mt-8 pt-6 flex flex-col sm:flex-row justify-between items-center text-xs text-slate-500">
-          <p>© {new Date().getFullYear()} Nivara Technologies Private Limited. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Nivara. All rights reserved.</p>
           <p className="mt-2 sm:mt-0">Designed for ultimate recovery and mindfulness.</p>
         </div>
       </div>
