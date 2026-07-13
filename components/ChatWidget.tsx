@@ -219,7 +219,7 @@ export default function ChatWidget() {
 
       {/* Floating Chat Panel */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 w-85 sm:w-96 h-[520px] flex flex-col rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl text-slate-100 font-sans overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-300">
+        <div className="fixed bottom-24 right-6 z-50 w-[calc(100vw-3rem)] sm:w-96 h-[520px] flex flex-col rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl text-slate-100 font-sans overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-300">
           
           {/* Header Panel */}
           <div className="p-4 bg-slate-950 border-b border-slate-800/80 flex items-center justify-between">
