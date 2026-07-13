@@ -190,12 +190,15 @@ RULES:
 
     // List of model candidates in order of preference (newer stable versions to older stable versions)
     const MODEL_CANDIDATES = [
+      "gemini-2.0-flash-lite",
+      "gemini-2.0-flash-lite-001",
       "gemini-2.5-flash",
       "gemini-2.0-flash",
+      "gemini-2.0-flash-001",
+      "gemini-2.5-pro",
       "gemini-1.5-flash",
       "gemini-2.5-flash-8b",
       "gemini-1.5-flash-8b",
-      "gemini-2.5-pro",
       "gemini-1.5-pro"
     ];
 
