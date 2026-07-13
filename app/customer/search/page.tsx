@@ -35,35 +35,36 @@ export default function CustomerSearch() {
   const [lng, setLng] = useState<number | null>(null);
 
   const mapRef = useRef<HTMLDivElement>(null);
+  const leafletMapRef = useRef<any>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [googleMapsKeyExists, setGoogleMapsKeyExists] = useState(false);
 
   useEffect(() => {
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
-    const hasRealKey = apiKey && !apiKey.includes('Mock') && !apiKey.startsWith('AIzaSyMock');
-    setGoogleMapsKeyExists(!!hasRealKey);
+    if (typeof window === 'undefined') return;
 
-    if (!hasRealKey) return;
+    // 1. Inject Leaflet CSS
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(link);
 
-    if ((window as any).google?.maps) {
-      setMapLoaded(true);
-      return;
-    }
-
-    // Load Google Maps API script dynamically
+    // 2. Inject Leaflet JS
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initGoogleMapSearch`;
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
     script.async = true;
-    script.defer = true;
-
-    (window as any).initGoogleMapSearch = () => {
+    
+    script.onload = () => {
       setMapLoaded(true);
     };
-
+    
     document.head.appendChild(script);
 
     return () => {
-      delete (window as any).initGoogleMapSearch;
+      try {
+        document.head.removeChild(link);
+        document.head.removeChild(script);
+      } catch (e) {
+        // ignore clean up error
+      }
     };
   }, []);
 
@@ -71,82 +72,65 @@ export default function CustomerSearch() {
     if (!mapLoaded || !mapRef.current || vans.length === 0) return;
 
     try {
-      let center = { lat: 19.0760, lng: 72.8777 }; // Mumbai default center
+      const L = (window as any).L;
+      if (!L) return;
+
+      // Center coordinates
+      let center: [number, number] = [19.0760, 72.8777]; // Mumbai center
       const validVans = vans.filter(v => v.latitude && v.longitude);
       
       if (validVans.length > 0) {
         if (lat && lng) {
-          center = { lat, lng };
+          center = [lat, lng];
         } else {
           const sumLat = validVans.reduce((sum, v) => sum + v.latitude, 0);
           const sumLng = validVans.reduce((sum, v) => sum + v.longitude, 0);
-          center = {
-            lat: sumLat / validVans.length,
-            lng: sumLng / validVans.length
-          };
+          center = [sumLat / validVans.length, sumLng / validVans.length];
         }
       }
 
-      const map = new (window as any).google.maps.Map(mapRef.current, {
-        center: center,
-        zoom: 11,
-        styles: [
-          {
-            "featureType": "all",
-            "elementType": "geometry.fill",
-            "stylers": [{ "weight": "2.00" }]
-          },
-          {
-            "featureType": "all",
-            "elementType": "geometry.stroke",
-            "stylers": [{ "color": "#E5E1D8" }]
-          },
-          {
-            "featureType": "landscape",
-            "elementType": "all",
-            "stylers": [{ "color": "#faf8f5" }] // Nivara cream
-          },
-          {
-            "featureType": "water",
-            "elementType": "all",
-            "stylers": [{ "color": "#e0ecf8" }]
-          }
-        ]
+      // Initialize map once
+      if (!leafletMapRef.current) {
+        leafletMapRef.current = L.map(mapRef.current, {
+          zoomControl: true,
+          scrollWheelZoom: true,
+          attributionControl: false
+        });
+
+        // Add free OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19
+        }).addTo(leafletMapRef.current);
+      }
+
+      // Update map view
+      leafletMapRef.current.setView(center, 11);
+
+      // Clear previous markers
+      leafletMapRef.current.eachLayer((layer: any) => {
+        if (layer instanceof L.Marker) {
+          leafletMapRef.current.removeLayer(layer);
+        }
       });
 
-      // Render markers
+      // Add fresh markers
       validVans.forEach(van => {
-        const marker = new (window as any).google.maps.Marker({
-          position: { lat: van.latitude, lng: van.longitude },
-          map: map,
-          title: van.title,
-          icon: {
-            path: (window as any).google.maps.SymbolPath.CIRCLE,
-            scale: 8,
-            fillColor: "#2C5234", // Forest Green
-            fillOpacity: 1,
-            strokeColor: "#ffffff",
-            strokeWeight: 2,
-          }
-        });
-
-        const infoWindow = new (window as any).google.maps.InfoWindow({
-          content: `
-            <div style="font-family: Inter, sans-serif; padding: 6px; max-width: 220px; line-height: 1.4;">
-              <h4 style="font-weight: 700; margin: 0 0 2px 0; color: #0A2540; font-size: 13px;">${van.title}</h4>
-              <p style="font-size: 11px; color: #666; margin: 0 0 6px 0;">${van.address}</p>
-              <div style="font-size: 11px; font-weight: 600; color: #2C5234; margin-bottom: 6px;">Price: from ₹${van.price15}/slot</div>
-              <a href="/customer/vans/${van.id}" style="display: inline-block; background-color: #0A2540; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-decoration: none;">View Slot Calendar</a>
-            </div>
-          `
-        });
-
-        marker.addListener('click', () => {
-          infoWindow.open(map, marker);
-        });
+        const marker = L.marker([van.latitude, van.longitude]).addTo(leafletMapRef.current);
+        
+        const popupContent = `
+          <div style="font-family: Inter, sans-serif; padding: 4px; max-width: 220px; line-height: 1.4;">
+            <h4 style="font-weight: 700; margin: 0 0 2px 0; color: #0A2540; font-size: 13px;">${van.title}</h4>
+            <p style="font-size: 11px; color: #666; margin: 0 0 6px 0;">${van.address}</p>
+            <div style="font-size: 11px; font-weight: 600; color: #2C5234; margin-bottom: 6px;">Price: from ₹${van.price15}/slot</div>
+            <a href="/customer/vans/${van.id}" style="display: inline-block; background-color: #0A2540; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-decoration: none;">View Slots</a>
+          </div>
+        `;
+        
+        marker.bindPopup(popupContent);
       });
+
     } catch (e) {
-      console.error("Failed to render Google Map markers:", e);
+      console.error("Failed to render Leaflet Map:", e);
     }
   }, [mapLoaded, vans, lat, lng]);
   
@@ -508,8 +492,8 @@ export default function CustomerSearch() {
                     <span className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></span>
                   ) : vans.length === 0 ? (
                     <span className="text-xs text-muted-foreground font-medium text-center">No active vehicles on map</span>
-                  ) : googleMapsKeyExists && mapLoaded ? (
-                    <div ref={mapRef} className="w-full h-full"></div>
+                  ) : mapLoaded ? (
+                    <div ref={mapRef} className="w-full h-full z-0"></div>
                   ) : (
                     <div className="w-full h-full relative p-4 flex items-center justify-center">
                       <div className="absolute inset-0 bg-[radial-gradient(#C19A6B_1px,transparent_1px)] [background-size:16px_16px] opacity-15"></div>
@@ -536,7 +520,7 @@ export default function CustomerSearch() {
                         <div className="absolute bottom-2 left-2 right-2 bg-[#FAF8F5]/90 backdrop-blur-sm border border-[#E5E1D8] p-2 rounded text-[10px] text-muted-foreground flex justify-between items-center font-medium">
                           <span className="flex items-center gap-1">
                             <Navigation className="w-3 h-3 text-secondary" />
-                            <span>Google Maps Mock Sandbox</span>
+                            <span>OpenStreetMap Sandbox</span>
                           </span>
                           <span>{vans.length} Vehicles Pinpoints</span>
                         </div>
@@ -546,7 +530,7 @@ export default function CustomerSearch() {
                 </div>
 
                 <div className="text-[11px] text-muted-foreground leading-normal font-sans">
-                  * Integrates standard Google Maps API key parameters. Standard geocoding intercepts key coordinates.
+                  * Powered by OpenStreetMap & Leaflet.js. Offers completely free, real-time map coordination and directions.
                 </div>
               </div>
             </div>
