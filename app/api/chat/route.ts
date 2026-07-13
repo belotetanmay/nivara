@@ -186,8 +186,13 @@ RULES:
     });
 
     // 4. Initialize Gemini Chat session with historic log (if provided)
-    // Structure history into Google Content formats
-    const formattedHistory = (history || []).map((h: any) => ({
+    // Structure history into Google Content formats.
+    // Google Gemini requires the first message in the chat history array to be from 'user'.
+    const rawHistory = history || [];
+    const firstUserIdx = rawHistory.findIndex((h: any) => h.role === 'user');
+    const validHistory = firstUserIdx !== -1 ? rawHistory.slice(firstUserIdx) : [];
+
+    const formattedHistory = validHistory.map((h: any) => ({
       role: h.role === 'bot' ? 'model' : 'user',
       parts: [{ text: h.content }]
     }));
