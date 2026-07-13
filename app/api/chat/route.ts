@@ -98,12 +98,12 @@ export async function POST(request: Request) {
     });
 
     // 3. Initialize Google Gemini API
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      console.error('GEMINI_API_KEY is not defined in environment variables.');
+    const apiKey = process.env.GEMINI_API_KEY?.trim();
+    if (!apiKey || apiKey === '') {
+      console.error('GEMINI_API_KEY is not defined or is empty in environment variables.');
       return NextResponse.json({
         error: 'gemini_config_error',
-        message: 'Google Gemini API key is missing. Please contact platform support.'
+        message: 'Google Gemini API key is missing. Please define GEMINI_API_KEY in your environment.'
       }, { status: 500 });
     }
 
@@ -366,9 +366,11 @@ RULES:
       }, { status: 429 });
     }
 
+    // Expose descriptive API validation details to help users set correct keys
+    const errMessage = error.message || 'Failed to process chat response. Try again in a few seconds.';
     return NextResponse.json({
       error: 'internal_error',
-      message: 'Failed to process chat response. Try again in a few seconds.'
+      message: `AI error: ${errMessage}`
     }, { status: 500 });
   }
 }
