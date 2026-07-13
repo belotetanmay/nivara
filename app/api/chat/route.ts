@@ -206,6 +206,7 @@ RULES:
     let functionCalls: any = null;
     let lastError: any = null;
     let workingModelName = '';
+    const errorsList: string[] = [];
 
     for (const modelName of MODEL_CANDIDATES) {
       try {
@@ -234,6 +235,7 @@ RULES:
         break; // Successfully handled message, exit loop!
       } catch (err: any) {
         console.warn(`Gemini model ${modelName} returned connection error:`, err.message);
+        errorsList.push(`${modelName}: ${err.message || 'unknown'}`);
         lastError = err;
       }
     }
@@ -241,14 +243,15 @@ RULES:
     if (lastError) {
       // Try to query Google REST API to retrieve list of active models for this key to diagnose
       let diagnosticError = null;
+      const cleanErrors = errorsList.map(e => e.replace(/https:\/\/\S+/g, '')).join(' | ');
       try {
         const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
         const listData = await listRes.json();
         if (listData && listData.models) {
           const names = listData.models.map((m: any) => m.name.replace('models/', ''));
-          diagnosticError = new Error(`All candidate models failed. Available models on your API key: ${names.slice(0, 10).join(', ')}. Last error: ${lastError.message}`);
+          diagnosticError = new Error(`All candidate models failed. Available models on your API key: ${names.slice(0, 10).join(', ')}. Candidate errors: ${cleanErrors}`);
         } else if (listData && listData.error) {
-          diagnosticError = new Error(`API key authorization failed: ${listData.error.message}. Last error: ${lastError.message}`);
+          diagnosticError = new Error(`API key authorization failed: ${listData.error.message}. Candidate errors: ${cleanErrors}`);
         }
       } catch (innerListErr: any) {
         console.error('Diagnostic model list fetch failed:', innerListErr);
