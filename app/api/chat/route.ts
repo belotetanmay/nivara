@@ -35,7 +35,157 @@ function isRateLimited(identifier: string): boolean {
   return false;
 }
 
+async function runLocalFallback(message: string, userId: string | undefined, activeConversationId: string | undefined) {
+  if (!activeConversationId) return "";
+  const text = message.toLowerCase();
+  let reply = "";
+
+  // 1. Stress Check-in Completion Parsing
+  if (text.includes('wellness check-in') || text.includes('stress level')) {
+    const stressMatch = text.match(/stress level is (\d)/);
+    const timeMatch = text.match(/have (\d+) minutes/);
+    const stressLevel = stressMatch ? parseInt(stressMatch[1]) : 3;
+    const timeAvailable = timeMatch ? parseInt(timeMatch[1]) : 30;
+
+    let recommendedTier = 'Basic';
+    let recommendedDuration = 15;
+    let sessionDetails = '15-minute quick refresh session';
+
+    if (stressLevel >= 4 && timeAvailable >= 45) {
+      recommendedTier = 'Premium';
+      recommendedDuration = 45;
+      sessionDetails = '45-minute VIP sensory restoration experience with custom aromatherapies and warm recovery tea';
+    } else if (stressLevel >= 3 && timeAvailable >= 30) {
+      recommendedTier = 'Standard';
+      recommendedDuration = 30;
+      sessionDetails = '30-minute Standard recovery session containing gentle physical massage and binaural sound treatment';
+    }
+
+    // Retrieve nearest active van from DB
+    const activeVans = await db.van.findMany({
+      where: { status: 'ACTIVE' },
+      include: {
+        availabilities: {
+          where: { isBooked: false },
+          orderBy: { startTime: 'asc' },
+          take: 1
+        }
+      },
+      take: 2
+    });
+
+    let vanSection = "";
+    if (activeVans.length > 0) {
+      const v = activeVans[0];
+      const slot = v.availabilities[0];
+      if (slot) {
+        const slotDate = slot.date.toISOString().split('T')[0];
+        const deepLink = `/customer/vans/${v.id}?date=${slotDate}&slotId=${slot.id}&sessionLength=${recommendedDuration}`;
+        vanSection = `\n\nI found a matching van: **${v.title}** at *${v.address}*.\n\n[Start Booking Draft - ${recommendedTier} Session](${deepLink})`;
+      } else {
+        vanSection = `\n\nI found a nearby van: **${v.title}** but no slots are loaded on the calendar. Go to [Browse Fleet](/customer/search) to check other dates.`;
+      }
+    } else {
+      vanSection = `\n\nWe don't have any active wellness vans in your neighborhood right now. You can check listings at [Browse Fleet](/customer/search).`;
+    }
+
+    reply = `Based on your self-reported stress level (${stressLevel}/5) and time limit (${timeAvailable} mins), I recommend our **${recommendedTier}** tier. This is a ${sessionDetails}.${vanSection}`;
+
+  // 2. Van Search Parsing
+  } else if (text.includes('find') || text.includes('search') || text.includes('van') || text.includes('near')) {
+    const activeVans = await db.van.findMany({
+      where: { status: 'ACTIVE' },
+      include: {
+        availabilities: {
+          where: { isBooked: false },
+          orderBy: { startTime: 'asc' },
+          take: 1
+        }
+      },
+      take: 3
+    });
+
+    if (activeVans.length > 0) {
+      reply = `Here are the active wellness vans near you:\n` + activeVans.map(v => {
+        const slot = v.availabilities[0];
+        const slotLink = slot ? `\n   👉 [View Available Slots](/customer/vans/${v.id}?slotId=${slot.id})` : '';
+        return `* **${v.title}** at *${v.address}* (From ₹${v.price15}/slot)${slotLink}`;
+      }).join('\n');
+    } else {
+      reply = `No active wellness vans were found in your region. You can check availability at [Browse Fleet](/customer/search) once fleet partners register!`;
+    }
+
+  // 3. KYC Status Check Parsing
+  } else if (text.includes('kyc') || text.includes('verify') || text.includes('verification')) {
+    if (!userId) {
+      reply = `Identity verification (KYC) is required before booking a slot. Please [Sign In](/login) and visit the [KYC Upload Page](/customer/kyc) to get verified.`;
+    } else {
+      const user = await db.user.findUnique({
+        where: { id: userId },
+        select: { kycStatus: true }
+      });
+      const status = user?.kycStatus || 'UNVERIFIED';
+      
+      if (status === 'VERIFIED') {
+        reply = `Your identity verification (KYC) is **VERIFIED**! You are fully authorized to book recovery slots.`;
+      } else if (status === 'PENDING') {
+        reply = `Your identity documents are under review by our administration team. You will receive an email confirmation once approved.`;
+      } else {
+        reply = `Your identity verification status is currently **UNVERIFIED**. Please go to the [KYC Upload Flow](/customer/kyc) to submit your documents and selfie.`;
+      }
+    }
+
+  // 4. Booking Status Check Parsing
+  } else if (text.includes('booking') || text.includes('status')) {
+    const codeMatch = message.match(/NV-[A-Z0-9]{4}-[A-Z0-9]{4}/);
+    if (!userId) {
+      reply = `Please [Sign In](/login) first to view booking statuses.`;
+    } else if (codeMatch) {
+      const code = codeMatch[0];
+      const booking = await db.booking.findFirst({
+        where: { bookingCode: code, customerId: userId },
+        include: { van: { select: { title: true } } }
+      });
+
+      if (booking) {
+        reply = `Booking **${booking.bookingCode}** for *${booking.van.title}* is currently **${booking.status}**.`;
+      } else {
+        reply = `No active booking matches the code **${code}** under your account. Please check the spelling or view your [Dashboard](/customer/dashboard).`;
+      }
+    } else {
+      reply = `Identity verification (KYC) is required. You can review all your reservations on your [Customer Dashboard](/customer/dashboard).`;
+    }
+
+  // 5. FAQ Policies
+  } else if (text.includes('cancel') || text.includes('refund')) {
+    reply = `**Cancellation Policy**: Free cancellation is allowed up to 1 hour before your scheduled session. Cancellations within 1 hour or no-shows are strictly non-refundable.`;
+  } else if (text.includes('price') || text.includes('pricing') || text.includes('cost')) {
+    reply = `**Nivara Pricing Tiers**:\n* **Basic (15 min)**: Entry tier for quick muscle recharge.\n* **Standard (30 min)**: Includes massage recovery and binaural beats.\n* **Premium (45 min)**: Includes custom recovery teas and VIP setups.`;
+  } else if (text.includes('amenit') || text.includes('inside') || text.includes('chair')) {
+    reply = `Our custom vans contain zero-gravity reclining seats, ambient light setups, full acoustic soundproofing, aromatherapy diffusers, and air conditioning.`;
+  } else if (text.includes('support') || text.includes('contact') || text.includes('help')) {
+    reply = `You can contact customer support directly at **support.nivara@gmail.com** for assistance.`;
+  } else {
+    reply = `I am the Nivara Calm Assistant. I can help you complete a [Stress Check-in Flow] (click Quick Actions), search nearby vans, or check your KYC status. How can I help you today?`;
+  }
+
+  // Save fallback message to database
+  await db.chatMessage.create({
+    data: {
+      conversationId: activeConversationId,
+      sender: 'bot',
+      content: reply,
+    },
+  });
+
+  return reply;
+}
+
 export async function POST(request: Request) {
+  let activeConversationId: string | undefined = undefined;
+  let parsedUserId: string | undefined = undefined;
+  let parsedMessage = '';
+
   try {
     // 1. Identify user/session for rate limiting and database binding
     const cookieStore = await cookies();
@@ -43,6 +193,7 @@ export async function POST(request: Request) {
     const token = tokenCookie?.value;
     const payload = token ? verifyToken(token) : null;
     const userId = payload?.userId;
+    parsedUserId = userId;
 
     // Use userId or fallback to a session identifier / IP address
     const clientIp = request.headers.get('x-forwarded-for') || 'anonymous_chat_user';
@@ -58,13 +209,14 @@ export async function POST(request: Request) {
     // 2. Parse request body
     const body = await request.json();
     const { message, conversationId, history = [] } = body;
+    parsedMessage = message;
+    activeConversationId = conversationId;
 
     if (!message || message.trim() === '') {
       return NextResponse.json({ error: 'Message content is required' }, { status: 400 });
     }
 
     // Initialize/Lookup Chat Conversation in Database
-    let activeConversationId = conversationId;
     let dbConversation;
 
     if (activeConversationId) {
@@ -91,7 +243,7 @@ export async function POST(request: Request) {
     // Save user message to database
     await db.chatMessage.create({
       data: {
-        conversationId: activeConversationId,
+        conversationId: activeConversationId!,
         sender: 'user',
         content: message,
       },
@@ -408,7 +560,7 @@ RULES:
     // Save bot response to database
     await db.chatMessage.create({
       data: {
-        conversationId: activeConversationId,
+        conversationId: activeConversationId!,
         sender: 'bot',
         content: responseText,
       },
@@ -421,17 +573,24 @@ RULES:
     });
 
   } catch (error: any) {
-    console.error('AI Chat endpoint crashed:', error);
+    console.error('AI Chat endpoint crashed, running local rules-based fallback:', error);
     
-    // Check if error is caused by Google API rate limits
-    if (error.message && (error.message.includes('RESOURCE_EXHAUSTED') || error.message.includes('rate limit'))) {
-      return NextResponse.json({
-        error: 'gemini_api_busy',
-        message: 'The wellness assistant is currently busy handling other requests. Please wait a moment and try again shortly.'
-      }, { status: 429 });
+    // Attempt local parsing fallback to keep chat widget working seamlessly
+    try {
+      if (activeConversationId) {
+        const fallbackReply = await runLocalFallback(parsedMessage, parsedUserId, activeConversationId);
+        return NextResponse.json({
+          success: true,
+          conversationId: activeConversationId,
+          reply: fallbackReply,
+          isFallback: true
+        });
+      }
+    } catch (fallbackError: any) {
+      console.error('Local rules-based fallback crash:', fallbackError);
     }
 
-    // Expose descriptive API validation details to help users set correct keys
+    // Default error response if database also fails
     const errMessage = error.message || 'Failed to process chat response. Try again in a few seconds.';
     return NextResponse.json({
       error: 'internal_error',
