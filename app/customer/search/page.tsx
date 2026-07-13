@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
@@ -33,6 +33,122 @@ export default function CustomerSearch() {
   const [loading, setLoading] = useState(true);
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
+
+  const mapRef = useRef<HTMLDivElement>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [googleMapsKeyExists, setGoogleMapsKeyExists] = useState(false);
+
+  useEffect(() => {
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+    const hasRealKey = apiKey && !apiKey.includes('Mock') && !apiKey.startsWith('AIzaSyMock');
+    setGoogleMapsKeyExists(!!hasRealKey);
+
+    if (!hasRealKey) return;
+
+    if ((window as any).google?.maps) {
+      setMapLoaded(true);
+      return;
+    }
+
+    // Load Google Maps API script dynamically
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initGoogleMapSearch`;
+    script.async = true;
+    script.defer = true;
+
+    (window as any).initGoogleMapSearch = () => {
+      setMapLoaded(true);
+    };
+
+    document.head.appendChild(script);
+
+    return () => {
+      delete (window as any).initGoogleMapSearch;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!mapLoaded || !mapRef.current || vans.length === 0) return;
+
+    try {
+      let center = { lat: 19.0760, lng: 72.8777 }; // Mumbai default center
+      const validVans = vans.filter(v => v.latitude && v.longitude);
+      
+      if (validVans.length > 0) {
+        if (lat && lng) {
+          center = { lat, lng };
+        } else {
+          const sumLat = validVans.reduce((sum, v) => sum + v.latitude, 0);
+          const sumLng = validVans.reduce((sum, v) => sum + v.longitude, 0);
+          center = {
+            lat: sumLat / validVans.length,
+            lng: sumLng / validVans.length
+          };
+        }
+      }
+
+      const map = new (window as any).google.maps.Map(mapRef.current, {
+        center: center,
+        zoom: 11,
+        styles: [
+          {
+            "featureType": "all",
+            "elementType": "geometry.fill",
+            "stylers": [{ "weight": "2.00" }]
+          },
+          {
+            "featureType": "all",
+            "elementType": "geometry.stroke",
+            "stylers": [{ "color": "#E5E1D8" }]
+          },
+          {
+            "featureType": "landscape",
+            "elementType": "all",
+            "stylers": [{ "color": "#faf8f5" }] // Nivara cream
+          },
+          {
+            "featureType": "water",
+            "elementType": "all",
+            "stylers": [{ "color": "#e0ecf8" }]
+          }
+        ]
+      });
+
+      // Render markers
+      validVans.forEach(van => {
+        const marker = new (window as any).google.maps.Marker({
+          position: { lat: van.latitude, lng: van.longitude },
+          map: map,
+          title: van.title,
+          icon: {
+            path: (window as any).google.maps.SymbolPath.CIRCLE,
+            scale: 8,
+            fillColor: "#2C5234", // Forest Green
+            fillOpacity: 1,
+            strokeColor: "#ffffff",
+            strokeWeight: 2,
+          }
+        });
+
+        const infoWindow = new (window as any).google.maps.InfoWindow({
+          content: `
+            <div style="font-family: Inter, sans-serif; padding: 6px; max-width: 220px; line-height: 1.4;">
+              <h4 style="font-weight: 700; margin: 0 0 2px 0; color: #0A2540; font-size: 13px;">${van.title}</h4>
+              <p style="font-size: 11px; color: #666; margin: 0 0 6px 0;">${van.address}</p>
+              <div style="font-size: 11px; font-weight: 600; color: #2C5234; margin-bottom: 6px;">Price: from ₹${van.price15}/slot</div>
+              <a href="/customer/vans/${van.id}" style="display: inline-block; background-color: #0A2540; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-decoration: none;">View Slot Calendar</a>
+            </div>
+          `
+        });
+
+        marker.addListener('click', () => {
+          infoWindow.open(map, marker);
+        });
+      });
+    } catch (e) {
+      console.error("Failed to render Google Map markers:", e);
+    }
+  }, [mapLoaded, vans, lat, lng]);
   
   // Filter States
   const [radius, setRadius] = useState<number>(10);
@@ -387,41 +503,43 @@ export default function CustomerSearch() {
                 </div>
 
                 {/* Map Grid Canvas */}
-                <div className="flex-grow bg-white border border-[#E5E1D8] rounded-lg my-4 relative overflow-hidden flex items-center justify-center p-4">
-                  {/* Map grid lines */}
-                  <div className="absolute inset-0 bg-[radial-gradient(#C19A6B_1px,transparent_1px)] [background-size:16px_16px] opacity-15"></div>
-                  
+                <div className="flex-grow bg-white border border-[#E5E1D8] rounded-lg my-4 relative overflow-hidden flex items-center justify-center">
                   {loading ? (
                     <span className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></span>
                   ) : vans.length === 0 ? (
                     <span className="text-xs text-muted-foreground font-medium text-center">No active vehicles on map</span>
+                  ) : googleMapsKeyExists && mapLoaded ? (
+                    <div ref={mapRef} className="w-full h-full"></div>
                   ) : (
-                    <div className="w-full h-full relative">
-                      {/* Render mock pins */}
-                      {vans.map((van, index) => (
-                        <div
-                          key={van.id}
-                          style={{
-                            top: `${30 + (index * 20) % 50}%`,
-                            left: `${20 + (index * 25) % 65}%`,
-                          }}
-                          className="absolute flex flex-col items-center group cursor-pointer"
-                        >
-                          <div className="flex items-center gap-1 bg-[#2C5234] text-white px-2 py-0.5 rounded shadow-md text-[9px] font-bold border border-white/20">
-                            <MapPin className="w-2.5 h-2.5" />
-                            <span>₹{van.price30}</span>
+                    <div className="w-full h-full relative p-4 flex items-center justify-center">
+                      <div className="absolute inset-0 bg-[radial-gradient(#C19A6B_1px,transparent_1px)] [background-size:16px_16px] opacity-15"></div>
+                      <div className="w-full h-full relative">
+                        {/* Render mock pins */}
+                        {vans.map((van, index) => (
+                          <div
+                            key={van.id}
+                            style={{
+                              top: `${30 + (index * 20) % 50}%`,
+                              left: `${20 + (index * 25) % 65}%`,
+                            }}
+                            className="absolute flex flex-col items-center group cursor-pointer"
+                          >
+                            <div className="flex items-center gap-1 bg-[#2C5234] text-white px-2 py-0.5 rounded shadow-md text-[9px] font-bold border border-white/20">
+                              <MapPin className="w-2.5 h-2.5" />
+                              <span>₹{van.price30}</span>
+                            </div>
+                            <div className="w-2 h-2 rounded-full bg-[#2C5234] border border-white mt-0.5 shadow-sm"></div>
                           </div>
-                          <div className="w-2 h-2 rounded-full bg-[#2C5234] border border-white mt-0.5 shadow-sm"></div>
-                        </div>
-                      ))}
+                        ))}
 
-                      {/* Map info watermark */}
-                      <div className="absolute bottom-2 left-2 right-2 bg-[#FAF8F5]/90 backdrop-blur-sm border border-[#E5E1D8] p-2 rounded text-[10px] text-muted-foreground flex justify-between items-center font-medium">
-                        <span className="flex items-center gap-1">
-                          <Navigation className="w-3 h-3 text-secondary" />
-                          <span>Google Maps Mock Sandbox</span>
-                        </span>
-                        <span>{vans.length} Vehicles Pinpoints</span>
+                        {/* Map info watermark */}
+                        <div className="absolute bottom-2 left-2 right-2 bg-[#FAF8F5]/90 backdrop-blur-sm border border-[#E5E1D8] p-2 rounded text-[10px] text-muted-foreground flex justify-between items-center font-medium">
+                          <span className="flex items-center gap-1">
+                            <Navigation className="w-3 h-3 text-secondary" />
+                            <span>Google Maps Mock Sandbox</span>
+                          </span>
+                          <span>{vans.length} Vehicles Pinpoints</span>
+                        </div>
                       </div>
                     </div>
                   )}

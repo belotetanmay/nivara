@@ -41,13 +41,16 @@ export async function geocodeAddress(address: string): Promise<{ lat: number; ln
   if (query.includes('bandra')) {
     return { lat: 19.0596, lng: 72.8295 };
   }
-  if (query.includes('mumbai')) {
+  if (query.includes('thane')) {
+    return { lat: 19.2183, lng: 72.9781 };
+  }
+  if (query.includes('mumbai') || query.includes('colaba')) {
     return { lat: 19.0760, lng: 72.8777 };
   }
   if (query.includes('delhi') || query.includes('connaught place')) {
     return { lat: 28.6139, lng: 77.2090 };
   }
-  if (query.includes('bangalore') || query.includes('bengaluru')) {
+  if (query.includes('bangalore') || query.includes('bengaluru') || query.includes('indiranagar')) {
     return { lat: 12.9716, lng: 77.5946 };
   }
 
@@ -69,8 +72,8 @@ export async function geocodeAddress(address: string): Promise<{ lat: number; ln
     }
   }
 
-  // Fallback in case coordinates cannot be parsed - return Bangalore center with small randomized offset so they show up on the map
+  // Fallback in case coordinates cannot be parsed - return Mumbai center with small randomized offset so they show up on the map
   const randomOffsetLat = (Math.random() - 0.5) * 0.05;
   const randomOffsetLng = (Math.random() - 0.5) * 0.05;
-  return { lat: 12.9716 + randomOffsetLat, lng: 77.5946 + randomOffsetLng };
+  return { lat: 19.0760 + randomOffsetLat, lng: 72.8777 + randomOffsetLng };
 }

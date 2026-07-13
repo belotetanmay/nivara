@@ -44,6 +44,28 @@ export default function Home() {
   // B2C Dynamic Pricing timeOfDay state
   const [timeOfDay, setTimeOfDay] = useState<'morning' | 'afternoon' | 'evening' | 'night'>('morning');
 
+  // Real-time Database Statistics
+  const [stats, setStats] = useState({
+    activeVans: 0,
+    completedSessions: 0,
+    averageRating: 0.0,
+    loaded: false
+  });
+
+  useEffect(() => {
+    fetch('/api/public-stats')
+      .then(res => res.json())
+      .then(data => {
+        setStats({
+          activeVans: data.activeVans || 0,
+          completedSessions: data.completedSessions || 0,
+          averageRating: data.averageRating || 0.0,
+          loaded: true
+        });
+      })
+      .catch(err => console.error('Failed to load public stats:', err));
+  }, []);
+
   // B2C Neighborhood Check Map State
   const [neighborhoodSearchQuery, setNeighborhoodSearchQuery] = useState('');
   const [neighborhoodStatus, setNeighborhoodStatus] = useState<'idle' | 'found' | 'not-found' | 'waitlist-success' | 'waitlist-loading'>('idle');
@@ -262,15 +284,15 @@ export default function Home() {
             <div className="flex flex-wrap justify-center items-center gap-4 pt-4 opacity-95 text-yellow-100/90 text-[10px] font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]">
               <div className="flex items-center gap-2 bg-slate-950/70 px-4 py-2 rounded-full border border-yellow-400/20 backdrop-blur-sm shadow-md">
                 <span className="flex h-2 w-2 rounded-full bg-[#7FD6B5] animate-ping"></span>
-                <span>15,000+ sessions completed</span>
+                <span>{stats.completedSessions} sessions completed</span>
               </div>
               <div className="flex items-center gap-1.5 bg-slate-950/70 px-4 py-2 rounded-full border border-yellow-400/20 backdrop-blur-sm shadow-md">
                 <div className="flex text-amber-400">★★★★★</div>
-                <span>Avg. rating: 4.9/5</span>
+                <span>{stats.averageRating > 0 ? `Avg. rating: ${stats.averageRating}/5` : 'No ratings yet'}</span>
               </div>
               <div className="flex items-center gap-2 bg-slate-950/70 px-4 py-2 rounded-full border border-yellow-400/20 backdrop-blur-sm shadow-md">
                 <Compass className="w-3 h-3 text-primary animate-spin-slow" />
-                <span>120+ active vans stationed</span>
+                <span>{stats.activeVans} active vans stationed</span>
               </div>
             </div>
           </div>
