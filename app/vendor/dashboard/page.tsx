@@ -57,6 +57,8 @@ export default function VendorDashboard() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [showPastSessions, setShowPastSessions] = useState(false);
+  const [completingBookingId, setCompletingBookingId] = useState<string | null>(null);
+  const [actualDurationInput, setActualDurationInput] = useState<number>(30);
   const [projectedVans, setProjectedVans] = useState(1);
   const [projectedRate, setProjectedRate] = useState(500);
   const [projectedHours, setProjectedHours] = useState(6);
@@ -112,7 +114,7 @@ export default function VendorDashboard() {
     }
   };
 
-  const handleCompleteBooking = async (bookingId: string) => {
+  const handleCompleteBooking = async (bookingId: string, actualDuration: number) => {
     setUpdatingId(bookingId);
     setError(null);
     setActionSuccess(null);
@@ -120,10 +122,12 @@ export default function VendorDashboard() {
     try {
       const res = await fetch(`/api/vendor/bookings/${bookingId}/complete`, {
         method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ actualDuration }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setActionSuccess('Booking marked as completed. Earnings added to ledger.');
+        setActionSuccess('Booking marked as completed. Earnings and overtime calculated.');
         await fetchDashboardData();
       } else {
         setError(data.error || 'Failed to complete booking.');
@@ -391,7 +395,10 @@ export default function VendorDashboard() {
                           )}
                           {booking.status === 'CONFIRMED' && (
                             <button
-                              onClick={() => handleCompleteBooking(booking.id)}
+                              onClick={() => {
+                                setCompletingBookingId(booking.id);
+                                setActualDurationInput(booking.sessionLength);
+                              }}
                               disabled={updatingId === booking.id}
                               className="flex-grow py-2 bg-secondary hover:bg-secondary/95 text-primary-foreground font-bold rounded text-xs transition-colors flex items-center justify-center gap-1.5"
                             >
@@ -581,6 +588,45 @@ export default function VendorDashboard() {
           </div>
         </div>
       </main>
+
+      {completingBookingId && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-[#E5E1D8] p-6 rounded-2xl w-full max-w-sm space-y-4 shadow-xl text-primary">
+            <h3 className="font-serif text-lg font-bold">Log Session Completion</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Please enter the actual duration (in minutes) spent by the customer inside the wellness cabin.
+            </p>
+            <div className="space-y-1.5">
+              <span className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">Actual Duration (Minutes)</span>
+              <input
+                type="number"
+                min="1"
+                className="w-full p-2 border border-[#E5E1D8] rounded text-sm text-primary font-medium focus:outline-none focus:border-secondary bg-white"
+                value={actualDurationInput}
+                onChange={(e) => setActualDurationInput(Number(e.target.value))}
+              />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => {
+                  handleCompleteBooking(completingBookingId, actualDurationInput);
+                  setCompletingBookingId(null);
+                }}
+                disabled={updatingId !== null}
+                className="flex-grow py-2.5 bg-primary hover:bg-primary/95 text-white rounded text-xs font-semibold shadow transition-all cursor-pointer disabled:opacity-50"
+              >
+                Submit & Complete
+              </button>
+              <button
+                onClick={() => setCompletingBookingId(null)}
+                className="flex-grow py-2.5 bg-white border border-[#E5E1D8] text-primary rounded text-xs font-semibold hover:bg-gray-50 transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

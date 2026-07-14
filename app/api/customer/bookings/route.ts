@@ -88,7 +88,19 @@ export async function POST(request: Request) {
       }, { status: 403 });
     }
 
-    const { vanId, slotId, sessionLength, scent, lighting, audio } = await request.json();
+    const { 
+      vanId, 
+      slotId, 
+      sessionLength, 
+      scent, 
+      lighting, 
+      audio,
+      serviceModel,
+      pickupAddress,
+      dropoffAddress,
+      includeParkingFee
+    } = await request.json();
+
     if (!vanId || !slotId || !sessionLength) {
       return NextResponse.json({ error: 'Van ID, slot ID, and session length are required' }, { status: 400 });
     }
@@ -112,9 +124,12 @@ export async function POST(request: Request) {
     }
 
     // Determine price
-    let amount = van.price30;
-    if (sessionLength === 15) amount = van.price15;
-    if (sessionLength === 45) amount = van.price45;
+    let baseAmount = van.price30;
+    if (sessionLength === 15) baseAmount = van.price15;
+    if (sessionLength === 45) baseAmount = van.price45;
+
+    const parkingFeeAmount = includeParkingFee ? 150.0 : 0.0;
+    const totalAmount = baseAmount + parkingFeeAmount;
 
     // Generate unique booking code
     const r1 = Math.random().toString(36).substring(2, 6).toUpperCase();
@@ -142,6 +157,11 @@ export async function POST(request: Request) {
           scent: scent || 'Lavender',
           lighting: lighting || 'Sunset Copper',
           audio: audio || 'Binaural Beats',
+          serviceModel: serviceModel || 'STEADY',
+          pickupAddress: serviceModel === 'PICK_AND_DROP' ? pickupAddress : null,
+          dropoffAddress: serviceModel === 'PICK_AND_DROP' ? dropoffAddress : null,
+          includeParkingFee: !!includeParkingFee,
+          parkingFeeAmount,
         },
       });
 
@@ -149,7 +169,7 @@ export async function POST(request: Request) {
       await tx.payment.create({
         data: {
           bookingId: newBooking.id,
-          amount,
+          amount: totalAmount,
           currency: 'INR',
           status: PaymentStatus.INITIATED,
         },

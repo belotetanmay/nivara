@@ -65,6 +65,12 @@ export default function VanDetailPage({ params }: { params: Promise<{ id: string
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [initialSlotPopulated, setInitialSlotPopulated] = useState(false);
 
+  // Service options
+  const [serviceModel, setServiceModel] = useState<'STEADY' | 'PICK_AND_DROP'>('STEADY');
+  const [pickupAddress, setPickupAddress] = useState('');
+  const [dropoffAddress, setDropoffAddress] = useState('');
+  const [includeParkingFee, setIncludeParkingFee] = useState(false);
+
   // Sensory Customizer Preset State
   const [scent, setScent] = useState('Lavender');
   const [lighting, setLighting] = useState('Sunset Copper');
@@ -181,6 +187,11 @@ export default function VanDetailPage({ params }: { params: Promise<{ id: string
       return;
     }
 
+    if (serviceModel === 'PICK_AND_DROP' && (!pickupAddress.trim() || !dropoffAddress.trim())) {
+      setBookingError('Please enter both pick-up and drop-off locations.');
+      return;
+    }
+
     setIsSubmitting(true);
     setBookingError(null);
 
@@ -195,6 +206,10 @@ export default function VanDetailPage({ params }: { params: Promise<{ id: string
           scent,
           lighting,
           audio,
+          serviceModel,
+          pickupAddress: serviceModel === 'PICK_AND_DROP' ? pickupAddress : undefined,
+          dropoffAddress: serviceModel === 'PICK_AND_DROP' ? dropoffAddress : undefined,
+          includeParkingFee,
         }),
       });
 
@@ -481,8 +496,84 @@ export default function VanDetailPage({ params }: { params: Promise<{ id: string
                 </div>
               </div>
 
+              {/* Service Model Selector */}
+              <div className="space-y-3 pt-3 border-t border-[#E5E1D8]/50">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Service Delivery Model
+                </label>
+                <div className="grid grid-cols-2 gap-2 text-center text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setServiceModel('STEADY')}
+                    className={`py-2.5 px-1.5 border rounded-md font-bold transition-all ${
+                      serviceModel === 'STEADY'
+                        ? 'border-secondary bg-[#FCF9F6] text-secondary ring-1 ring-secondary'
+                        : 'border-[#E5E1D8] text-muted-foreground bg-white'
+                    }`}
+                  >
+                    Steady Position
+                    <span className="block text-[9px] font-normal text-muted-foreground mt-0.5">Walk in at station</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setServiceModel('PICK_AND_DROP')}
+                    className={`py-2.5 px-1.5 border rounded-md font-bold transition-all ${
+                      serviceModel === 'PICK_AND_DROP'
+                        ? 'border-secondary bg-[#FCF9F6] text-secondary ring-1 ring-secondary'
+                        : 'border-[#E5E1D8] text-muted-foreground bg-white'
+                    }`}
+                  >
+                    Pick & Drop (Ola/Uber)
+                    <span className="block text-[9px] font-normal text-muted-foreground mt-0.5">We come to you</span>
+                  </button>
+                </div>
+
+                {serviceModel === 'PICK_AND_DROP' && (
+                  <div className="space-y-2 pt-1 animate-in fade-in duration-200">
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-slate-500 font-bold block">Pick-up Location</span>
+                      <input
+                        type="text"
+                        placeholder="Enter pick-up address..."
+                        value={pickupAddress}
+                        onChange={(e) => setPickupAddress(e.target.value)}
+                        className="w-full p-2 border border-[#E5E1D8] rounded text-xs text-primary font-medium focus:outline-none focus:border-secondary"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-slate-500 font-bold block">Drop-off Location</span>
+                      <input
+                        type="text"
+                        placeholder="Enter drop-off address..."
+                        value={dropoffAddress}
+                        onChange={(e) => setDropoffAddress(e.target.value)}
+                        className="w-full p-2 border border-[#E5E1D8] rounded text-xs text-primary font-medium focus:outline-none focus:border-secondary"
+                        required
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Parking Spot Selection */}
+              <div className="space-y-2 pt-3 border-t border-[#E5E1D8]/50">
+                <label className="flex items-start gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={includeParkingFee}
+                    onChange={(e) => setIncludeParkingFee(e.target.checked)}
+                    className="rounded border-[#E5E1D8] text-primary focus:ring-secondary w-4 h-4 mt-0.5"
+                  />
+                  <div className="text-xs text-primary leading-normal">
+                    <span className="font-semibold block text-slate-800">Include Dedicated Parking Spot?</span>
+                    <span className="text-[10px] text-muted-foreground block mt-0.5">Some prime spaces include a flat ₹150 parking fee.</span>
+                  </div>
+                </label>
+              </div>
+
               {/* Date selection picker */}
-              <div className="space-y-2">
+              <div className="space-y-2 pt-3 border-t border-[#E5E1D8]/50">
                 <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Select Date
                 </label>

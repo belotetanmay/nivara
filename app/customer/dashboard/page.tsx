@@ -14,6 +14,15 @@ interface Booking {
   sessionLength: number;
   status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
   createdAt: string;
+  serviceModel: string;
+  pickupAddress: string | null;
+  dropoffAddress: string | null;
+  includeParkingFee: boolean;
+  parkingFeeAmount: number;
+  actualDuration: number | null;
+  overtimeMinutes: number;
+  overtimeAmount: number;
+  overtimeStatus: string;
   van: {
     title: string;
     address: string;
@@ -43,6 +52,29 @@ export default function CustomerDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+  const [payingOvertimeId, setPayingOvertimeId] = useState<string | null>(null);
+
+  const handlePayOvertime = async (bookingId: string) => {
+    setPayingOvertimeId(bookingId);
+    setError(null);
+    setActionSuccess(null);
+    try {
+      const res = await fetch(`/api/customer/bookings/${bookingId}/pay-overtime`, {
+        method: 'POST'
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setActionSuccess('Overtime fee paid successfully!');
+        await fetchBookings();
+      } else {
+        setError(data.error || 'Failed to pay overtime fee.');
+      }
+    } catch (e) {
+      setError('An error occurred completing overtime payment.');
+    } finally {
+      setPayingOvertimeId(null);
+    }
+  };
 
   const fetchBookings = async () => {
     try {
@@ -410,6 +442,54 @@ export default function CustomerDashboard() {
                         <span className="font-bold text-primary">
                           INR {booking.payment.amount}
                         </span>
+                      </div>
+                    )}
+
+                    {/* Service model badge */}
+                    <div className="text-[11px] bg-slate-50 border border-slate-200/60 p-2 rounded text-muted-foreground space-y-1">
+                      <div className="flex justify-between items-center">
+                        <span>Service Mode:</span>
+                        <span className="font-bold text-primary">
+                          {booking.serviceModel === 'PICK_AND_DROP' ? '🚗 Pick & Drop' : '📍 Steady Position'}
+                        </span>
+                      </div>
+                      {booking.serviceModel === 'PICK_AND_DROP' && (
+                        <div className="text-[10px] border-t border-slate-200/40 pt-1 space-y-0.5">
+                          <p><span className="font-semibold">Pick-up:</span> {booking.pickupAddress}</p>
+                          <p><span className="font-semibold">Drop-off:</span> {booking.dropoffAddress}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Overtime charge warnings */}
+                    {booking.overtimeStatus === 'UNPAID' && (
+                      <div className="p-3 bg-amber-50 border border-amber-200 rounded text-xs space-y-2">
+                        <div className="flex gap-1.5 items-start text-amber-800 font-medium">
+                          <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-600 animate-pulse" />
+                          <div>
+                            <span className="font-bold">Overtime Charge Pending</span>
+                            <p className="text-[10px] text-amber-700 mt-0.5">
+                              Spent {booking.actualDuration} min inside van (+{booking.overtimeMinutes} min overtime).
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center pt-1.5 border-t border-amber-200/60">
+                          <span className="font-bold text-amber-900 text-xs">Fee: ₹{booking.overtimeAmount}</span>
+                          <button
+                            onClick={() => handlePayOvertime(booking.id)}
+                            disabled={payingOvertimeId === booking.id}
+                            className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-[10px] px-2.5 py-1 rounded shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+                          >
+                            {payingOvertimeId === booking.id ? 'Processing...' : 'Pay Fee'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {booking.overtimeStatus === 'PAID' && (
+                      <div className="p-2.5 bg-green-50 border border-green-200 rounded text-[10px] text-green-700 flex items-center gap-1.5 font-medium">
+                        <CheckCircle className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+                        <span>Paid Overtime (Spent {booking.actualDuration} min - ₹{booking.overtimeAmount})</span>
                       </div>
                     )}
 

@@ -117,6 +117,9 @@ model Van {
   status         VanStatus      @default(UNDER_REVIEW)
   hasAttendant   Boolean        @default(false)
   attendantName  String?
+  serviceType    String         @default("STEADY") // "STEADY", "PICK_AND_DROP", or "BOTH"
+  currentLatitude Float?
+  currentLongitude Float?
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
   
@@ -155,6 +158,15 @@ model Booking {
   scent          String        @default("Lavender")
   lighting       String        @default("Sunset Copper")
   audio          String        @default("Binaural Beats")
+  serviceModel   String        @default("STEADY") // "STEADY" or "PICK_AND_DROP"
+  pickupAddress  String?
+  dropoffAddress String?
+  includeParkingFee Boolean     @default(false)
+  parkingFeeAmount  Float       @default(0.0)
+  actualDuration    Int?
+  overtimeMinutes   Int         @default(0)
+  overtimeAmount    Float       @default(0.0)
+  overtimeStatus    String      @default("NONE") // "NONE", "UNPAID", "PAID"
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   

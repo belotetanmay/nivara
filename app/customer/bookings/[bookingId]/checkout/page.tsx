@@ -11,6 +11,11 @@ interface Booking {
   id: string;
   bookingCode: string;
   sessionLength: number;
+  serviceModel: string;
+  pickupAddress: string | null;
+  dropoffAddress: string | null;
+  includeParkingFee: boolean;
+  parkingFeeAmount: number;
   van: {
     title: string;
     address: string;
@@ -110,7 +115,7 @@ export default function BookingCheckout({ params }: { params: Promise<{ bookingI
       <div className="flex flex-col min-h-screen bg-[#FAF8F5]">
         <Navbar />
         <div className="flex-grow max-w-3xl mx-auto w-full px-4 py-16 text-center space-y-4">
-          <h1 className="font-serif text-2xl font-bold text-primary font-serif">Checkout Error</h1>
+          <h1 className="font-serif text-2xl font-bold text-primary">Checkout Error</h1>
           <p className="text-sm text-muted-foreground">{error || 'Session not found.'}</p>
           <div className="pt-2">
             <Link href="/customer/search" className="text-secondary font-semibold hover:underline">
@@ -142,7 +147,18 @@ export default function BookingCheckout({ params }: { params: Promise<{ bookingI
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div className="flex items-start gap-2">
                 <MapPin className="w-4.5 h-4.5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                <span className="leading-relaxed text-muted-foreground">{booking.van.address}</span>
+                <div className="space-y-1">
+                  <span className="leading-relaxed text-muted-foreground block">{booking.van.address}</span>
+                  <span className="inline-block bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded text-[10px] font-bold">
+                    Mode: {booking.serviceModel === 'PICK_AND_DROP' ? '🚗 Pick & Drop' : '📍 Steady Station'}
+                  </span>
+                  {booking.serviceModel === 'PICK_AND_DROP' && (
+                    <div className="text-[10px] text-slate-500 space-y-0.5 pt-1.5 border-t border-[#FAF8F5]">
+                      <p><span className="font-bold">Pick-up:</span> {booking.pickupAddress}</p>
+                      <p><span className="font-bold">Drop-off:</span> {booking.dropoffAddress}</p>
+                    </div>
+                  )}
+                </div>
               </div>
               
               <div className="space-y-2">
@@ -167,8 +183,14 @@ export default function BookingCheckout({ params }: { params: Promise<{ bookingI
             <div className="space-y-1.5 pt-1">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Wellness Pod Rental ({booking.sessionLength} Min)</span>
-                <span>₹{booking.payment?.amount || 0}</span>
+                <span>₹{(booking.payment?.amount || 0) - (booking.includeParkingFee ? booking.parkingFeeAmount : 0)}</span>
               </div>
+              {booking.includeParkingFee && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Dedicated Parking Spot Reservation fee</span>
+                  <span>₹{booking.parkingFeeAmount}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Cabin Sanitization Service fee</span>
                 <span className="text-secondary font-medium">Free</span>

@@ -42,11 +42,45 @@ export async function PATCH(
       return NextResponse.json({ error: 'Only confirmed bookings can be marked as complete' }, { status: 400 });
     }
 
+    // Read actual session duration from request body
+    let actualDuration: number | null = null;
+    try {
+      const body = await request.json();
+      actualDuration = body.actualDuration ? Number(body.actualDuration) : null;
+    } catch (e) {
+      // Body may not be present or valid JSON
+    }
+
+    let overtimeMinutes = 0;
+    let overtimeAmount = 0;
+    let overtimeStatus = 'NONE';
+
+    const sessionLength = booking.sessionLength;
+    if (actualDuration && actualDuration > sessionLength) {
+      overtimeMinutes = actualDuration - sessionLength;
+      
+      // Calculate overtime amount pro-rata based on price15
+      const van = await db.van.findUnique({
+        where: { id: booking.vanId },
+      });
+      if (van) {
+        const ratePerMinute = van.price15 / 15;
+        overtimeAmount = Number((ratePerMinute * overtimeMinutes).toFixed(2));
+        overtimeStatus = 'UNPAID';
+      }
+    }
+
     // Mark as completed and update total bookings counter in a transaction
     await db.$transaction(async (tx) => {
       await tx.booking.update({
         where: { id: bookingId },
-        data: { status: BookingStatus.COMPLETED },
+        data: { 
+          status: BookingStatus.COMPLETED,
+          actualDuration: actualDuration || sessionLength,
+          overtimeMinutes,
+          overtimeAmount,
+          overtimeStatus,
+        },
       });
 
       await tx.vendorProfile.update({
