@@ -63,11 +63,11 @@ function PaymentForm() {
 
   return (
     <form onSubmit={handlePay} className="space-y-6">
-      <div className="flex gap-2.5 items-start p-4 bg-amber-50 text-amber-800 border border-amber-200 rounded-md text-xs">
+      <div className="flex gap-2.5 items-start p-4 bg-amber-50 text-amber-800 border border-amber-200 rounded-md text-xs animate-pulse">
         <AlertTriangle className="w-5 h-5 flex-shrink-0 text-amber-600 mt-0.5" />
         <div>
-          <span className="font-bold block">Stripe Sandbox/Test Mode</span>
-          No real money is charged. Click &quot;Complete Payment&quot; below to simulate a successful transactions callback.
+          <span className="font-bold block">Beta Pilot Mode - Simulated Checkout</span>
+          No real card payments are collected yet. Stripe gateways and live vehicle coordinates tracking are disabled for this phase. Please click &quot;Complete Payment&quot; below to simulate validation.
         </div>
       </div>
 

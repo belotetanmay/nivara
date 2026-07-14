@@ -203,12 +203,12 @@ export default function BookingCheckout({ params }: { params: Promise<{ bookingI
           </div>
 
           {/* Security details badge */}
-          <div className="p-3 bg-secondary/5 border border-secondary/20 rounded text-xs flex gap-2.5 items-start">
-            <ShieldCheck className="w-5 h-5 text-secondary flex-shrink-0" />
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded text-xs flex gap-2.5 items-start">
+            <ShieldCheck className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
             <div>
-              <span className="font-semibold text-primary">Vetted & Encrypted Gateway</span>
-              <p className="text-[10px] text-muted-foreground leading-normal mt-0.5">
-                Payments are processed through Stripe secure checkout servers. Nivara does not store or process card numbers directly.
+              <span className="font-semibold text-primary">Beta Pilot Checkout (Simulated)</span>
+              <p className="text-[10px] text-slate-500 leading-normal mt-0.5">
+                Nivara is currently running in test pilot mode. Payments are simulated and no real credit card numbers or money transactions are processed.
               </p>
             </div>
           </div>
