@@ -12,6 +12,7 @@ import {
   UserCheck, CreditCard, TrendingUp, DollarSign, Percent, Award, ShieldAlert,
   Map, HelpCircle
 } from 'lucide-react';
+import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
 
 export default function Home() {
   const router = useRouter();
@@ -74,6 +75,28 @@ export default function Home() {
   const [waitlistSociety, setWaitlistSociety] = useState('');
   const [waitlistEmail, setWaitlistEmail] = useState('');
   const [waitlistPhone, setWaitlistPhone] = useState('');
+  const [activeVans, setActiveVans] = useState<any[]>([]);
+  const [mapCenter, setMapCenter] = useState({ lat: 19.0760, lng: 72.8777 }); // Mumbai default center
+  const [mapZoom, setMapZoom] = useState(10);
+
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+  const hasRealKey = !!(apiKey && !apiKey.includes('Mock') && !apiKey.startsWith('AIzaSyMock'));
+
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: apiKey,
+    libraries: ['places'] as any,
+  });
+
+  useEffect(() => {
+    fetch('/api/customer/vans')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.vans) {
+          setActiveVans(data.vans);
+        }
+      })
+      .catch(err => console.error('Failed to load active vans for map:', err));
+  }, []);
 
   // B2B Efficiency Model state
   const [b2bModelView, setB2bModelView] = useState<'traditional' | 'nivara'>('nivara');
@@ -144,15 +167,50 @@ export default function Home() {
     }
   };
 
-  const handleNeighborhoodSearch = (e: React.FormEvent) => {
+  const handleNeighborhoodSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!neighborhoodSearchQuery.trim()) return;
-    
-    const query = neighborhoodSearchQuery.toLowerCase();
-    // Supported seeded zones: Indiranagar, Koramangala
-    if (query.includes('indira') || query.includes('kora') || query.includes('bangalore') || query.includes('bengaluru')) {
-      setNeighborhoodStatus('found');
-    } else {
+
+    setNeighborhoodStatus('waitlist-loading');
+    try {
+      const res = await fetch(`/api/customer/geocode?address=${encodeURIComponent(neighborhoodSearchQuery)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.lat && data.lng) {
+          setMapCenter({ lat: data.lat, lng: data.lng });
+          setMapZoom(12);
+
+          // Proximity helper function (Haversine formula in km)
+          const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+          };
+
+          const hasNearbyVans = activeVans.some(van => {
+            const vanLat = van.currentLatitude || van.latitude;
+            const vanLng = van.currentLongitude || van.longitude;
+            return getDistance(data.lat, data.lng, vanLat, vanLng) <= 12; // 12km threshold
+          });
+
+          if (hasNearbyVans) {
+            setNeighborhoodStatus('found');
+          } else {
+            setNeighborhoodStatus('not-found');
+          }
+        } else {
+          setNeighborhoodStatus('not-found');
+        }
+      } else {
+        setNeighborhoodStatus('not-found');
+      }
+    } catch (err) {
+      console.error('Error in homepage search:', err);
       setNeighborhoodStatus('not-found');
     }
   };
@@ -883,75 +941,123 @@ export default function Home() {
                   </div>
 
                   {/* Right Stylized Mock Map Graphic with Percentage Coordinate Pins */}
-                  <div className="lg:col-span-7 bg-[#EAE6DF] border border-slate-200 rounded-3xl shadow-sm overflow-hidden min-h-[350px] relative">
-                    {/* Grid Backdrop simulating street layout */}
-                    <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
-                    
-                    {/* SVG Map Lines */}
-                    <svg className="absolute inset-0 w-full h-full text-white/50" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M 0 100 Q 150 150 300 100 T 600 200" fill="none" stroke="currentColor" strokeWidth="8" />
-                      <path d="M 100 0 L 120 400" fill="none" stroke="currentColor" strokeWidth="6" />
-                      <path d="M 450 0 L 400 400" fill="none" stroke="currentColor" strokeWidth="6" />
-                      <path d="M 0 300 L 600 250" fill="none" stroke="currentColor" strokeWidth="10" />
-                    </svg>
+                  <div className="lg:col-span-7 bg-[#EAE6DF] border border-slate-200 rounded-3xl shadow-sm overflow-hidden min-h-[350px] relative flex items-center justify-center">
+                    {isLoaded && hasRealKey ? (
+                      <GoogleMap
+                        mapContainerStyle={{ width: '100%', height: '100%' }}
+                        center={mapCenter}
+                        zoom={mapZoom}
+                        options={{
+                          disableDefaultUI: true,
+                          zoomControl: false,
+                          styles: [
+                            {
+                              "featureType": "all",
+                              "elementType": "geometry.fill",
+                              "stylers": [{ "weight": "2.00" }]
+                            },
+                            {
+                              "featureType": "all",
+                              "elementType": "geometry.stroke",
+                              "stylers": [{ "color": "#E5E1D8" }]
+                            },
+                            {
+                              "featureType": "landscape",
+                              "elementType": "all",
+                              "stylers": [{ "color": "#faf8f5" }]
+                            },
+                            {
+                              "featureType": "water",
+                              "elementType": "all",
+                              "stylers": [{ "color": "#e0ecf8" }]
+                            }
+                          ]
+                        }}
+                      >
+                        {activeVans.map(van => {
+                          const vanLat = van.currentLatitude || van.latitude;
+                          const vanLng = van.currentLongitude || van.longitude;
+                          if (!vanLat || !vanLng) return null;
 
-                    {/* Locality Pin Points */}
-                    {/* Indiranagar Cluster Pin */}
-                    <div className="absolute top-[28%] left-[22%] z-10 group">
-                      <span className="flex h-3.5 w-3.5 relative">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-primary shadow border-2 border-white"></span>
-                      </span>
-                      <div className="absolute top-5 left-1/2 -translate-x-1/2 bg-slate-900 text-white font-bold text-[8px] px-2 py-0.5 rounded shadow whitespace-nowrap opacity-90">
-                        Indiranagar Cluster (Active)
-                      </div>
-                    </div>
+                          return (
+                            <Marker
+                              key={van.id}
+                              position={{ lat: vanLat, lng: vanLng }}
+                              onClick={() => router.push(`/customer/vans/${van.id}`)}
+                              options={{
+                                icon: {
+                                  path: typeof window !== 'undefined' ? (window as any).google?.maps?.SymbolPath?.CIRCLE : 0,
+                                  scale: 9,
+                                  fillColor: van.currentLatitude ? '#2C5234' : '#0A2540',
+                                  fillOpacity: 1,
+                                  strokeColor: '#ffffff',
+                                  strokeWeight: 2,
+                                }
+                              }}
+                            />
+                          );
+                        })}
+                      </GoogleMap>
+                    ) : (
+                      <>
+                        {/* Grid Backdrop simulating street layout */}
+                        <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
+                        
+                        {/* SVG Map Lines */}
+                        <svg className="absolute inset-0 w-full h-full text-white/50" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M 0 100 Q 150 150 300 100 T 600 200" fill="none" stroke="currentColor" strokeWidth="8" />
+                          <path d="M 100 0 L 120 400" fill="none" stroke="currentColor" strokeWidth="6" />
+                          <path d="M 450 0 L 400 400" fill="none" stroke="currentColor" strokeWidth="6" />
+                          <path d="M 0 300 L 600 250" fill="none" stroke="currentColor" strokeWidth="10" />
+                        </svg>
 
-                    {/* Koramangala Cluster Pin */}
-                    <div className="absolute top-[62%] left-[64%] z-10 group">
-                      <span className="flex h-3.5 w-3.5 relative">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-secondary shadow border-2 border-white"></span>
-                      </span>
-                      <div className="absolute top-5 left-1/2 -translate-x-1/2 bg-slate-900 text-white font-bold text-[8px] px-2 py-0.5 rounded shadow whitespace-nowrap opacity-90">
-                        Koramangala Station (Active)
-                      </div>
-                    </div>
-
-                    {/* Bangalore Tech Park Cluster Pin */}
-                    <div className="absolute top-[40%] left-[45%] z-10 group">
-                      <span className="flex h-3.5 w-3.5 relative">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-accent shadow border-2 border-white"></span>
-                      </span>
-                      <div className="absolute top-5 left-1/2 -translate-x-1/2 bg-slate-900 text-white font-bold text-[8px] px-2 py-0.5 rounded shadow whitespace-nowrap opacity-90">
-                        HSR Hub (Active)
-                      </div>
-                    </div>
-
-                    {/* User Pin if local query matches Bangalore */}
-                    {neighborhoodStatus === 'found' && (
-                      <div className="absolute top-[50%] left-[30%] z-20 animate-bounce">
-                        <span className="flex h-5 w-5 bg-red-500 rounded-full items-center justify-center text-white border-2 border-white shadow font-bold text-[8px]">
-                          ★
-                        </span>
-                        <div className="absolute top-6 left-1/2 -translate-x-1/2 bg-red-600 text-white font-bold text-[9px] px-2 py-1 rounded shadow whitespace-nowrap">
-                          Your Queried Zone
+                        {/* Locality Pin Points */}
+                        {/* Indiranagar Cluster Pin */}
+                        <div className="absolute top-[28%] left-[22%] z-10 group">
+                          <span className="flex h-3.5 w-3.5 relative">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-primary shadow border-2 border-white"></span>
+                          </span>
+                          <div className="absolute top-5 left-1/2 -translate-x-1/2 bg-slate-900 text-white font-bold text-[8px] px-2 py-0.5 rounded shadow whitespace-nowrap opacity-90">
+                            Indiranagar Cluster (Active)
+                          </div>
                         </div>
-                      </div>
-                    )}
 
-                    {/* Legend */}
-                    <div className="absolute bottom-4 left-4 bg-slate-950/80 backdrop-blur text-white text-[9px] font-bold p-3 rounded-xl border border-white/10 space-y-1.5">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-primary inline-block border border-white/20"></span>
-                        <span>Corporate Tech Clusters</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-secondary inline-block border border-white/20"></span>
-                        <span>Residential Societies</span>
-                      </div>
-                    </div>
+                        {/* Koramangala Cluster Pin */}
+                        <div className="absolute top-[62%] left-[64%] z-10 group">
+                          <span className="flex h-3.5 w-3.5 relative">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-secondary shadow border-2 border-white"></span>
+                          </span>
+                          <div className="absolute top-5 left-1/2 -translate-x-1/2 bg-slate-900 text-white font-bold text-[8px] px-2 py-0.5 rounded shadow whitespace-nowrap opacity-90">
+                            Koramangala Station (Active)
+                          </div>
+                        </div>
+
+                        {/* Bangalore Tech Park Cluster Pin */}
+                        <div className="absolute top-[40%] left-[45%] z-10 group">
+                          <span className="flex h-3.5 w-3.5 relative">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-accent shadow border-2 border-white"></span>
+                          </span>
+                          <div className="absolute top-5 left-1/2 -translate-x-1/2 bg-slate-900 text-white font-bold text-[8px] px-2 py-0.5 rounded shadow whitespace-nowrap opacity-90">
+                            HSR Hub (Active)
+                          </div>
+                        </div>
+
+                        {/* Legend */}
+                        <div className="absolute bottom-4 left-4 bg-slate-950/80 backdrop-blur text-white text-[9px] font-bold p-3 rounded-xl border border-white/10 space-y-1.5">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full bg-primary inline-block border border-white/20"></span>
+                            <span>Corporate Tech Clusters</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full bg-secondary inline-block border border-white/20"></span>
+                            <span>Residential Societies</span>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                 </div>
