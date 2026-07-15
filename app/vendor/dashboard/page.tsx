@@ -6,7 +6,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CheckCircle2, Clock, MapPin, Inbox, CreditCard, ShieldCheck, AlertTriangle, ArrowUpRight, BarChart3, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle2, Clock, MapPin, Inbox, CreditCard, ShieldCheck, AlertTriangle, ArrowUpRight, BarChart3, ChevronDown, ChevronUp, Compass, Navigation } from 'lucide-react';
 
 interface Booking {
   id: string;
@@ -59,6 +59,79 @@ export default function VendorDashboard() {
   const [showPastSessions, setShowPastSessions] = useState(false);
   const [completingBookingId, setCompletingBookingId] = useState<string | null>(null);
   const [actualDurationInput, setActualDurationInput] = useState<number>(30);
+  const [vans, setVans] = useState<any[]>([]);
+  const [simulatingVanId, setSimulatingVanId] = useState<string | null>(null);
+  const [gpsIntervalId, setGpsIntervalId] = useState<any>(null);
+
+  const fetchVansData = async () => {
+    try {
+      const res = await fetch('/api/vendor/vans');
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setVans(data.vans || []);
+      }
+    } catch (e) {
+      console.error('Failed to load vendor vans:', e);
+    }
+  };
+
+  const startGpsSimulation = (vanId: string) => {
+    if (simulatingVanId) {
+      clearInterval(gpsIntervalId);
+    }
+    setSimulatingVanId(vanId);
+
+    // Initial coordinates in Mumbai Bandra region
+    let lat = 19.0596;
+    let lng = 72.8295;
+
+    const interval = setInterval(async () => {
+      lat += (Math.random() - 0.5) * 0.0015;
+      lng += (Math.random() - 0.5) * 0.0015;
+
+      try {
+        const res = await fetch(`/api/vendor/vans/${vanId}/gps`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ currentLatitude: lat, currentLongitude: lng }),
+        });
+        if (res.ok) {
+          setVans(prev => prev.map(v => v.id === vanId ? { ...v, currentLatitude: lat, currentLongitude: lng } : v));
+        }
+      } catch (err) {
+        console.error('Failed to send dynamic GPS update:', err);
+      }
+    }, 4000);
+
+    setGpsIntervalId(interval);
+  };
+
+  const stopGpsSimulation = async (vanId: string) => {
+    if (simulatingVanId === vanId) {
+      clearInterval(gpsIntervalId);
+      setSimulatingVanId(null);
+      setGpsIntervalId(null);
+    }
+
+    try {
+      const res = await fetch(`/api/vendor/vans/${vanId}/gps`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentLatitude: null, currentLongitude: null }),
+      });
+      if (res.ok) {
+        setVans(prev => prev.map(v => v.id === vanId ? { ...v, currentLatitude: null, currentLongitude: null } : v));
+      }
+    } catch (err) {
+      console.error('Failed to reset GPS coordinates:', err);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (gpsIntervalId) clearInterval(gpsIntervalId);
+    };
+  }, [gpsIntervalId]);
   const [projectedVans, setProjectedVans] = useState(1);
   const [projectedRate, setProjectedRate] = useState(500);
   const [projectedHours, setProjectedHours] = useState(6);
@@ -85,6 +158,7 @@ export default function VendorDashboard() {
     if (!authLoading) {
       if (user) {
         fetchDashboardData();
+        fetchVansData();
       } else {
         router.push('/login');
       }
@@ -581,6 +655,77 @@ export default function VendorDashboard() {
                     <span className="text-[9px] text-slate-400 font-medium block">calculated at {earnings.utilizationRate || 35}% base utilization</span>
                   </div>
                 </div>
+              </div>
+
+              {/* Nivara GPS Flightdeck (Real-time Coordinate Tracking Simulator) */}
+              <div className="glass-card space-y-4">
+                <div className="flex items-center gap-2 pb-2 border-b border-[#FAF8F5]">
+                  <Compass className="w-5 h-5 text-secondary" />
+                  <h3 className="font-serif text-base font-bold text-primary">GPS Flightdeck</h3>
+                </div>
+
+                <p className="text-[10px] text-muted-foreground leading-normal">
+                  Manage dynamic vehicle coordinates and simulate travel routing in active regions.
+                </p>
+
+                {vans.length === 0 ? (
+                  <p className="text-center py-2 text-xs text-muted-foreground">No wellness pods listed.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {vans.map((van) => (
+                      <div
+                        key={van.id}
+                        className="bg-[#FCF9F6] border border-[#E5E1D8]/60 p-3 rounded-lg text-xs space-y-2 text-primary"
+                      >
+                        <div className="flex justify-between items-center">
+                          <span className="font-bold truncate max-w-[150px]">{van.title}</span>
+                          {van.currentLatitude ? (
+                            <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 text-[9px] font-bold flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+                              Simulating
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200 text-[9px] font-bold">
+                              Stationary
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="text-[10px] text-muted-foreground space-y-0.5">
+                          <p>
+                            <span className="font-medium text-primary">Base Pos:</span> {van.latitude.toFixed(4)}, {van.longitude.toFixed(4)}
+                          </p>
+                          {van.currentLatitude && (
+                            <p className="text-[#2C5234] font-medium flex items-center gap-1">
+                              <Navigation className="w-3 h-3 text-[#2C5234]" />
+                              <span>Live GPS: {van.currentLatitude.toFixed(4)}, {van.currentLongitude.toFixed(4)}</span>
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="flex gap-2 pt-1 border-t border-[#E5E1D8]/40">
+                          {van.currentLatitude ? (
+                            <button
+                              type="button"
+                              onClick={() => stopGpsSimulation(van.id)}
+                              className="flex-grow py-1.5 bg-white border border-[#E5E1D8] text-red-600 rounded text-[10px] font-bold hover:bg-red-50 transition-all cursor-pointer"
+                            >
+                              Reset Coordinates
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => startGpsSimulation(van.id)}
+                              className="flex-grow py-1.5 bg-primary text-white rounded text-[10px] font-bold hover:bg-primary/95 shadow transition-all cursor-pointer"
+                            >
+                              Simulate Live GPS
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
             </div>

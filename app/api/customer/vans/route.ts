@@ -39,7 +39,9 @@ export async function GET(request: Request) {
 
       filteredVans = filteredVans
         .map((van) => {
-          const dist = getDistance(centerLat, centerLng, van.latitude, van.longitude);
+          const vanLat = van.currentLatitude !== null ? van.currentLatitude : van.latitude;
+          const vanLng = van.currentLongitude !== null ? van.currentLongitude : van.longitude;
+          const dist = getDistance(centerLat, centerLng, vanLat, vanLng);
           return { ...van, distance: dist };
         })
         .filter((van) => van.distance <= radiusKm)
