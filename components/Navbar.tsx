@@ -38,11 +38,14 @@ export default function Navbar() {
                   <LinkComponent href="/" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
                     Home
                   </LinkComponent>
+                  <LinkComponent href="/customer/search" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+                    Locations
+                  </LinkComponent>
                   <LinkComponent href="/#how-it-works" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
                     How it Works
                   </LinkComponent>
-                  <LinkComponent href="/#about" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-                    About
+                  <LinkComponent href="/about" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+                    About Us
                   </LinkComponent>
                 </>
               )}
@@ -50,7 +53,7 @@ export default function Navbar() {
               {user?.role === 'CUSTOMER' && (
                 <>
                   <LinkComponent href="/customer/search" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-                    Discover Vans
+                    Locations
                   </LinkComponent>
                   <LinkComponent href="/customer/dashboard" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
                     My Bookings
@@ -204,8 +207,14 @@ export default function Navbar() {
               <LinkComponent href="/" className="block px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-primary hover:bg-background">
                 Home
               </LinkComponent>
+              <LinkComponent href="/customer/search" className="block px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-primary hover:bg-background">
+                Locations
+              </LinkComponent>
               <LinkComponent href="/#how-it-works" className="block px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-primary hover:bg-background">
                 How it Works
+              </LinkComponent>
+              <LinkComponent href="/about" className="block px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-primary hover:bg-background">
+                About Us
               </LinkComponent>
               <LinkComponent href="/login" className="block px-3 py-2 rounded-md text-base font-medium text-primary hover:bg-background">
                 Sign In
@@ -219,7 +228,7 @@ export default function Navbar() {
           {user?.role === 'CUSTOMER' && (
             <>
               <LinkComponent href="/customer/search" className="block px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-primary hover:bg-background">
-                Discover Vans
+                Locations
               </LinkComponent>
               <LinkComponent href="/customer/dashboard" className="block px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-primary hover:bg-background">
                 My Bookings
