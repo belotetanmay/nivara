@@ -38,17 +38,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Van not found or unauthorized' }, { status: 404 });
     }
 
-    // Generate standard hour slots from 9:00 to 18:00
+    // Generate standard slots (30m session + 15m cleaning buffer gaps)
     const slotTimes = [
-      { start: 9, end: 10 },
-      { start: 10, end: 11 },
-      { start: 11, end: 12 },
-      { start: 12, end: 13 },
-      { start: 13, end: 14 },
-      { start: 14, end: 15 },
-      { start: 15, end: 16 },
-      { start: 16, end: 17 },
-      { start: 17, end: 18 },
+      { startHour: 9, startMin: 0, endHour: 9, endMin: 30 },
+      { startHour: 9, startMin: 45, endHour: 10, endMin: 15 },
+      { startHour: 10, startMin: 30, endHour: 11, endMin: 0 },
+      { startHour: 11, startMin: 15, endHour: 11, endMin: 45 },
+      { startHour: 12, startMin: 0, endHour: 12, endMin: 30 },
+      { startHour: 12, startMin: 45, endHour: 13, endMin: 15 },
+      { startHour: 13, startMin: 30, endHour: 14, endMin: 0 },
+      { startHour: 14, startMin: 15, endHour: 14, endMin: 45 },
+      { startHour: 15, startMin: 0, endHour: 15, endMin: 30 },
+      { startHour: 15, startMin: 45, endHour: 16, endMin: 15 },
+      { startHour: 16, startMin: 30, endHour: 17, endMin: 0 },
+      { startHour: 17, startMin: 15, endHour: 17, endMin: 45 },
     ];
 
     let createdCount = 0;
@@ -58,10 +61,10 @@ export async function POST(request: Request) {
 
     for (const time of slotTimes) {
       const startTime = new Date(baseDate);
-      startTime.setHours(time.start, 0, 0, 0);
+      startTime.setHours(time.startHour, time.startMin, 0, 0);
 
       const endTime = new Date(baseDate);
-      endTime.setHours(time.end, 0, 0, 0);
+      endTime.setHours(time.endHour, time.endMin, 0, 0);
 
       // Check if slot already exists
       const existing = await db.availability.findFirst({

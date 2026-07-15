@@ -131,6 +131,45 @@ export async function POST(request: Request) {
     const parkingFeeAmount = includeParkingFee ? 150.0 : 0.0;
     const totalAmount = baseAmount + parkingFeeAmount;
 
+    // Calculate requested booking start & end times
+    const startTime = new Date(slot.startTime);
+    const bookingEndTime = new Date(startTime.getTime() + sessionLength * 60000);
+
+    // Enforce 15-minute cleaning buffer against all adjacent active/completed bookings
+    const existingBookings = await db.booking.findMany({
+      where: {
+        vanId,
+        status: { in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED] }
+      },
+      include: {
+        availability: true
+      }
+    });
+
+    const BUFFER_MS = 15 * 60000;
+
+    for (const exist of existingBookings) {
+      const existStart = new Date(exist.availability.startTime).getTime();
+      const existEnd = existStart + exist.sessionLength * 60000;
+
+      const reqStart = startTime.getTime();
+      const reqEnd = bookingEndTime.getTime();
+
+      const gapBefore = existStart - reqEnd;
+      const gapAfter = reqStart - existEnd;
+
+      const overlaps = reqStart < existEnd && reqEnd > existStart;
+      const violatesBefore = gapBefore >= 0 && gapBefore < BUFFER_MS;
+      const violatesAfter = gapAfter >= 0 && gapAfter < BUFFER_MS;
+
+      if (overlaps || violatesBefore || violatesAfter) {
+        return NextResponse.json({
+          error: 'BUFFER_CONFLICT',
+          message: 'The requested slot violates the mandatory 15-minute cleaning buffer of an adjacent session.',
+        }, { status: 400 });
+      }
+    }
+
     // Generate unique booking code
     const r1 = Math.random().toString(36).substring(2, 6).toUpperCase();
     const r2 = Math.random().toString(36).substring(2, 6).toUpperCase();
@@ -138,10 +177,13 @@ export async function POST(request: Request) {
 
     // Execute booking creation inside transaction
     const booking = await db.$transaction(async (tx) => {
-      // 1. Lock slot
+      // 1. Lock slot and update its end time to the booking end time
       await tx.availability.update({
         where: { id: slotId },
-        data: { isBooked: true },
+        data: { 
+          isBooked: true,
+          endTime: bookingEndTime,
+        },
       });
 
       // 2. Create booking

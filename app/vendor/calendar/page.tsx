@@ -241,36 +241,64 @@ export default function VendorCalendar() {
                 <span>No slots configured for this date. Click generate above to get started.</span>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {slots.map((slot) => (
-                  <div
-                    key={slot.id}
-                    className={`p-3 rounded-lg border flex justify-between items-center text-xs transition-all ${
-                      slot.isBooked
-                        ? 'bg-gray-100 border-gray-200 text-gray-500 shadow-inner'
-                        : 'bg-white border-[#E5E1D8] text-primary hover:border-secondary/40 shadow-sm'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                      <span className="font-semibold">{formatTime(slot.startTime)}</span>
-                    </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {slots.map((slot) => {
+                  const slotEnd = new Date(slot.endTime);
+                  const bufferEnd = new Date(slotEnd.getTime() + 15 * 60000);
 
-                    {slot.isBooked ? (
-                      <span className="text-[9px] bg-secondary/15 text-secondary border border-secondary/20 px-2 py-0.5 rounded uppercase font-bold tracking-wider select-none">
-                        Booked
-                      </span>
-                    ) : (
-                      <button
-                        onClick={() => handleDeleteSlot(slot.id)}
-                        className="p-1.5 text-muted-foreground hover:text-red-500 rounded hover:bg-red-50 transition-colors"
-                        title="Delete slot"
+                  return (
+                    <React.Fragment key={slot.id}>
+                      {/* Actual Time Slot */}
+                      <div
+                        className={`p-3.5 rounded-lg border flex justify-between items-center text-xs transition-all ${
+                          slot.isBooked
+                            ? 'bg-gray-100 border-gray-200 text-gray-500 shadow-inner'
+                            : 'bg-white border-[#E5E1D8] text-primary hover:border-secondary/40 shadow-sm'
+                        }`}
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-                ))}
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                          <div className="space-y-0.5">
+                            <span className="font-semibold text-primary block">
+                              {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
+                            </span>
+                            <span className="text-[9px] text-slate-400 block font-medium">Bookable Session</span>
+                          </div>
+                        </div>
+
+                        {slot.isBooked ? (
+                          <span className="text-[9px] bg-secondary/15 text-secondary border border-secondary/20 px-2 py-0.5 rounded uppercase font-bold tracking-wider select-none">
+                            Booked
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleDeleteSlot(slot.id)}
+                            className="p-1.5 text-muted-foreground hover:text-red-500 rounded hover:bg-red-50 transition-colors cursor-pointer"
+                            title="Delete slot"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Cleaning Buffer Block */}
+                      <div className="p-3.5 rounded-lg border border-dashed border-gray-200 bg-gray-50/50 text-gray-400 flex justify-between items-center text-xs shadow-inner">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-gray-300 flex-shrink-0" />
+                          <div className="space-y-0.5">
+                            <span className="font-medium text-gray-500 block">
+                              {formatTime(slot.endTime)} - {formatTime(bufferEnd.toISOString())}
+                            </span>
+                            <span className="text-[9px] text-gray-400 block font-medium">Mandatory Gap</span>
+                          </div>
+                        </div>
+                        <span className="text-[8px] bg-gray-200/50 text-gray-500 px-2 py-0.5 rounded uppercase font-bold tracking-wider select-none">
+                          Cleaning Buffer
+                        </span>
+                      </div>
+                    </React.Fragment>
+                  );
+                })}
               </div>
             )}
           </div>
