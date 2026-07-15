@@ -4,7 +4,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Search, MapPin, Star, Sparkles, SlidersHorizontal, Navigation, ShieldCheck } from 'lucide-react';
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Autocomplete } from '@react-google-maps/api';
 
 interface Van {
   id: string;
@@ -30,18 +32,24 @@ interface Van {
 }
 
 export default function CustomerSearch() {
+  const router = useRouter();
   const [addressInput, setAddressInput] = useState('');
   const [vans, setVans] = useState<Van[]>([]);
   const [loading, setLoading] = useState(true);
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
-
-  const mapRef = useRef<HTMLDivElement>(null);
-  const googleMapInstanceRef = useRef<any>(null);
-  const googleMarkersRef = useRef<any[]>([]);
-  const [mapLoaded, setMapLoaded] = useState(false);
-  const [googleMapsKeyExists, setGoogleMapsKeyExists] = useState(false);
   const [gpsLocating, setGpsLocating] = useState(false);
+  const [hoveredVanId, setHoveredVanId] = useState<string | null>(null);
+  const [selectedVanForInfoWindow, setSelectedVanForInfoWindow] = useState<Van | null>(null);
+  const [autocompleteInstance, setAutocompleteInstance] = useState<any>(null);
+
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+  const hasRealKey = !!(apiKey && !apiKey.includes('Mock') && !apiKey.startsWith('AIzaSyMock'));
+
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: apiKey,
+    libraries: ['places'] as any,
+  });
 
   const handleLocateUser = () => {
     if (!navigator.geolocation) {
@@ -68,145 +76,46 @@ export default function CustomerSearch() {
     );
   };
 
+  // Automatically request geolocation permission only on discovery search page load
   useEffect(() => {
     if (typeof window === 'undefined') return;
-
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
-    const hasRealKey = apiKey && !apiKey.includes('Mock') && !apiKey.startsWith('AIzaSyMock');
-    setGoogleMapsKeyExists(!!hasRealKey);
-
-    if (!hasRealKey) return;
-
-    if ((window as any).google?.maps) {
-      setMapLoaded(true);
-      return;
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const uLat = position.coords.latitude;
+          const uLng = position.coords.longitude;
+          setLat(uLat);
+          setLng(uLng);
+          setAddressInput(`${uLat.toFixed(4)}, ${uLng.toFixed(4)}`);
+          fetchVans(uLat, uLng);
+        },
+        (err) => {
+          console.log('Location permission denied/unavailable. Falling back to manual search input options.');
+        },
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
     }
-
-    // Define globally required init callback
-    (window as any).initGoogleMapSearch = () => {
-      setMapLoaded(true);
-    };
-
-    // Load Google Maps API script dynamically
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initGoogleMapSearch`;
-    script.async = true;
-    script.defer = true;
-
-    document.head.appendChild(script);
-
-    return () => {
-      try {
-        document.head.removeChild(script);
-        delete (window as any).initGoogleMapSearch;
-      } catch (e) {
-        // ignore clean up error
-      }
-    };
   }, []);
 
-  useEffect(() => {
-    if (!mapLoaded || !mapRef.current || vans.length === 0) return;
+  const onAutocompleteLoad = (instance: any) => {
+    setAutocompleteInstance(instance);
+  };
 
-    try {
-      const google = (window as any).google;
-      if (!google?.maps) return;
-
-      // Center coordinates
-      let center = { lat: 19.0760, lng: 72.8777 }; // Mumbai default center
-      const validVans = vans.filter(v => (v.currentLatitude || v.latitude) && (v.currentLongitude || v.longitude));
-      
-      if (validVans.length > 0) {
-        if (lat && lng) {
-          center = { lat, lng };
-        } else {
-          const sumLat = validVans.reduce((sum, v) => sum + (v.currentLatitude || v.latitude), 0);
-          const sumLng = validVans.reduce((sum, v) => sum + (v.currentLongitude || v.longitude), 0);
-          center = {
-            lat: sumLat / validVans.length,
-            lng: sumLng / validVans.length
-          };
-        }
+  const onPlaceChanged = () => {
+    if (autocompleteInstance) {
+      const place = autocompleteInstance.getPlace();
+      if (place.geometry?.location) {
+        const nLat = place.geometry.location.lat();
+        const nLng = place.geometry.location.lng();
+        const formattedAddress = place.formatted_address || place.name || '';
+        setAddressInput(formattedAddress);
+        setLat(nLat);
+        setLng(nLng);
+        fetchVans(nLat, nLng);
       }
-
-      // Initialize map once
-      if (!googleMapInstanceRef.current) {
-        googleMapInstanceRef.current = new google.maps.Map(mapRef.current, {
-          center: center,
-          zoom: 11,
-          styles: [
-            {
-              "featureType": "all",
-              "elementType": "geometry.fill",
-              "stylers": [{ "weight": "2.00" }]
-            },
-            {
-              "featureType": "all",
-              "elementType": "geometry.stroke",
-              "stylers": [{ "color": "#E5E1D8" }]
-            },
-            {
-              "featureType": "landscape",
-              "elementType": "all",
-              "stylers": [{ "color": "#faf8f5" }] // Nivara cream
-            },
-            {
-              "featureType": "water",
-              "elementType": "all",
-              "stylers": [{ "color": "#e0ecf8" }]
-            }
-          ]
-        });
-      } else {
-        googleMapInstanceRef.current.setCenter(center);
-      }
-
-      // Clear previous markers
-      googleMarkersRef.current.forEach(m => m.setMap(null));
-      googleMarkersRef.current = [];
-
-      // Render markers
-      validVans.forEach(van => {
-        const vanLat = van.currentLatitude || van.latitude;
-        const vanLng = van.currentLongitude || van.longitude;
-
-        const marker = new google.maps.Marker({
-          position: { lat: vanLat, lng: vanLng },
-          map: googleMapInstanceRef.current,
-          title: van.title,
-          icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 9,
-            fillColor: van.currentLatitude ? "#D4A373" : "#2C5234", // Amber color if GPS is live, green if static
-            fillOpacity: 1,
-            strokeColor: "#ffffff",
-            strokeWeight: 2,
-          }
-        });
-
-        const infoWindow = new google.maps.InfoWindow({
-          content: `
-            <div style="font-family: Inter, sans-serif; padding: 6px; max-width: 220px; line-height: 1.4;">
-              <h4 style="font-weight: 700; margin: 0 0 2px 0; color: #0A2540; font-size: 13px;">${van.title}</h4>
-              <p style="font-size: 11px; color: #666; margin: 0 0 6px 0;">${van.address}</p>
-              ${van.currentLatitude ? `<span style="display:inline-block; background-color:#FEF3C7; color:#92400E; padding:2px 6px; border-radius:4px; font-size:9px; font-weight:bold; margin-bottom:6px;">⚡ Live GPS Tracking</span>` : ''}
-              <div style="font-size: 11px; font-weight: 600; color: #2C5234; margin-bottom: 6px;">Price: from ₹${van.price15}/slot</div>
-              <a href="/customer/vans/${van.id}" style="display: inline-block; background-color: #0A2540; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-decoration: none;">View Slots</a>
-            </div>
-          `
-        });
-
-        marker.addListener('click', () => {
-          infoWindow.open(googleMapInstanceRef.current, marker);
-        });
-
-        googleMarkersRef.current.push(marker);
-      });
-    } catch (e) {
-      console.error("Failed to render Google Map:", e);
     }
-  }, [mapLoaded, vans, lat, lng]);
-  
+  };
+
   // Filter States
   const [radius, setRadius] = useState<number>(10);
   const [maxPrice, setMaxPrice] = useState<string>('Any');
@@ -320,14 +229,29 @@ export default function CustomerSearch() {
             <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-grow flex gap-2">
                 <div className="relative flex-grow">
-                  <MapPin className="absolute left-3.5 top-3.5 w-5 h-5 text-muted-foreground" />
-                  <input
-                    type="text"
-                    placeholder="Search city or area (e.g. Bandra, Thane West)..."
-                    value={addressInput}
-                    onChange={(e) => setAddressInput(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3 border border-[#E5E1D8] rounded-md text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all"
-                  />
+                  <MapPin className="absolute left-3.5 top-3.5 w-5 h-5 text-muted-foreground z-10" />
+                  {isLoaded && hasRealKey ? (
+                    <Autocomplete
+                      onLoad={onAutocompleteLoad}
+                      onPlaceChanged={onPlaceChanged}
+                    >
+                      <input
+                        type="text"
+                        placeholder="Search city or area (e.g. Bandra, Thane West)..."
+                        value={addressInput}
+                        onChange={(e) => setAddressInput(e.target.value)}
+                        className="w-full pl-11 pr-4 py-3 border border-[#E5E1D8] rounded-md text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all"
+                      />
+                    </Autocomplete>
+                  ) : (
+                    <input
+                      type="text"
+                      placeholder="Search city or area (e.g. Bandra, Thane West)..."
+                      value={addressInput}
+                      onChange={(e) => setAddressInput(e.target.value)}
+                      className="w-full pl-11 pr-4 py-3 border border-[#E5E1D8] rounded-md text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all"
+                    />
+                  )}
                 </div>
                 <button
                   type="button"
@@ -486,7 +410,11 @@ export default function CustomerSearch() {
                 vans.map((van) => (
                   <div
                     key={van.id}
-                    className="bg-white border border-[#E5E1D8] rounded-xl p-5 flex flex-col sm:flex-row gap-5 hover:shadow-md transition-all shadow-sm group"
+                    onMouseEnter={() => setHoveredVanId(van.id)}
+                    onMouseLeave={() => setHoveredVanId(null)}
+                    className={`bg-white border rounded-xl p-5 flex flex-col sm:flex-row gap-5 hover:shadow-md transition-all shadow-sm group ${
+                      hoveredVanId === van.id ? 'border-secondary ring-1 ring-secondary' : 'border-[#E5E1D8]'
+                    }`}
                   >
                     {/* Visual Placeholder */}
                     <div className="w-full sm:w-28 h-28 bg-gradient-to-br from-[#2C5234]/15 to-[#0A2540]/10 rounded-lg flex-shrink-0 flex items-center justify-center border border-[#E5E1D8]/40">
@@ -576,8 +504,87 @@ export default function CustomerSearch() {
                     <span className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></span>
                   ) : vans.length === 0 ? (
                     <span className="text-xs text-muted-foreground font-medium text-center">No active vehicles on map</span>
-                  ) : googleMapsKeyExists && mapLoaded ? (
-                    <div ref={mapRef} className="w-full h-full z-0"></div>
+                  ) : isLoaded && hasRealKey ? (
+                    <GoogleMap
+                      mapContainerStyle={{ width: '100%', height: '100%', borderRadius: '8px' }}
+                      zoom={11}
+                      center={lat && lng ? { lat, lng } : { lat: 19.0760, lng: 72.8777 }}
+                      options={{
+                        disableDefaultUI: false,
+                        zoomControl: true,
+                        styles: [
+                          {
+                            "featureType": "all",
+                            "elementType": "geometry.fill",
+                            "stylers": [{ "weight": "2.00" }]
+                          },
+                          {
+                            "featureType": "all",
+                            "elementType": "geometry.stroke",
+                            "stylers": [{ "color": "#E5E1D8" }]
+                          },
+                          {
+                            "featureType": "landscape",
+                            "elementType": "all",
+                            "stylers": [{ "color": "#faf8f5" }]
+                          },
+                          {
+                            "featureType": "water",
+                            "elementType": "all",
+                            "stylers": [{ "color": "#e0ecf8" }]
+                          }
+                        ]
+                      }}
+                    >
+                      {vans.map(van => {
+                        const vanLat = van.currentLatitude || van.latitude;
+                        const vanLng = van.currentLongitude || van.longitude;
+                        if (!vanLat || !vanLng) return null;
+                        const isHovered = hoveredVanId === van.id;
+
+                        return (
+                          <React.Fragment key={van.id}>
+                            <Marker
+                              position={{ lat: vanLat, lng: vanLng }}
+                              onClick={() => {
+                                setSelectedVanForInfoWindow(van);
+                              }}
+                              onMouseOver={() => setHoveredVanId(van.id)}
+                              onMouseOut={() => setHoveredVanId(null)}
+                              options={{
+                                icon: {
+                                  path: typeof window !== 'undefined' ? (window as any).google?.maps?.SymbolPath?.CIRCLE : 0,
+                                  scale: isHovered ? 13 : 9,
+                                  fillColor: isHovered ? '#D4A373' : (van.currentLatitude ? '#2C5234' : '#0A2540'),
+                                  fillOpacity: 1,
+                                  strokeColor: '#ffffff',
+                                  strokeWeight: 2,
+                                }
+                              }}
+                            />
+                            {selectedVanForInfoWindow?.id === van.id && (
+                              <InfoWindow
+                                position={{ lat: vanLat, lng: vanLng }}
+                                onCloseClick={() => setSelectedVanForInfoWindow(null)}
+                              >
+                                <div style={{ fontFamily: 'Inter, sans-serif', padding: '6px', maxWidth: '220px', lineHeight: '1.4' }} className="text-primary">
+                                  <h4 style={{ fontWeight: 700, margin: '0 0 2px 0', color: '#0A2540', fontSize: '13px' }}>{van.title}</h4>
+                                  <p style={{ fontSize: '11px', color: '#666', margin: '0 0 6px 0' }}>{van.address}</p>
+                                  {van.currentLatitude && <span style={{ display: 'inline-block', backgroundColor: '#FEF3C7', color: '#92400E', padding: '2px 6px', borderRadius: '4px', fontSize: '9px', fontWeight: 'bold', marginBottom: '6px' }}>⚡ Live GPS Tracking</span>}
+                                  <div style={{ fontSize: '11px', fontWeight: 600, color: '#2C5234', marginBottom: '6px' }}>Price: from ₹{van.price15}/slot</div>
+                                  <Link
+                                    href={`/customer/vans/${van.id}`}
+                                    style={{ display: 'inline-block', backgroundColor: '#0A2540', color: '#fff', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', textDecoration: 'none' }}
+                                  >
+                                    View Slots
+                                  </Link>
+                                </div>
+                              </InfoWindow>
+                            )}
+                          </React.Fragment>
+                        );
+                      })}
+                    </GoogleMap>
                   ) : (
                     <div className="w-full h-full relative p-4 flex items-center justify-center">
                       <div className="absolute inset-0 bg-[radial-gradient(#C19A6B_1px,transparent_1px)] [background-size:16px_16px] opacity-15"></div>
