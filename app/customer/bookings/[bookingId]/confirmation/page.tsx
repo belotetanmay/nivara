@@ -4,7 +4,7 @@ import React, { useState, useEffect, use } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
-import { CheckCircle2, Calendar, Clock, MapPin, QrCode } from 'lucide-react';
+import { CheckCircle2, Calendar, Clock, MapPin, QrCode, Navigation } from 'lucide-react';
 
 interface Booking {
   id: string;
@@ -15,6 +15,10 @@ interface Booking {
     address: string;
     hasAttendant: boolean;
     attendantName: string | null;
+    latitude: number;
+    longitude: number;
+    currentLatitude?: number | null;
+    currentLongitude?: number | null;
   };
   availability: {
     startTime: string;
@@ -175,17 +179,24 @@ export default function BookingConfirmation({ params }: { params: Promise<{ book
 
           {/* Bottom Actions */}
           <div className="pt-4 border-t border-[#FAF8F5] flex flex-col sm:flex-row justify-center gap-4">
+            {booking.van && (
+              <a
+                href={`https://www.google.com/maps/dir/?api=1&destination=${
+                  booking.van.currentLatitude || booking.van.latitude
+                },${booking.van.currentLongitude || booking.van.longitude}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-semibold rounded-md text-white bg-secondary hover:bg-secondary/95 shadow transition-all cursor-pointer"
+              >
+                <Navigation className="w-4 h-4 fill-white" />
+                Navigate to Van
+              </a>
+            )}
             <Link
               href="/customer/dashboard"
-              className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold rounded-md text-primary-foreground bg-primary hover:bg-primary/95 shadow transition-all"
-            >
-              View My Bookings
-            </Link>
-            <Link
-              href="/customer/search"
               className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold rounded-md text-primary bg-[#FCF9F6] border border-[#E5E1D8] hover:bg-gray-50 transition-all"
             >
-              Find More Pods
+              View My Bookings
             </Link>
           </div>
 

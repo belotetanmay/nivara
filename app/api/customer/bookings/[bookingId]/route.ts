@@ -32,6 +32,10 @@ export async function GET(
             address: true,
             hasAttendant: true,
             attendantName: true,
+            latitude: true,
+            longitude: true,
+            currentLatitude: true,
+            currentLongitude: true,
           },
         },
         availability: {

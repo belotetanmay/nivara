@@ -572,12 +572,22 @@ export default function CustomerSearch() {
                                   <p style={{ fontSize: '11px', color: '#666', margin: '0 0 6px 0' }}>{van.address}</p>
                                   {van.currentLatitude && <span style={{ display: 'inline-block', backgroundColor: '#FEF3C7', color: '#92400E', padding: '2px 6px', borderRadius: '4px', fontSize: '9px', fontWeight: 'bold', marginBottom: '6px' }}>⚡ Live GPS Tracking</span>}
                                   <div style={{ fontSize: '11px', fontWeight: 600, color: '#2C5234', marginBottom: '6px' }}>Price: from ₹{van.price15}/slot</div>
-                                  <Link
-                                    href={`/customer/vans/${van.id}`}
-                                    style={{ display: 'inline-block', backgroundColor: '#0A2540', color: '#fff', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', textDecoration: 'none' }}
-                                  >
-                                    View Slots
-                                  </Link>
+                                  <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
+                                    <Link
+                                      href={`/customer/vans/${van.id}`}
+                                      style={{ display: 'inline-block', backgroundColor: '#0A2540', color: '#fff', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', textDecoration: 'none' }}
+                                    >
+                                      View Slots
+                                    </Link>
+                                    <a
+                                      href={`https://www.google.com/maps/dir/?api=1&destination=${vanLat},${vanLng}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      style={{ display: 'inline-block', backgroundColor: '#2C5234', color: '#fff', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', textDecoration: 'none' }}
+                                    >
+                                      Navigate
+                                    </a>
+                                  </div>
                                 </div>
                               </InfoWindow>
                             )}
