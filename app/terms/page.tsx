@@ -61,10 +61,10 @@ export default function TermsOfService() {
             <section className="space-y-2">
               <h2 className="font-serif text-lg font-bold text-primary">4. Booking Sessions & Overtime Charges</h2>
               <p>
-                Sessions are booked in 15, 30, or 45-minute slots. Actual duration inside the cabin is recorded by partner attendants. If actual time spent exceeds the reserved slot length, overtime charges apply:
+                Sessions are booked in 30, 45, or 60-minute slots. Actual duration inside the cabin is recorded by partner attendants. If actual time spent exceeds the reserved slot length, overtime charges apply:
               </p>
               <p className="bg-[#FCF9F6] p-3 rounded border border-[#E5E1D8]/60 text-[#2C5234] font-medium mt-1">
-                Overtime Fee = (Price of 15-Minute Base Slot / 15) × Overtime Minutes.
+                Overtime Fee = (Price of 30-Minute Base Slot / 30) × Overtime Minutes.
               </p>
               <p>
                 Pending overtime fees must be paid through the customer dashboard before booking future sessions.

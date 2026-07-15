@@ -7,6 +7,7 @@ import { useAuth } from './AuthContext';
 import { ShieldCheck, User as UserIcon, LogOut, CheckCircle2, AlertCircle, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
+import ActiveSessionTracker from './ActiveSessionTracker';
 
 export default function Navbar() {
   const { user, logout, loading } = useAuth();
@@ -283,6 +284,7 @@ export default function Navbar() {
           )}
         </div>
       )}
+      <ActiveSessionTracker />
     </nav>
   );
 }

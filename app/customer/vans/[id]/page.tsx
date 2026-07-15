@@ -60,7 +60,7 @@ export default function VanDetailPage({ params }: { params: Promise<{ id: string
   // Selector states
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
-  const [sessionLength, setSessionLength] = useState<15 | 30 | 45>(30);
+  const [sessionLength, setSessionLength] = useState<30 | 45 | 60>(30);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [initialSlotPopulated, setInitialSlotPopulated] = useState(false);
@@ -117,8 +117,8 @@ export default function VanDetailPage({ params }: { params: Promise<{ id: string
 
       if (urlLength) {
         const len = parseInt(urlLength);
-        if (len === 15 || len === 30 || len === 45) {
-          setSessionLength(len as 15 | 30 | 45);
+        if (len === 30 || len === 45 || len === 60) {
+          setSessionLength(len as 30 | 45 | 60);
         }
       }
     }
@@ -412,36 +412,36 @@ export default function VanDetailPage({ params }: { params: Promise<{ id: string
                 </label>
                 <div className="grid grid-cols-3 gap-2 text-center text-xs">
                   <button
-                    onClick={() => setSessionLength(15)}
-                    className={`py-2 px-1 border rounded-md font-bold transition-all ${
-                      sessionLength === 15
-                        ? 'border-secondary bg-[#FCF9F6] text-secondary ring-1 ring-secondary'
-                        : 'border-[#E5E1D8] text-muted-foreground hover:text-primary bg-white'
-                    }`}
-                  >
-                    15 Min
-                    <span className="block text-[10px] font-normal text-muted-foreground mt-0.5">₹{van.price15}</span>
-                  </button>
-                  <button
                     onClick={() => setSessionLength(30)}
-                    className={`py-2 px-1 border rounded-md font-bold transition-all ${
+                    className={`py-2 px-1 border rounded-md font-bold transition-all cursor-pointer ${
                       sessionLength === 30
                         ? 'border-secondary bg-[#FCF9F6] text-secondary ring-1 ring-secondary'
                         : 'border-[#E5E1D8] text-muted-foreground hover:text-primary bg-white'
                     }`}
                   >
                     30 Min
-                    <span className="block text-[10px] font-normal text-muted-foreground mt-0.5">₹{van.price30}</span>
+                    <span className="block text-[10px] font-normal text-muted-foreground mt-0.5">₹{van.price15}</span>
                   </button>
                   <button
                     onClick={() => setSessionLength(45)}
-                    className={`py-2 px-1 border rounded-md font-bold transition-all ${
+                    className={`py-2 px-1 border rounded-md font-bold transition-all cursor-pointer ${
                       sessionLength === 45
                         ? 'border-secondary bg-[#FCF9F6] text-secondary ring-1 ring-secondary'
                         : 'border-[#E5E1D8] text-muted-foreground hover:text-primary bg-white'
                     }`}
                   >
                     45 Min
+                    <span className="block text-[10px] font-normal text-muted-foreground mt-0.5">₹{van.price30}</span>
+                  </button>
+                  <button
+                    onClick={() => setSessionLength(60)}
+                    className={`py-2 px-1 border rounded-md font-bold transition-all cursor-pointer ${
+                      sessionLength === 60
+                        ? 'border-secondary bg-[#FCF9F6] text-secondary ring-1 ring-secondary'
+                        : 'border-[#E5E1D8] text-muted-foreground hover:text-primary bg-white'
+                    }`}
+                  >
+                    60 Min
                     <span className="block text-[10px] font-normal text-muted-foreground mt-0.5">₹{van.price45}</span>
                   </button>
                 </div>

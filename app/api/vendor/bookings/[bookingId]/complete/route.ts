@@ -64,7 +64,7 @@ export async function PATCH(
         where: { id: booking.vanId },
       });
       if (van) {
-        const ratePerMinute = van.price15 / 15;
+        const ratePerMinute = van.price15 / 30;
         overtimeAmount = Number((ratePerMinute * overtimeMinutes).toFixed(2));
         overtimeStatus = 'UNPAID';
       }
