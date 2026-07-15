@@ -177,10 +177,12 @@ export default function VanDetailPage({ params }: { params: Promise<{ id: string
       return;
     }
 
+    /*
     if (user.kycStatus !== 'VERIFIED') {
       setBookingError('Booking blocked: Your identity verification (KYC) is required first.');
       return;
     }
+    */
 
     if (!selectedSlotId) {
       setBookingError('Please select a relaxation slot from the calendar.');
@@ -389,21 +391,7 @@ export default function VanDetailPage({ params }: { params: Promise<{ id: string
                 </div>
               )}
 
-              {/* KYC block banner for non-verified */}
-              {user && user.kycStatus !== 'VERIFIED' && (
-                <div className="p-3 bg-yellow-50 text-yellow-800 border border-yellow-200 rounded text-xs flex gap-2">
-                  <AlertTriangle className="w-4.5 h-4.5 flex-shrink-0 text-yellow-600 mt-0.5" />
-                  <div>
-                    <span className="font-bold">Identity Action Needed</span>
-                    <p className="text-[10px] text-yellow-700 mt-0.5">
-                      Your identity documents must be approved before booking wellness slots.{' '}
-                      <Link href="/customer/kyc" className="underline font-bold">
-                        Upload ID Card
-                      </Link>
-                    </p>
-                  </div>
-                </div>
-              )}
+
 
               {/* Duration selector */}
               <div className="space-y-2">

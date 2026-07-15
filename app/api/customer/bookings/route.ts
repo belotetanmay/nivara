@@ -81,12 +81,15 @@ export async function POST(request: Request) {
       where: { id: payload.userId },
     });
 
+    // KYC check bypassed for friction-free reservation booking
+    /*
     if (!user || user.kycStatus !== KYCStatus.VERIFIED) {
       return NextResponse.json({
         error: 'KYC_NOT_VERIFIED',
         message: 'You must complete and pass identity verification before reserving a wellness pod.',
       }, { status: 403 });
     }
+    */
 
     const { 
       vanId, 

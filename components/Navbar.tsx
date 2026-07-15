@@ -59,9 +59,6 @@ export default function Navbar() {
                   <LinkComponent href="/customer/dashboard" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
                     My Bookings
                   </LinkComponent>
-                  <LinkComponent href="/customer/kyc" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-                    KYC Verification
-                  </LinkComponent>
                 </>
               )}
 
@@ -102,30 +99,7 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-4">
             {!loading && user && (
               <div className="flex items-center gap-3">
-                {/* KYC Badge for customers */}
-                {user.role === 'CUSTOMER' && (
-                  <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                    user.kycStatus === 'VERIFIED'
-                      ? 'bg-secondary/10 text-secondary border border-secondary/20'
-                      : user.kycStatus === 'PENDING'
-                      ? 'bg-accent/10 text-accent border border-accent/20'
-                      : 'bg-red-500/10 text-red-600 border border-red-500/20'
-                  }`}>
-                    {user.kycStatus === 'VERIFIED' ? (
-                      <>
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Verified Traveler
-                      </>
-                    ) : user.kycStatus === 'PENDING' ? (
-                      <>
-                        <AlertCircle className="w-3.5 h-3.5" /> KYC Pending
-                      </>
-                    ) : (
-                      <>
-                        <AlertCircle className="w-3.5 h-3.5" /> KYC Unverified
-                      </>
-                    )}
-                  </div>
-                )}
+
 
                 {/* Vendor verification status badge */}
                 {user.role === 'VENDOR' && user.vendorProfile && (
@@ -233,9 +207,6 @@ export default function Navbar() {
               </LinkComponent>
               <LinkComponent href="/customer/dashboard" className="block px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-primary hover:bg-background">
                 My Bookings
-              </LinkComponent>
-              <LinkComponent href="/customer/kyc" className="block px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-primary hover:bg-background">
-                KYC Verification
               </LinkComponent>
             </>
           )}
