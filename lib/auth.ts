@@ -29,3 +29,21 @@ export async function hashPassword(password: string): Promise<string> {
 export async function comparePassword(password: string, hash: string): Promise<boolean> {
   return bcrypt.compare(password, hash);
 }
+
+export function extractToken(request: Request): string | null {
+  // 1. Try to read from Authorization Header
+  const authHeader = request.headers.get('authorization');
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return authHeader.substring(7);
+  }
+
+  // 2. Try to read from Cookies (Fallback for web)
+  const cookieHeader = request.headers.get('cookie');
+  if (cookieHeader) {
+    const match = cookieHeader.match(/auth_token=([^;]+)/);
+    if (match) return decodeURIComponent(match[1]);
+  }
+
+  return null;
+}
+

@@ -1,18 +1,16 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { db } from '@/lib/db';
-import { verifyToken } from '@/lib/auth';
+import { verifyToken, extractToken } from '@/lib/auth';
 import { Role, KYCStatus, VanStatus, BookingStatus, PaymentStatus } from '@prisma/client';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const cookieStore = await cookies();
-    const tokenCookie = cookieStore.get('auth_token');
-    if (!tokenCookie) {
+    const token = extractToken(request);
+    if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const payload = verifyToken(tokenCookie.value);
+    const payload = verifyToken(token);
     if (!payload || payload.role !== 'CUSTOMER') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -65,13 +63,12 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const cookieStore = await cookies();
-    const tokenCookie = cookieStore.get('auth_token');
-    if (!tokenCookie) {
+    const token = extractToken(request);
+    if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const payload = verifyToken(tokenCookie.value);
+    const payload = verifyToken(token);
     if (!payload || payload.role !== 'CUSTOMER') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

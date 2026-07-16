@@ -38,16 +38,35 @@ export default function BookingCheckout({ params }: { params: Promise<{ bookingI
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'wallet'>('card');
 
   useEffect(() => {
-    const fetchBookingDetails = async () => {
+    const fetchBookingDetailsAndBalance = async () => {
       try {
-        const res = await fetch(`/api/customer/bookings/${bookingId}`);
-        const data = await res.json();
-        if (res.ok && data.success) {
-          setBooking(data.booking);
+        // 1. Fetch booking details
+        const bookingRes = await fetch(`/api/customer/bookings/${bookingId}`);
+        const bookingData = await bookingRes.json();
+        
+        let loadedBooking: Booking | null = null;
+        if (bookingRes.ok && bookingData.success) {
+          setBooking(bookingData.booking);
+          loadedBooking = bookingData.booking;
         } else {
-          setError(data.error || 'Failed to retrieve booking information.');
+          setError(bookingData.error || 'Failed to retrieve booking information.');
+        }
+
+        // 2. Fetch wallet balance
+        const balanceRes = await fetch('/api/customer/balance');
+        if (balanceRes.ok) {
+          const balanceData = await balanceRes.json();
+          if (balanceData.success) {
+            setWalletBalance(balanceData.balance);
+            // Auto-select wallet if they have enough balance
+            if (loadedBooking && loadedBooking.payment && balanceData.balance >= loadedBooking.payment.amount) {
+              setPaymentMethod('wallet');
+            }
+          }
         }
       } catch (err) {
         setError('Error loading checkout session.');
@@ -56,7 +75,7 @@ export default function BookingCheckout({ params }: { params: Promise<{ bookingI
       }
     };
 
-    fetchBookingDetails();
+    fetchBookingDetailsAndBalance();
   }, [bookingId]);
 
   const handlePayment = async () => {
@@ -66,10 +85,12 @@ export default function BookingCheckout({ params }: { params: Promise<{ bookingI
     try {
       const res = await fetch(`/api/customer/bookings/${bookingId}/pay`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentMethod }),
       });
       const data = await res.json();
       if (res.ok && data.url) {
-        // Redirect directly to the checkout URL (Stripe or Mock Checkout Page)
+        // Redirect directly to the checkout URL (Stripe/Mock checkout or Confirmation page)
         router.push(data.url);
       } else {
         setError(data.error || 'Failed to initiate payment transaction.');
@@ -202,6 +223,49 @@ export default function BookingCheckout({ params }: { params: Promise<{ bookingI
             </div>
           </div>
 
+          {/* Payment Method Selection */}
+          <div className="space-y-3.5 pt-4 border-t border-[#FAF8F5]">
+            <h4 className="font-semibold text-primary text-xs uppercase tracking-wider">Select Payment Method</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
+              
+              {/* Option 1: Nivara Balance */}
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('wallet')}
+                className={`p-4 border rounded-xl flex flex-col items-start text-left transition-all cursor-pointer ${
+                  paymentMethod === 'wallet'
+                    ? 'border-secondary bg-secondary/5 ring-1 ring-secondary'
+                    : 'border-[#E5E1D8] hover:bg-gray-50'
+                }`}
+              >
+                <span className="font-bold text-primary">Nivara Wallet Balance</span>
+                <span className="text-[10px] text-slate-500 mt-1">
+                  {walletBalance !== null ? `Available: ₹${walletBalance.toLocaleString('en-IN')}` : 'Loading balance...'}
+                </span>
+                {walletBalance !== null && booking && walletBalance < (booking.payment?.amount || 0) && (
+                  <span className="text-[9px] text-red-600 font-bold mt-1">
+                    Insufficient Balance (Need ₹{(booking.payment?.amount || 0) - walletBalance} more)
+                  </span>
+                )}
+              </button>
+
+              {/* Option 2: Card / UPI (Stripe) */}
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('card')}
+                className={`p-4 border rounded-xl flex flex-col items-start text-left transition-all cursor-pointer ${
+                  paymentMethod === 'card'
+                    ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                    : 'border-[#E5E1D8] hover:bg-gray-50'
+                }`}
+              >
+                <span className="font-bold text-primary">Card / UPI / NetBanking</span>
+                <span className="text-[10px] text-slate-500 mt-1">Pay securely via Stripe gateway.</span>
+              </button>
+
+            </div>
+          </div>
+
           {/* Security details badge */}
           <div className="p-3 bg-amber-50 border border-amber-200 rounded text-xs flex gap-2.5 items-start">
             <ShieldCheck className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
@@ -217,16 +281,18 @@ export default function BookingCheckout({ params }: { params: Promise<{ bookingI
           <div className="flex flex-col sm:flex-row gap-4 pt-2">
             <button
               onClick={handlePayment}
-              disabled={isSubmitting}
-              className="flex-1 py-3 px-4 border border-transparent text-sm font-semibold rounded-md text-primary-foreground bg-primary hover:bg-primary/95 shadow transition-all disabled:opacity-55 flex items-center justify-center gap-2"
+              disabled={isSubmitting || (paymentMethod === 'wallet' && walletBalance !== null && walletBalance < (booking.payment?.amount || 0))}
+              className="flex-1 py-3 px-4 border border-transparent text-sm font-semibold rounded-md text-primary-foreground bg-primary hover:bg-primary/95 shadow transition-all disabled:opacity-55 flex items-center justify-center gap-2 cursor-pointer"
             >
               {isSubmitting ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" /> Securely Loading...
                 </>
+              ) : paymentMethod === 'wallet' && walletBalance !== null && walletBalance < (booking.payment?.amount || 0) ? (
+                'Insufficient Wallet Balance'
               ) : (
                 <>
-                  Proceed to Payment <ArrowRight className="w-4 h-4" />
+                  Confirm Booking Payment <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </button>

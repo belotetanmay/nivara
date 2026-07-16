@@ -66,13 +66,33 @@ export default function CustomerDashboard() {
       if (res.ok && data.success) {
         setActionSuccess('Overtime fee paid successfully!');
         await fetchBookings();
+        await fetchWalletBalance();
       } else {
         setError(data.error || 'Failed to pay overtime fee.');
       }
-    } catch (e) {
-      setError('An error occurred completing overtime payment.');
+    } catch (err) {
+      setError('An error occurred during overtime payment.');
     } finally {
       setPayingOvertimeId(null);
+    }
+  };
+
+  const [walletBalance, setWalletBalance] = useState<number>(0);
+  const [showAddMoneyModal, setShowAddMoneyModal] = useState(false);
+  const [addAmount, setAddAmount] = useState('');
+  const [addingFunds, setAddingFunds] = useState(false);
+
+  const fetchWalletBalance = async () => {
+    try {
+      const res = await fetch('/api/customer/balance');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setWalletBalance(data.balance);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load wallet balance:', err);
     }
   };
 
@@ -92,10 +112,43 @@ export default function CustomerDashboard() {
     }
   };
 
+  const handleAddMoney = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const parsed = parseFloat(addAmount);
+    if (isNaN(parsed) || parsed <= 0) {
+      alert('Please enter a valid positive amount.');
+      return;
+    }
+    setAddingFunds(true);
+    setError(null);
+    setActionSuccess(null);
+    try {
+      const res = await fetch('/api/customer/balance/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: parsed }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setWalletBalance(data.balance);
+        setActionSuccess(data.message || `Successfully refueled ₹${parsed} to your Nivara Balance.`);
+        setShowAddMoneyModal(false);
+        setAddAmount('');
+      } else {
+        setError(data.error || 'Failed to add funds.');
+      }
+    } catch (err) {
+      setError('Error while processing wallet recharge.');
+    } finally {
+      setAddingFunds(false);
+    }
+  };
+
   useEffect(() => {
     if (!authLoading) {
       if (user) {
         fetchBookings();
+        fetchWalletBalance();
       } else {
         router.push('/login');
       }
@@ -141,7 +194,6 @@ export default function CustomerDashboard() {
   const spent = bookings
     .filter((b) => b.status === 'CONFIRMED' || b.status === 'COMPLETED')
     .reduce((sum, b) => sum + (b.payment?.amount || 0), 0);
-  const walletBalance = Math.max(0, 2500 - spent);
 
   // Filter bookings based on activeTab
   const filteredBookings = bookings.filter((b) => {
@@ -326,8 +378,16 @@ export default function CustomerDashboard() {
 
             <div className="glass-card flex items-center justify-between">
               <div>
-                <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Virtual Wallet</p>
-                <p className="text-3xl font-black text-slate-900 mt-1">₹{walletBalance.toLocaleString('en-IN')}</p>
+                <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Nivara Balance</p>
+                <div className="flex items-baseline gap-2.5 mt-1">
+                  <p className="text-3xl font-black text-slate-900">₹{walletBalance.toLocaleString('en-IN')}</p>
+                  <button
+                    onClick={() => setShowAddMoneyModal(true)}
+                    className="text-[10px] font-bold text-secondary hover:underline cursor-pointer bg-secondary/10 px-2 py-0.5 rounded-full transition-all"
+                  >
+                    + Refuel
+                  </button>
+                </div>
               </div>
               <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-slate-600">
                 <Receipt className="w-5 h-5" />
@@ -552,6 +612,61 @@ export default function CustomerDashboard() {
           )}
         </div>
       </main>
+
+      {/* Refuel Modal */}
+      {showAddMoneyModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 border border-[#E5E1D8] shadow-xl space-y-4">
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="font-serif text-lg font-bold text-primary">Refuel Nivara Balance</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">Add credits to your virtual wallet for instant session checkouts.</p>
+              </div>
+              <button 
+                onClick={() => setShowAddMoneyModal(false)}
+                className="text-slate-400 hover:text-slate-600 font-bold text-lg"
+              >
+                &times;
+              </button>
+            </div>
+
+            <form onSubmit={handleAddMoney} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase font-bold text-slate-400">Amount (INR)</label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-serif text-slate-400 font-bold">₹</span>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    placeholder="500"
+                    value={addAmount}
+                    onChange={(e) => setAddAmount(e.target.value)}
+                    className="w-full pl-8 pr-4 py-2 bg-[#FAF8F5] border border-[#E5E1D8] rounded-lg text-sm text-primary font-bold focus:outline-none focus:ring-1 focus:ring-secondary"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddMoneyModal(false)}
+                  className="flex-1 py-2 border border-[#E5E1D8] text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={addingFunds}
+                  className="flex-1 py-2 bg-secondary text-primary-foreground text-xs font-semibold rounded-lg hover:bg-secondary/95 transition-all disabled:opacity-50"
+                >
+                  {addingFunds ? 'Recharging...' : 'Confirm Refuel'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>
