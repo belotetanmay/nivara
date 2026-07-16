@@ -73,9 +73,9 @@ export async function createCheckoutSession(params: {
   };
 }
 
-export async function refundPayment(gatewayRef: string): Promise<{ success: boolean; error?: string }> {
-  if (isMockStripe || !stripe || gatewayRef.startsWith('ch_mock') || gatewayRef.startsWith('cs_mock')) {
-    console.log(`[Mock Stripe] Processed refund for reference: ${gatewayRef}`);
+export async function refundPayment(gatewayRef: string, amount?: number): Promise<{ success: boolean; error?: string }> {
+  if (isMockStripe || !stripe || gatewayRef.startsWith('ch_mock') || gatewayRef.startsWith('cs_mock') || gatewayRef.startsWith('EXT-')) {
+    console.log(`[Mock Stripe] Processed refund of ₹${amount !== undefined ? amount : 'full'} for reference: ${gatewayRef}`);
     return { success: true };
   }
 
@@ -92,9 +92,14 @@ export async function refundPayment(gatewayRef: string): Promise<{ success: bool
       }
     }
 
-    await stripe.refunds.create({
+    const refundParams: any = {
       payment_intent: chargeOrIntentId,
-    });
+    };
+    if (amount !== undefined) {
+      refundParams.amount = Math.round(amount * 100);
+    }
+
+    await stripe.refunds.create(refundParams);
     return { success: true };
   } catch (error: any) {
     console.error('Stripe Refund error:', error);

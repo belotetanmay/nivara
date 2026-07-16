@@ -111,6 +111,7 @@ export async function DELETE(
       where: { id: bookingId },
       include: {
         payment: true,
+        availability: true,
       },
     });
 
@@ -123,14 +124,35 @@ export async function DELETE(
       return NextResponse.json({ error: 'Booking cannot be cancelled in its current state' }, { status: 400 });
     }
 
+    const now = new Date();
+    const startTime = new Date(booking.availability.startTime);
+    const timeDiffMs = startTime.getTime() - now.getTime();
+    const isLateCancellation = timeDiffMs < 60 * 60 * 1000; // less than 60 minutes before start time
+
     // Check if refund is needed
     let refundProcessed = false;
+    let refundAmount = 0;
+    let cancellationFee = 0;
+
     if (booking.payment && booking.payment.status === PaymentStatus.SUCCESS && booking.payment.gatewayRef) {
-      const refundRes = await refundPayment(booking.payment.gatewayRef);
-      if (!refundRes.success) {
-        return NextResponse.json({ error: refundRes.error || 'Failed to refund payment' }, { status: 500 });
+      const totalPaid = booking.payment.amount;
+      if (isLateCancellation) {
+        // Late cancellation: 50% fee applies, 50% balance refunded
+        cancellationFee = Number((totalPaid * 0.5).toFixed(2));
+        refundAmount = Number((totalPaid * 0.5).toFixed(2));
+      } else {
+        // Free cancellation: 100% refunded
+        cancellationFee = 0;
+        refundAmount = totalPaid;
       }
-      refundProcessed = true;
+
+      if (refundAmount > 0) {
+        const refundRes = await refundPayment(booking.payment.gatewayRef, refundAmount);
+        if (!refundRes.success) {
+          return NextResponse.json({ error: refundRes.error || 'Failed to refund payment' }, { status: 500 });
+        }
+        refundProcessed = true;
+      }
     }
 
     // Run cancellation db updates in transaction
@@ -153,14 +175,19 @@ export async function DELETE(
           where: { id: booking.payment.id },
           data: {
             status: refundProcessed ? PaymentStatus.REFUNDED : PaymentStatus.FAILED,
+            amount: isLateCancellation ? cancellationFee : booking.payment.amount, // update paid amount to reflect cancellation fee retained
           },
         });
       }
     });
 
+    const successMsg = isLateCancellation 
+      ? `Booking cancelled late. A 50% cancellation fee of ₹${cancellationFee} was retained, and the remaining ₹${refundAmount} was refunded.`
+      : `Booking cancelled successfully. A full refund of ₹${refundAmount} has been initiated.`;
+
     return NextResponse.json({
       success: true,
-      message: 'Booking cancelled successfully' + (refundProcessed ? ' and payment refunded' : ''),
+      message: successMsg,
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });

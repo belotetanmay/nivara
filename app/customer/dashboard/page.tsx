@@ -117,7 +117,7 @@ export default function CustomerDashboard() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setActionSuccess('Booking cancelled and slot released successfully.');
+        setActionSuccess(data.message || 'Booking cancelled and slot released successfully.');
         await fetchBookings();
       } else {
         setError(data.error || 'Failed to cancel booking.');

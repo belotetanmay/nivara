@@ -3,7 +3,7 @@
 import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { Eye, ShieldAlert, Lock } from 'lucide-react';
+import { Eye, ShieldCheck, Lock } from 'lucide-react';
 
 export default function PrivacyPolicy() {
   return (
@@ -18,15 +18,15 @@ export default function PrivacyPolicy() {
               <Eye className="w-3.5 h-3.5" /> Privacy Shield
             </div>
             <h1 className="font-serif text-3xl font-bold tracking-tight text-primary">Privacy Policy</h1>
-            <p className="text-xs text-slate-400">Last updated: July 2026 • Beta Pilot Edition</p>
+            <p className="text-xs text-slate-400">Last updated: July 2026 • Version 1.0</p>
           </div>
 
           <div className="p-4 bg-slate-900 text-slate-100 rounded-xl flex gap-3 items-start border border-slate-800 shadow-md">
             <Lock className="w-5 h-5 text-secondary flex-shrink-0 mt-0.5" />
             <div>
-              <span className="font-bold text-white text-xs">KYC & Data Encrypted Storage</span>
+              <span className="font-bold text-white text-xs">DPDP Act Compliant Storage</span>
               <p className="text-[10px] text-slate-400 leading-relaxed mt-0.5">
-                All submitted identity cards and user details are securely encrypted and stored within our private Supabase database. Only vetted administrators can access documents for approval. No raw files are visible to partners, vendors, or external third parties.
+                In compliance with the Digital Personal Data Protection Act (DPDP Act), 2023, user personal data is processed solely under clear consent and legitimate use guidelines. Encryption safeguards are active for all data in transit and at rest.
               </p>
             </div>
           </div>
@@ -34,61 +34,55 @@ export default function PrivacyPolicy() {
           <div className="space-y-6 text-xs text-slate-600 leading-relaxed">
             
             <section className="space-y-2">
-              <h2 className="font-serif text-lg font-bold text-primary">1. Information We Collect</h2>
+              <h2 className="font-serif text-lg font-bold text-primary">1. Personal Data We Collect</h2>
               <p>
-                To provide you with secure access to our luxury wellness pods, we collect the following data during the pilot phase:
+                We collect personal information necessary to deliver, verify, and improve our mobile relaxation services:
               </p>
               <ul className="list-disc pl-5 space-y-1 mt-1 text-slate-500">
-                <li><span className="font-semibold text-primary">Personal Details:</span> Name, email address, and phone number when registering.</li>
-                <li><span className="font-semibold text-primary">KYC Verification Files:</span> Scanned images of ID cards or licenses to satisfy secure cabin entry criteria.</li>
-                <li><span className="font-semibold text-primary">Sensory Presets:</span> Scent, ambient color lighting, and binaural audio options chosen for cabin configurations.</li>
+                <li><span className="font-semibold text-primary">Account Data:</span> Full name, email address, password hashes, mobile number, and registration logs.</li>
+                <li><span className="font-semibold text-primary">Sensory Presets:</span> Aromatherapy scents, ambient color lighting profiles, and spatial audio tracks configured for your relaxation pod.</li>
+                <li><span className="font-semibold text-primary">Wellness Partner KYC Data (Vendors Only):</span> Government-issued identity certificates, business licenses, vehicle registrations (VIN), proof of liability insurance, and bank details for payouts.</li>
               </ul>
             </section>
 
             <section className="space-y-2">
-              <h2 className="font-serif text-lg font-bold text-primary">2. Location Data Policy</h2>
-              <div className="p-3.5 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg flex gap-2 items-start">
-                <ShieldAlert className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
-                <div className="text-[10px] leading-relaxed">
-                  <span className="font-bold block">No Real-time Live Tracking</span>
-                  We do not track your real-time smartphone background location. We only record static coordinates: (1) pickup and dropoff addresses for Pick & Drop bookings, and (2) coordinates of active regional vans to display them on the search map.
-                </div>
-              </div>
-            </section>
-
-            <section className="space-y-2">
-              <h2 className="font-serif text-lg font-bold text-primary">3. How We Use Your Data</h2>
+              <h2 className="font-serif text-lg font-bold text-primary">2. Precise Location Tracking</h2>
               <p>
-                Your data is exclusively processed to manage slots bookings, authenticate entry door QR locks, process simulated checkout totals, and customize your cabin acoustics and aroma preferences. We do not sell or monetize personal information.
+                * **Customers:** We collect precise real-time coordinates only while the app is in use and during active bookings to show nearby available vehicles, calculate pickup distances, and enable live session tracking.
+                * **Vendors:** Location is collected in the foreground and background while marked online to enable matching. Partners can go offline to stop tracking.
               </p>
             </section>
 
             <section className="space-y-2">
-              <h2 className="font-serif text-lg font-bold text-primary">4. Data Access & Sharing</h2>
+              <h2 className="font-serif text-lg font-bold text-primary">3. Sharing and Disclosures</h2>
               <p>
-                Only authenticated administrators can view your KYC verification logs to approve account activations. Attendants and vendors only see booking codes, first names, slot schedules, and sensory presets (aroma/light/audio) to configure cabins. Revenue earnings are strictly protected under row-level security (RLS) and are never visible to other partners.
+                Nivara does not sell personal data. Information is shared strictly under the following criteria:
+                * **Fulfillment:** User names and session addresses are shared with the assigned Wellness Partner to enable pod delivery.
+                * **Processors:** Minimum transactional metadata is shared with secure payment processors, mapping APIs, and notification service providers contractually bound under data processing rules.
               </p>
             </section>
 
             <section className="space-y-2">
-              <h2 className="font-serif text-lg font-bold text-primary">5. Cookies & Local Cache</h2>
+              <h2 className="font-serif text-lg font-bold text-primary">4. Data Security &amp; Tokenization</h2>
               <p>
-                We use cookies to preserve your authenticated user sessions (`auth_token`) and local browser storage to cache your sensory customizer presets and AI chatbot conversations, ensuring smooth navigation without session loss.
+                We execute security controls including SSL/TLS transfer encryptions, role-based database constraints, and tokenized payment checkouts. No complete payment card credentials are ever recorded or stored on our servers.
               </p>
             </section>
 
             <section className="space-y-2">
-              <h2 className="font-serif text-lg font-bold text-primary">6. Deletion Requests</h2>
+              <h2 className="font-serif text-lg font-bold text-primary">5. Data Retention &amp; Rights</h2>
               <p>
-                You may request account deletion at any time by emailing our support desk. Upon approval, all uploaded identity documents, bookings logs, and credentials will be permanently purged from our databases.
+                Personal data is retained only for active account periods, or as necessary to complete transactional audits and legal tax compliance. In accordance with the DPDP Act, you have the right to access summaries of processed data, request corrections, withdraw consent, or trigger account deletion by reaching out to: **privacy@nivara.in**.
               </p>
             </section>
 
           </div>
 
           <div className="pt-6 border-t border-[#FAF8F5] flex justify-between items-center text-[10px] text-slate-400">
-            <span>support.nivara@gmail.com</span>
-            <span>Nivara Privacy Committee</span>
+            <span className="flex items-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-secondary" /> DPDP Secure Protocol
+            </span>
+            <span>support@nivara.in</span>
           </div>
 
         </div>
