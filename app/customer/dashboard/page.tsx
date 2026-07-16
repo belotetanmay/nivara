@@ -284,12 +284,22 @@ export default function CustomerDashboard() {
               <h1 className="font-serif text-3xl font-bold tracking-tight text-primary">My Wellness Sessions</h1>
               <p className="text-sm text-muted-foreground">Manage your upcoming pods and review past recovery logs.</p>
             </div>
-            <Link
-              href="/customer/search"
-              className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-md text-primary-foreground bg-primary hover:bg-primary/95 shadow transition-all"
-            >
-              Book New Session
-            </Link>
+            <div className="flex flex-wrap gap-2.5">
+              <button
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('trigger-demo-session'));
+                }}
+                className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-md text-primary bg-[#FAF8F5] border border-[#E5E1D8] hover:bg-gray-50 shadow-sm transition-all cursor-pointer"
+              >
+                🔧 Trigger Alerts Demo
+              </button>
+              <Link
+                href="/customer/search"
+                className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-md text-primary-foreground bg-primary hover:bg-primary/95 shadow transition-all"
+              >
+                Book New Session
+              </Link>
+            </div>
           </div>
 
           {/* Metrics Pane */}

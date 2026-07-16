@@ -78,6 +78,8 @@ export default function ActiveSessionTracker() {
 
   // Poll for active session every 10 seconds (minimal CPU drain)
   const fetchActiveSession = async () => {
+    if (activeBooking?.id === 'demo-booking-id') return;
+
     try {
       const res = await fetch('/api/customer/active-session');
       if (res.ok) {
@@ -95,10 +97,40 @@ export default function ActiveSessionTracker() {
   };
 
   useEffect(() => {
+    const handleDemoEvent = () => {
+      const mockBooking: ActiveBooking = {
+        id: "demo-booking-id",
+        sessionLength: 30,
+        vanId: "demo-van-id",
+        van: {
+          title: "Wellness Pod - HSR Hub (Demo)",
+          address: "Sector 4, HSR Layout, Bengaluru",
+          price15: 350
+        },
+        availability: {
+          id: "demo-slot-id",
+          startTime: new Date(Date.now() - 21 * 60000).toISOString(),
+          endTime: new Date(Date.now() + 9 * 60000).toISOString(),
+        }
+      };
+      setActiveBooking(mockBooking);
+      setPopupTriggeredForId(null);
+    };
+
+    window.addEventListener('trigger-demo-session', handleDemoEvent);
+
+    if (typeof window !== 'undefined' && window.location.search.includes('demo=true')) {
+      handleDemoEvent();
+    }
+
     fetchActiveSession();
     const interval = setInterval(fetchActiveSession, 12000);
-    return () => clearInterval(interval);
-  }, [pathname]);
+
+    return () => {
+      window.removeEventListener('trigger-demo-session', handleDemoEvent);
+      clearInterval(interval);
+    };
+  }, [pathname, activeBooking?.id]);
 
   // Handle countdown calculations
   useEffect(() => {
