@@ -174,6 +174,16 @@ export default function ActiveSessionTracker() {
   // End session early callback
   const handleEndSessionEarly = async () => {
     if (!activeBooking) return;
+    
+    if (activeBooking.id === 'demo-booking-id') {
+      setActiveBooking(null);
+      setShowEndingPopup(false);
+      setConfirmEndStep(false);
+      alert("Hope you're feeling recharged! Your session has been completed early.");
+      router.push('/customer/dashboard');
+      return;
+    }
+
     try {
       const res = await fetch('/api/customer/active-session/end-early', {
         method: 'POST',
@@ -195,6 +205,17 @@ export default function ActiveSessionTracker() {
   // Extend Session adjacent checks
   const handleCheckExtension = async () => {
     if (!activeBooking) return;
+    
+    if (activeBooking.id === 'demo-booking-id') {
+      setExtensionStatus('checking');
+      setTimeout(() => {
+        setNextSlotId('demo-next-slot');
+        setExtensionPrice(350);
+        setExtensionStatus('available');
+      }, 1000);
+      return;
+    }
+
     setExtensionStatus('checking');
     try {
       const res = await fetch('/api/customer/active-session/check-extension', {
@@ -218,6 +239,28 @@ export default function ActiveSessionTracker() {
   // Confirm extension payment flow
   const handleConfirmExtension = async () => {
     if (!activeBooking || !nextSlotId) return;
+
+    if (activeBooking.id === 'demo-booking-id') {
+      setExtensionStatus('success');
+      setTimeout(() => {
+        // Extend demo session endTime locally by 30 mins
+        const extendedEndTime = new Date(new Date(activeBooking.availability.endTime).getTime() + 30 * 60000).toISOString();
+        setActiveBooking(prev => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            availability: {
+              ...prev.availability,
+              endTime: extendedEndTime
+            }
+          };
+        });
+        setShowEndingPopup(false);
+        setExtensionStatus('idle');
+      }, 2000);
+      return;
+    }
+
     try {
       const res = await fetch('/api/customer/active-session/confirm-extension', {
         method: 'POST',
