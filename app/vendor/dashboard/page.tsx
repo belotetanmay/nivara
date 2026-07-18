@@ -6,7 +6,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CheckCircle2, Clock, MapPin, Inbox, CreditCard, ShieldCheck, AlertTriangle, ArrowUpRight, BarChart3, ChevronDown, ChevronUp, Compass, Navigation, Sparkles } from 'lucide-react';
+import { CheckCircle2, Clock, MapPin, Inbox, CreditCard, ShieldCheck, AlertTriangle, ArrowUpRight, BarChart3, ChevronDown, ChevronUp, Compass, Navigation, Sparkles, FileText } from 'lucide-react';
 import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
 
 interface Booking {
@@ -50,6 +50,7 @@ interface VendorProfile {
   payoutDetails: string;
   ratingAvg: number;
   totalBookings: number;
+  businessLicenseNo: string | null;
 }
 
 export default function VendorDashboard() {
@@ -378,13 +379,75 @@ export default function VendorDashboard() {
 
   // Account not approved view
   if (vendorProfile && vendorProfile.verificationStatus !== 'APPROVED') {
+    const isKycDone = user?.kycStatus === 'PENDING' || user?.kycStatus === 'VERIFIED';
+    const isBusinessDone = !!vendorProfile.businessLicenseNo;
+    const isVehicleDone = vans.length > 0;
+    const isInspectionDone = vans.length > 0 && !!vans[0].onSiteInspectionCertUrl && !!vans[0].fakePhotoDeclaration;
+
+    const onboardingIncomplete = !isKycDone || !isBusinessDone || !isVehicleDone || !isInspectionDone;
+
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-tr from-[#5B8DEF]/5 via-[#FAF8F5] to-[#C5B3FF]/5 relative overflow-hidden">
         <Navbar />
         <main className="flex-grow max-w-4xl mx-auto w-full px-4 py-16 sm:px-6 z-10">
           <div className="glass-card text-center space-y-6 p-8 sm:p-12">
             
-            {vendorProfile.verificationStatus === 'PENDING' && (
+            {onboardingIncomplete ? (
+              <>
+                <div className="inline-flex items-center justify-center p-4 rounded-full bg-yellow-50 text-yellow-600 border border-yellow-200">
+                  <FileText className="w-12 h-12 animate-pulse" />
+                </div>
+                <h1 className="font-serif text-3xl font-bold text-primary">Onboarding Checklist Incomplete</h1>
+                <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
+                  Before our administrators can review and approve your account, you must complete the mandatory 4-step onboarding credentials setup.
+                </p>
+                
+                <div className="bg-[#FCF9F6] border border-[#E5E1D8]/60 p-5 rounded-xl text-left max-w-md mx-auto text-xs space-y-3.5 shadow-sm">
+                  <h4 className="font-bold text-primary border-b border-[#E5E1D8]/40 pb-1.5 uppercase tracking-wide">Pending Setup Phases</h4>
+                  
+                  {/* Step 1: KYC */}
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-slate-700">1. Personal KYC Verification</span>
+                    <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${isKycDone ? 'bg-secondary/15 text-secondary border border-secondary/20' : 'bg-yellow-50 text-yellow-600 border border-yellow-200'}`}>
+                      {isKycDone ? '✓ Completed' : 'Pending Upload'}
+                    </span>
+                  </div>
+
+                  {/* Step 2: Business */}
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-slate-700">2. Business Validation (GST/Bank/PAN)</span>
+                    <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${isBusinessDone ? 'bg-secondary/15 text-secondary border border-secondary/20' : 'bg-yellow-50 text-yellow-600 border border-yellow-200'}`}>
+                      {isBusinessDone ? '✓ Completed' : 'Pending Info'}
+                    </span>
+                  </div>
+
+                  {/* Step 3: Vehicle */}
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-slate-700">3. Commercial Vehicle details (RC/Ins/PUC)</span>
+                    <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${isVehicleDone ? 'bg-secondary/15 text-secondary border border-secondary/20' : 'bg-yellow-50 text-yellow-600 border border-yellow-200'}`}>
+                      {isVehicleDone ? '✓ Completed' : 'Pending Registration'}
+                    </span>
+                  </div>
+
+                  {/* Step 4: Inspection */}
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-slate-700">4. On-site Inspection Certificate</span>
+                    <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${isInspectionDone ? 'bg-secondary/15 text-secondary border border-secondary/20' : 'bg-yellow-50 text-yellow-600 border border-yellow-200'}`}>
+                      {isInspectionDone ? '✓ Completed' : 'Pending Inspection'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-4">
+                  <Link
+                    href="/vendor/onboarding"
+                    className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold rounded-md text-white bg-secondary hover:bg-secondary/95 shadow transition-all cursor-pointer"
+                  >
+                    👉 Complete Onboarding Wizard Now
+                  </Link>
+                </div>
+              </>
+            ) : vendorProfile.verificationStatus === 'PENDING' ? (
               <>
                 <div className="inline-flex items-center justify-center p-4 rounded-full bg-amber-50 text-amber-600 border border-amber-200">
                   <Clock className="w-12 h-12" />
@@ -409,9 +472,7 @@ export default function VendorDashboard() {
                   </div>
                 </div>
               </>
-            )}
-
-            {vendorProfile.verificationStatus === 'REJECTED' && (
+            ) : vendorProfile.verificationStatus === 'REJECTED' ? (
               <>
                 <div className="inline-flex items-center justify-center p-4 rounded-full bg-red-50 text-red-600 border border-red-200">
                   <AlertTriangle className="w-12 h-12" />
@@ -435,9 +496,7 @@ export default function VendorDashboard() {
                   </Link>
                 </div>
               </>
-            )}
-
-            {vendorProfile.verificationStatus === 'SUSPENDED' && (
+            ) : (
               <>
                 <div className="inline-flex items-center justify-center p-4 rounded-full bg-red-100 text-red-600 border border-red-200">
                   <AlertTriangle className="w-12 h-12" />
