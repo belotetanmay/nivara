@@ -281,7 +281,7 @@ export default function EditVanPage({ params }: { params: Promise<{ id: string }
                   <div className="grid grid-cols-3 gap-3">
                     <div>
                       <label htmlFor="price15" className="block text-[10px] font-semibold text-primary mb-1">
-                        Price 15 Min <span className="text-red-500">*</span>
+                        30 Min Price (₹) <span className="text-red-500">*</span>
                       </label>
                       <input
                         id="price15"
@@ -295,7 +295,7 @@ export default function EditVanPage({ params }: { params: Promise<{ id: string }
                     
                     <div>
                       <label htmlFor="price30" className="block text-[10px] font-semibold text-primary mb-1">
-                        Price 30 Min <span className="text-red-500">*</span>
+                        45 Min Price (₹) <span className="text-red-500">*</span>
                       </label>
                       <input
                         id="price30"
@@ -309,7 +309,7 @@ export default function EditVanPage({ params }: { params: Promise<{ id: string }
 
                     <div>
                       <label htmlFor="price45" className="block text-[10px] font-semibold text-primary mb-1">
-                        Price 45 Min <span className="text-red-500">*</span>
+                        60 Min Price (₹) <span className="text-red-500">*</span>
                       </label>
                       <input
                         id="price45"

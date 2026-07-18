@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { hashPassword, signToken } from '@/lib/auth';
 import { Role, KYCStatus, VendorStatus } from '@prisma/client';
+import { sendAdminApprovalNotification } from '@/lib/services/email';
 
 export async function POST(request: Request) {
   try {
@@ -52,6 +53,13 @@ export async function POST(request: Request) {
 
       return createdUser;
     });
+
+    if (role === 'VENDOR') {
+      const bName = businessName || `${name}'s Wellness Pods`;
+      sendAdminApprovalNotification(name, bName, email).catch(err => {
+        console.error('Failed to send admin email alert:', err);
+      });
+    }
 
     // Sign JWT Token
     const token = signToken({

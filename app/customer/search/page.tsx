@@ -417,11 +417,12 @@ export default function CustomerSearch() {
                     }`}
                   >
                     {/* Visual Placeholder */}
-                    <div className="w-full sm:w-28 h-28 bg-gradient-to-br from-[#2C5234]/15 to-[#0A2540]/10 rounded-lg flex-shrink-0 flex items-center justify-center border border-[#E5E1D8]/40">
-                      <div className="text-center p-2 text-[10px] font-semibold text-secondary flex flex-col items-center">
-                        <Sparkles className="w-5 h-5 mb-1" />
-                        <span>Nivara Cabin</span>
-                      </div>
+                    <div className="w-full sm:w-28 h-28 rounded-lg flex-shrink-0 border border-[#E5E1D8]/40 overflow-hidden relative">
+                      <img
+                        src={(van.photos && van.photos.length > 0) ? van.photos[0] : "/van_demo.jpg"}
+                        alt={van.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
                     </div>
 
                     {/* Details content */}

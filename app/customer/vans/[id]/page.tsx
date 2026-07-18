@@ -294,12 +294,14 @@ export default function VanDetailPage({ params }: { params: Promise<{ id: string
           <div className="lg:col-span-8 space-y-8">
             
             {/* Visual Header / Photo Grid */}
-            <div className="relative w-full h-64 sm:h-80 rounded-xl bg-gradient-to-br from-[#2C5234]/15 to-[#0A2540]/10 border border-[#E5E1D8] flex items-center justify-center shadow-sm overflow-hidden">
-              <div className="absolute inset-0 bg-[radial-gradient(#C19A6B_1px,transparent_1px)] [background-size:20px_20px] opacity-10"></div>
-              <div className="text-center space-y-2 z-10">
-                <Sparkles className="w-10 h-10 text-secondary mx-auto" />
-                <h3 className="font-serif text-lg font-bold text-primary">Nivara Wellness Pod Interior</h3>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Warm Timber Amber lighting setting</p>
+            <div className="relative w-full h-64 sm:h-80 rounded-xl border border-[#E5E1D8] shadow-sm overflow-hidden">
+              <img
+                src={(van.photos && van.photos.length > 0) ? van.photos[0] : "/van_demo.jpg"}
+                alt={van.title}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute bottom-4 left-4 bg-slate-950/75 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-[10px] uppercase font-bold tracking-wider">
+                Nivara Cabin Space
               </div>
             </div>
 

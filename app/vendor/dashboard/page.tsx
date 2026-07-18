@@ -6,7 +6,8 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CheckCircle2, Clock, MapPin, Inbox, CreditCard, ShieldCheck, AlertTriangle, ArrowUpRight, BarChart3, ChevronDown, ChevronUp, Compass, Navigation } from 'lucide-react';
+import { CheckCircle2, Clock, MapPin, Inbox, CreditCard, ShieldCheck, AlertTriangle, ArrowUpRight, BarChart3, ChevronDown, ChevronUp, Compass, Navigation, Sparkles } from 'lucide-react';
+import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
 
 interface Booking {
   id: string;
@@ -14,6 +15,12 @@ interface Booking {
   sessionLength: number;
   status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
   createdAt: string;
+  scent: string;
+  lighting: string;
+  audio: string;
+  serviceModel: string;
+  pickupAddress: string | null;
+  dropoffAddress: string | null;
   customer: {
     name: string;
     email: string;
@@ -35,6 +42,7 @@ interface Booking {
 }
 
 interface VendorProfile {
+  id: string;
   businessName: string;
   bio: string;
   verificationStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
@@ -62,6 +70,83 @@ export default function VendorDashboard() {
   const [vans, setVans] = useState<any[]>([]);
   const [simulatingVanId, setSimulatingVanId] = useState<string | null>(null);
   const [gpsIntervalId, setGpsIntervalId] = useState<any>(null);
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+  const hasRealKey = !!(apiKey && !apiKey.includes('Mock') && !apiKey.startsWith('AIzaSyMock'));
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: apiKey,
+    libraries: ['places'] as any,
+  });
+  const [sessionEndingAlert, setSessionEndingAlert] = useState<any | null>(null);
+  const [alertChimeTriggeredId, setAlertChimeTriggeredId] = useState<string | null>(null);
+
+  // Play synthetic wellness chime for vendor alert
+  const playVendorChime = () => {
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      const ctx = new AudioContextClass();
+      const now = ctx.currentTime;
+      
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, now); // C5 (warm note)
+      
+      gainNode.gain.setValueAtTime(0, now);
+      gainNode.gain.linearRampToValueAtTime(0.15, now + 0.1);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 1.5);
+      
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      
+      osc.start(now);
+      osc.stop(now + 1.7);
+    } catch (err) {
+      console.log('Chime blocked by browser autoplay policy.', err);
+    }
+  };
+
+  useEffect(() => {
+    if (bookings.length === 0) return;
+
+    const checkActiveSessionsAlert = () => {
+      const now = Date.now();
+      
+      // Find any confirmed booking active right now
+      const activeSession = bookings.find((b) => {
+        if (b.status !== 'CONFIRMED') return false;
+        const start = new Date(b.availability.startTime).getTime();
+        const end = new Date(b.availability.endTime).getTime();
+        return now >= start && now <= end;
+      });
+
+      if (activeSession) {
+        const end = new Date(activeSession.availability.endTime).getTime();
+        const remainingSeconds = Math.max(0, Math.floor((end - now) / 1000));
+        
+        // 10 minutes (600 seconds) warning threshold
+        if (remainingSeconds <= 600 && remainingSeconds > 0) {
+          setSessionEndingAlert({
+            booking: activeSession,
+            remainingSeconds
+          });
+          
+          if (alertChimeTriggeredId !== activeSession.id) {
+            playVendorChime();
+            setAlertChimeTriggeredId(activeSession.id);
+          }
+          return;
+        }
+      }
+      
+      setSessionEndingAlert(null);
+    };
+
+    checkActiveSessionsAlert();
+    const interval = setInterval(checkActiveSessionsAlert, 5000);
+    return () => clearInterval(interval);
+  }, [bookings, alertChimeTriggeredId]);
 
   const fetchVansData = async () => {
     try {
@@ -183,6 +268,31 @@ export default function VendorDashboard() {
       }
     } catch (err) {
       setError('Error confirming session.');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+  const handleRejectBooking = async (bookingId: string) => {
+    if (!confirm('Are you sure you want to decline this booking request? This will release the time slot and refund the client.')) {
+      return;
+    }
+    setUpdatingId(bookingId);
+    setError(null);
+    setActionSuccess(null);
+
+    try {
+      const res = await fetch(`/api/vendor/bookings/${bookingId}/reject`, {
+        method: 'PATCH',
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setActionSuccess('Booking request declined and slot released.');
+        await fetchDashboardData();
+      } else {
+        setError(data.error || 'Failed to decline booking request.');
+      }
+    } catch (err) {
+      setError('Error declining session.');
     } finally {
       setUpdatingId(null);
     }
@@ -362,7 +472,7 @@ export default function VendorDashboard() {
             
             <div className="flex gap-3">
               <Link
-                href={`/vendor/portfolio/${user?.vendorProfile?.id}`}
+                href={`/vendor/portfolio/${vendorProfile?.id}`}
                 className="inline-flex items-center justify-center px-4 py-2 border border-[#E5E1D8] bg-white text-primary text-sm font-semibold rounded-md hover:bg-gray-50 transition-all"
               >
                 View Public Portfolio
@@ -457,27 +567,65 @@ export default function VendorDashboard() {
                           </div>
                         </div>
 
+                        {/* Customer Session Needs/Receipt details */}
+                        <div className="bg-slate-50 border border-slate-200/60 p-3 rounded text-[11px] text-primary space-y-1.5 mt-2 font-sans">
+                          <span className="font-bold text-secondary text-[10px] uppercase tracking-wider block">Customer Session Needs</span>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <div><span className="text-muted-foreground block text-[9px] uppercase">Aroma Diffuser</span><span className="font-semibold">{booking.scent}</span></div>
+                            <div><span className="text-muted-foreground block text-[9px] uppercase">Ambient Light</span><span className="font-semibold">{booking.lighting}</span></div>
+                            <div><span className="text-muted-foreground block text-[9px] uppercase">Soundscape</span><span className="font-semibold">{booking.audio}</span></div>
+                          </div>
+                          <div className="border-t border-slate-200/40 pt-1.5 flex flex-wrap justify-between gap-2">
+                            <span>Service Delivery: <span className="font-bold">{booking.serviceModel === 'PICK_AND_DROP' ? '🚗 Pick & Drop' : '📍 Steady Station'}</span></span>
+                            {booking.serviceModel === 'PICK_AND_DROP' && (
+                              <div className="w-full text-[10px] bg-white p-2 rounded border border-slate-200 mt-1 space-y-0.5 font-sans">
+                                <p><span className="font-semibold text-slate-500">Pick-up:</span> {booking.pickupAddress}</p>
+                                <p><span className="font-semibold text-slate-500">Drop-off:</span> {booking.dropoffAddress}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
                         <div className="flex gap-3 pt-2">
                           {booking.status === 'PENDING' && (
-                            <button
-                              onClick={() => handleConfirmBooking(booking.id)}
-                              disabled={updatingId === booking.id}
-                              className="flex-grow py-2 bg-primary hover:bg-primary/95 text-primary-foreground font-bold rounded text-xs transition-colors flex items-center justify-center gap-1.5"
-                            >
-                              Confirm Booking
-                            </button>
+                            <>
+                              <button
+                                onClick={() => handleConfirmBooking(booking.id)}
+                                disabled={updatingId === booking.id}
+                                className="flex-grow py-2 bg-primary hover:bg-primary/95 text-primary-foreground font-bold rounded text-xs transition-colors flex items-center justify-center gap-1.5"
+                              >
+                                Accept Booking
+                              </button>
+                              <button
+                                onClick={() => handleRejectBooking(booking.id)}
+                                disabled={updatingId === booking.id}
+                                className="flex-grow py-2 border border-red-200 hover:bg-red-50 text-red-600 font-bold rounded text-xs transition-colors flex items-center justify-center gap-1.5"
+                              >
+                                Decline Request
+                              </button>
+                            </>
                           )}
                           {booking.status === 'CONFIRMED' && (
-                            <button
-                              onClick={() => {
-                                setCompletingBookingId(booking.id);
-                                setActualDurationInput(booking.sessionLength);
-                              }}
-                              disabled={updatingId === booking.id}
-                              className="flex-grow py-2 bg-secondary hover:bg-secondary/95 text-primary-foreground font-bold rounded text-xs transition-colors flex items-center justify-center gap-1.5"
-                            >
-                              Mark Session Complete
-                            </button>
+                            <>
+                              <button
+                                onClick={() => {
+                                  setCompletingBookingId(booking.id);
+                                  setActualDurationInput(booking.sessionLength);
+                                }}
+                                disabled={updatingId === booking.id}
+                                className="flex-grow py-2 bg-secondary hover:bg-secondary/95 text-primary-foreground font-bold rounded text-xs transition-colors flex items-center justify-center gap-1.5"
+                              >
+                                Mark Session Complete
+                              </button>
+                              <button
+                                onClick={() => handleRejectBooking(booking.id)}
+                                disabled={updatingId === booking.id}
+                                className="py-2 px-3 border border-red-200 hover:bg-red-50 text-red-650 rounded text-xs transition-colors"
+                                title="Cancel Active Booking"
+                              >
+                                Cancel Session
+                              </button>
+                            </>
                           )}
                         </div>
                       </div>
@@ -726,6 +874,100 @@ export default function VendorDashboard() {
                     ))}
                   </div>
                 )}
+
+                {/* Embedded GPS Tracking Map / Visual Radar Display */}
+                <div className="w-full h-52 rounded-xl border border-[#E5E1D8] overflow-hidden mt-3 relative bg-[#EAE6DF] shadow-inner">
+                  {isLoaded && hasRealKey ? (
+                    <GoogleMap
+                      mapContainerStyle={{ width: '100%', height: '100%' }}
+                      zoom={11}
+                      center={
+                        vans.find(v => v.currentLatitude) 
+                          ? { lat: vans.find(v => v.currentLatitude).currentLatitude, lng: vans.find(v => v.currentLatitude).currentLongitude }
+                          : (vans[0] ? { lat: vans[0].latitude, lng: vans[0].longitude } : { lat: 19.0760, lng: 72.8777 })
+                      }
+                      options={{
+                        disableDefaultUI: true,
+                        zoomControl: true,
+                      }}
+                    >
+                      {vans.map((van) => (
+                        <Marker
+                          key={van.id}
+                          position={{
+                            lat: van.currentLatitude || van.latitude,
+                            lng: van.currentLongitude || van.longitude,
+                          }}
+                          title={van.title}
+                        />
+                      ))}
+                    </GoogleMap>
+                  ) : (
+                    // Premium Mock Map Visualizer with localized CSS animation
+                    <div className="absolute inset-0 bg-[#EAE6DF] flex flex-col justify-between p-3 font-mono text-[9px] text-slate-700 select-none overflow-hidden">
+                      <style>{`
+                        @keyframes scan {
+                          0% { transform: translateY(-50px); opacity: 0; }
+                          50% { opacity: 0.6; }
+                          100% { transform: translateY(150px); opacity: 0; }
+                        }
+                        .animate-scan {
+                          animation: scan 4s linear infinite;
+                        }
+                      `}</style>
+                      
+                      {/* Radar sweep line */}
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(44,82,52,0.08)_0%,transparent_75%)] animate-pulse"></div>
+                      <div className="absolute top-0 left-0 right-0 h-0.5 bg-[#2C5234]/20 animate-scan"></div>
+                      
+                      <div className="flex justify-between items-start z-10">
+                        <span className="bg-slate-900 text-white px-2 py-0.5 rounded text-[8px] tracking-widest uppercase animate-pulse font-bold">
+                          📡 GPS Tracking Live Feed
+                        </span>
+                        <span className="text-[8px] text-slate-500 font-bold">SECTOR: MUMBAI-THANE</span>
+                      </div>
+
+                      {/* Dot markers rendering over relative map screen grid */}
+                      <div className="relative flex-grow flex items-center justify-center">
+                        {vans.map((van, idx) => {
+                          const isSim = !!van.currentLatitude;
+                          const lat = van.currentLatitude || van.latitude;
+                          const lng = van.currentLongitude || van.longitude;
+                          // Distribute markers visually on radar
+                          const leftOffset = 25 + (idx * 30);
+                          const topOffset = 35 + (idx * 20);
+                          return (
+                            <div 
+                              key={van.id}
+                              style={{ left: `${leftOffset}%`, top: `${topOffset}%` }}
+                              className="absolute flex items-center gap-1.5 transition-all duration-1000"
+                            >
+                              <div className="relative">
+                                <span className={`absolute -inset-2.5 rounded-full ${isSim ? 'bg-amber-500/30 animate-ping' : 'bg-[#2C5234]/15'}`}></span>
+                                <span className={`w-2.5 h-2.5 rounded-full border border-white shadow block ${isSim ? 'bg-amber-500 animate-pulse' : 'bg-secondary'}`}></span>
+                              </div>
+                              <span className="bg-white/90 px-1 py-0.5 rounded border border-slate-300 text-[8px] font-bold text-primary max-w-[80px] truncate shadow-sm">
+                                {van.title.split(' ')[0]} {isSim ? '🚀' : '📍'}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <div className="flex justify-between items-end z-10 bg-white/80 backdrop-blur-sm p-1.5 rounded border border-[#E5E1D8]/60 text-[8px]">
+                        <div>
+                          <span className="font-bold text-primary uppercase block">Telemetry Stream:</span>
+                          <span className="text-slate-600 font-medium">
+                            {vans.filter(v => v.currentLatitude).length} Simulating | {vans.filter(v => !v.currentLatitude).length} Stationary
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-slate-500 font-bold">COORDS SYNC: OK</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
             </div>
@@ -769,6 +1011,30 @@ export default function VendorDashboard() {
                 Cancel
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* 10-Minute Turnaround Warning Popup for Vendor */}
+      {sessionEndingAlert && (
+        <div className="fixed bottom-6 right-6 z-50 max-w-sm w-full bg-slate-900 border border-slate-800 text-white rounded-2xl shadow-2xl p-4 flex gap-3 animate-slide-up">
+          <div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-500 flex-shrink-0 animate-pulse">
+            <Clock className="w-5 h-5" />
+          </div>
+          <div className="flex-grow space-y-1">
+            <div className="flex justify-between items-start">
+              <span className="text-[10px] uppercase font-bold tracking-widest text-amber-500 animate-pulse">
+                Session Ending Soon
+              </span>
+              <span className="text-[10px] font-mono bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded font-bold">
+                {Math.floor(sessionEndingAlert.remainingSeconds / 60)}m {sessionEndingAlert.remainingSeconds % 60}s left
+              </span>
+            </div>
+            <h4 className="font-serif text-sm font-bold text-slate-100 leading-snug">
+              {sessionEndingAlert.booking.van.title}
+            </h4>
+            <p className="text-[11px] text-slate-400">
+              Customer <span className="font-semibold text-slate-200">{sessionEndingAlert.booking.customer.name}</span>'s session is concluding. Prepare the 15-minute turnaround cleaning buffer!
+            </p>
           </div>
         </div>
       )}

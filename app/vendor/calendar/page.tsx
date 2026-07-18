@@ -30,6 +30,43 @@ export default function VendorCalendar() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  const [generationMode, setGenerationMode] = useState<'auto' | 'custom'>('auto');
+  const [customStart, setCustomStart] = useState('09:00');
+  const [customEnd, setCustomEnd] = useState('10:00');
+  const [isCreatingCustom, setIsCreatingCustom] = useState(false);
+
+  const handleCreateCustomSlot = async () => {
+    if (!selectedVanId || !selectedDate || !customStart || !customEnd) return;
+    setIsCreatingCustom(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const res = await fetch('/api/vendor/availability/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          vanId: selectedVanId,
+          date: selectedDate,
+          startTime: customStart,
+          endTime: customEnd,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSuccess('Custom time slot added successfully.');
+        await fetchSlots();
+      } else {
+        setError(data.error || 'Failed to add custom time slot.');
+      }
+    } catch (err) {
+      setError('An error occurred creating the slot.');
+    } finally {
+      setIsCreatingCustom(false);
+    }
+  };
+
   // Set default date to today
   useEffect(() => {
     const today = new Date();
@@ -207,23 +244,86 @@ export default function VendorCalendar() {
             </div>
           </div>
 
-          {/* Generator Controls */}
+          {/* Generator Toggles */}
           {selectedVanId && (
-            <div className="p-4 bg-[#FCF9F6] border border-[#E5E1D8]/65 rounded-lg flex flex-col sm:flex-row justify-between items-center gap-4 text-xs">
-              <div className="space-y-1">
-                <span className="font-bold text-primary block">Auto-Generate Time Blocks</span>
-                <p className="text-[10px] text-muted-foreground leading-normal max-w-sm">
-                  Quickly generate standard hour-long slots from 9:00 AM to 6:00 PM for the selected date. Already existing blocks will be skipped.
-                </p>
+            <div className="space-y-4">
+              {/* Tab Selector */}
+              <div className="flex border-b border-[#E5E1D8] text-xs">
+                <button
+                  onClick={() => setGenerationMode('auto')}
+                  className={`py-2 px-4 font-bold border-b-2 transition-all cursor-pointer ${
+                    generationMode === 'auto'
+                      ? 'border-secondary text-secondary'
+                      : 'border-transparent text-muted-foreground hover:text-primary'
+                  }`}
+                >
+                  ⚡ Auto-Generate Tiers
+                </button>
+                <button
+                  onClick={() => setGenerationMode('custom')}
+                  className={`py-2 px-4 font-bold border-b-2 transition-all cursor-pointer ${
+                    generationMode === 'custom'
+                      ? 'border-secondary text-secondary'
+                      : 'border-transparent text-muted-foreground hover:text-primary'
+                  }`}
+                >
+                  👤 According to Vendor (Custom)
+                </button>
               </div>
 
-              <button
-                onClick={handleGenerateSlots}
-                disabled={isGenerating || loadingSlots}
-                className="w-full sm:w-auto py-2.5 px-4 bg-primary hover:bg-primary/95 text-primary-foreground font-bold rounded shadow transition-all whitespace-nowrap"
-              >
-                {isGenerating ? 'Generating...' : 'Generate 9AM - 6PM Slots'}
-              </button>
+              {/* Mode Views */}
+              {generationMode === 'auto' ? (
+                <div className="p-4 bg-[#FCF9F6] border border-[#E5E1D8]/65 rounded-lg flex flex-col sm:flex-row justify-between items-center gap-4 text-xs">
+                  <div className="space-y-1">
+                    <span className="font-bold text-primary block">Auto-Generate Time Blocks</span>
+                    <p className="text-[10px] text-muted-foreground leading-normal max-w-sm">
+                      Quickly generate standard hour-long slots from 9:00 AM to 6:00 PM for the selected date. Already existing slots will be skipped.
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={handleGenerateSlots}
+                    disabled={isGenerating || loadingSlots}
+                    className="w-full sm:w-auto py-2.5 px-4 bg-primary hover:bg-primary/95 text-primary-foreground font-bold rounded shadow transition-all whitespace-nowrap cursor-pointer"
+                  >
+                    {isGenerating ? 'Generating...' : 'Generate 9AM - 6PM Slots'}
+                  </button>
+                </div>
+              ) : (
+                <div className="p-4 bg-[#FCF9F6] border border-[#E5E1D8]/65 rounded-lg space-y-3.5 text-xs text-primary animate-fadeIn">
+                  <span className="font-bold text-primary block">Create Custom Open Time Block</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[9px] font-bold uppercase text-slate-400 mb-1">Start Time</label>
+                        <input
+                          type="time"
+                          value={customStart}
+                          onChange={(e) => setCustomStart(e.target.value)}
+                          className="w-full p-2 border border-[#E5E1D8] rounded bg-white font-medium focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-bold uppercase text-slate-400 mb-1">End Time</label>
+                        <input
+                          type="time"
+                          value={customEnd}
+                          onChange={(e) => setCustomEnd(e.target.value)}
+                          className="w-full p-2 border border-[#E5E1D8] rounded bg-white font-medium focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                    
+                    <button
+                      onClick={handleCreateCustomSlot}
+                      disabled={isCreatingCustom || loadingSlots}
+                      className="w-full py-2.5 px-4 bg-secondary hover:bg-secondary/95 text-white font-bold rounded shadow transition-all whitespace-nowrap cursor-pointer text-center"
+                    >
+                      {isCreatingCustom ? 'Saving Slot...' : 'Add Open Time Block'}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

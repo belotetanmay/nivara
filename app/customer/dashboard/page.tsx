@@ -53,7 +53,13 @@ export default function CustomerDashboard() {
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [payingOvertimeId, setPayingOvertimeId] = useState<string | null>(null);
+  const [showDemoButton, setShowDemoButton] = useState(false);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setShowDemoButton(window.location.search.includes('demo=true'));
+    }
+  }, []);
   const handlePayOvertime = async (bookingId: string) => {
     setPayingOvertimeId(bookingId);
     setError(null);
@@ -337,14 +343,16 @@ export default function CustomerDashboard() {
               <p className="text-sm text-muted-foreground">Manage your upcoming pods and review past recovery logs.</p>
             </div>
             <div className="flex flex-wrap gap-2.5">
-              <button
-                onClick={() => {
-                  window.dispatchEvent(new CustomEvent('trigger-demo-session'));
-                }}
-                className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-md text-primary bg-[#FAF8F5] border border-[#E5E1D8] hover:bg-gray-50 shadow-sm transition-all cursor-pointer"
-              >
-                🔧 Trigger Alerts Demo
-              </button>
+              {showDemoButton && (
+                <button
+                  onClick={() => {
+                    window.dispatchEvent(new CustomEvent('trigger-demo-session'));
+                  }}
+                  className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-md text-primary bg-[#FAF8F5] border border-[#E5E1D8] hover:bg-gray-50 shadow-sm transition-all cursor-pointer"
+                >
+                  🔧 Trigger Alerts Demo
+                </button>
+              )}
               <Link
                 href="/customer/search"
                 className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-md text-primary-foreground bg-primary hover:bg-primary/95 shadow transition-all"

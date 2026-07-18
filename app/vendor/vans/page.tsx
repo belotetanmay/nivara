@@ -184,15 +184,15 @@ export default function VendorVans() {
                     {/* Pricing Tiers grid */}
                     <div className="bg-[#FCF9F6] border border-[#E5E1D8]/65 p-3 rounded-lg grid grid-cols-3 gap-2 text-center">
                       <div>
-                        <span className="text-[9px] text-muted-foreground uppercase font-semibold">15 Min</span>
+                        <span className="text-[9px] text-muted-foreground uppercase font-semibold">30 Min</span>
                         <span className="block font-bold text-primary text-sm mt-0.5">₹{van.price15}</span>
                       </div>
                       <div className="border-l border-r border-[#E5E1D8]/80">
-                        <span className="text-[9px] text-muted-foreground uppercase font-semibold">30 Min</span>
+                        <span className="text-[9px] text-muted-foreground uppercase font-semibold">45 Min</span>
                         <span className="block font-bold text-primary text-sm mt-0.5">₹{van.price30}</span>
                       </div>
                       <div>
-                        <span className="text-[9px] text-muted-foreground uppercase font-semibold">45 Min</span>
+                        <span className="text-[9px] text-muted-foreground uppercase font-semibold">60 Min</span>
                         <span className="block font-bold text-primary text-sm mt-0.5">₹{van.price45}</span>
                       </div>
                     </div>

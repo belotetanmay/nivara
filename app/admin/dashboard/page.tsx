@@ -60,6 +60,8 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchStats();
+    const interval = setInterval(fetchStats, 8000);
+    return () => clearInterval(interval);
   }, []);
 
   const formatDate = (dateStr: string) => {
@@ -92,10 +94,20 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-8 page-entrance">
       
-      {/* Welcome Head */}
-      <div>
-        <h1 className="font-serif text-3xl font-bold tracking-tight text-primary">Platform Control Center</h1>
-        <p className="text-xs text-muted-foreground mt-1">Hello Founder. Monitor wellness vehicles active listings, verify users, and inspect logs.</p>
+      {/* Welcome Head with Real-time indicator */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="font-serif text-3xl font-bold tracking-tight text-primary">Platform Control Center</h1>
+          <p className="text-xs text-muted-foreground mt-1">Hello Founder. Monitor wellness vehicles active listings, verify users, and inspect logs.</p>
+        </div>
+        <div className="bg-[#FCF9F6] border border-[#E5E1D8] px-3 py-1.5 rounded-lg flex items-center gap-2 text-[10px] text-[#2C5234] font-bold uppercase shadow-sm">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#2C5234] opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#2C5234]"></span>
+          </span>
+          <span>Live Sync Active</span>
+          <span className="text-slate-400 font-normal">| Refreshes every 8s</span>
+        </div>
       </div>
 
       {/* 4 Stats Grid */}
