@@ -332,14 +332,26 @@ export default function VanDetailPage({ params }: { params: Promise<{ id: string
             <div className="bg-white border border-[#E5E1D8] p-6 rounded-xl space-y-4 shadow-sm">
               <h2 className="font-serif text-lg font-bold text-primary">Cabin Amenities</h2>
               <div className="flex flex-wrap gap-2.5">
-                {van.amenities.map((amenity) => (
-                  <span
-                    key={amenity}
-                    className="bg-[#FCF9F6] border border-[#E5E1D8] text-xs font-semibold text-primary px-3 py-1.5 rounded-md"
-                  >
-                    {amenity}
-                  </span>
-                ))}
+                {(() => {
+                  const basicList = ['Zero-Gravity Chair', 'Soundproofing', 'Calming Audio'];
+                  const intermediateList = ['Zero-Gravity Chair', 'Soundproofing', 'Calming Audio', 'Aromatherapy', 'Ambient Lighting'];
+                  let displayedAmenities = van.amenities;
+                  if (sessionLength === 30) {
+                    displayedAmenities = van.amenities.filter(a => basicList.some(item => a.toLowerCase().includes(item.toLowerCase())));
+                    if (displayedAmenities.length === 0) displayedAmenities = van.amenities.slice(0, 3);
+                  } else if (sessionLength === 45) {
+                    displayedAmenities = van.amenities.filter(a => intermediateList.some(item => a.toLowerCase().includes(item.toLowerCase())));
+                    if (displayedAmenities.length === 0) displayedAmenities = van.amenities.slice(0, 5);
+                  }
+                  return displayedAmenities.map((amenity) => (
+                    <span
+                      key={amenity}
+                      className="bg-[#FCF9F6] border border-[#E5E1D8] text-xs font-semibold text-primary px-3 py-1.5 rounded-md transition-all duration-300 animate-in fade-in"
+                    >
+                      {amenity}
+                    </span>
+                  ));
+                })()}
               </div>
             </div>
 

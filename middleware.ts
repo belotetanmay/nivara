@@ -22,7 +22,11 @@ export function middleware(request: NextRequest) {
   // Define protected paths
   const isAdminPath = path.startsWith('/admin');
   const isVendorPath = path.startsWith('/vendor');
-  const isCustomerPath = path.startsWith('/customer');
+  const isCustomerPath = 
+    path.startsWith('/customer/dashboard') || 
+    path.startsWith('/customer/kyc') || 
+    path.startsWith('/customer/bookings') || 
+    path.startsWith('/customer/review');
   const isLoginPath = path === '/login' || path === '/register';
 
   if (!isAdminPath && !isVendorPath && !isCustomerPath && !isLoginPath) {
