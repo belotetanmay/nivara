@@ -11,6 +11,9 @@ import MapScreen from './screens/Customer/MapScreen';
 import VanDetailsScreen from './screens/Customer/VanDetailsScreen';
 import BookingsScreen from './screens/Customer/BookingsScreen';
 import ScanQRScreen from './screens/Vendor/ScanQRScreen';
+import VendorDashboardScreen from './screens/Vendor/VendorDashboardScreen';
+import AdminDashboardScreen from './screens/Admin/AdminDashboardScreen';
+import AdminApprovalsScreen from './screens/Admin/AdminApprovalsScreen';
 
 const Stack = createStackNavigator();
 
@@ -20,7 +23,7 @@ function NavigationRouter() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#4F46E5" />
+        <ActivityIndicator size="large" color="#0A2540" />
       </View>
     );
   }
@@ -34,12 +37,29 @@ function NavigationRouter() {
           <Stack.Screen name="Register" component={RegisterScreen} />
         </>
       ) : (
-        // Authenticated Stack
+        // Authenticated Stack (Isolated by role to ensure proper landing screens)
         <>
-          <Stack.Screen name="Map" component={MapScreen} />
-          <Stack.Screen name="VanDetails" component={VanDetailsScreen} />
-          <Stack.Screen name="Bookings" component={BookingsScreen} />
-          <Stack.Screen name="ScanQR" component={ScanQRScreen} />
+          {user.role === 'ADMIN' && (
+            <>
+              <Stack.Screen name="AdminDashboard" component={AdminDashboardScreen} />
+              <Stack.Screen name="AdminApprovals" component={AdminApprovalsScreen} />
+            </>
+          )}
+
+          {user.role === 'VENDOR' && (
+            <>
+              <Stack.Screen name="VendorDashboard" component={VendorDashboardScreen} />
+              <Stack.Screen name="ScanQR" component={ScanQRScreen} />
+            </>
+          )}
+
+          {user.role === 'CUSTOMER' && (
+            <>
+              <Stack.Screen name="Map" component={MapScreen} />
+              <Stack.Screen name="VanDetails" component={VanDetailsScreen} />
+              <Stack.Screen name="Bookings" component={BookingsScreen} />
+            </>
+          )}
         </>
       )}
     </Stack.Navigator>
@@ -59,7 +79,7 @@ export default function App() {
 const styles = StyleSheet.create({
   center: {
     flex: 1,
-    backgroundColor: '#0F0C1B',
+    backgroundColor: '#FAF8F5',
     justifyContent: 'center',
     alignItems: 'center',
   },

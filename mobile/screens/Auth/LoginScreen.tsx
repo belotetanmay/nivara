@@ -10,6 +10,7 @@ import {
   Platform,
   ScrollView,
   StatusBar,
+  Image,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { KeyRound, Mail, AlertCircle, Sparkles } from 'lucide-react-native';
@@ -51,10 +52,11 @@ export default function LoginScreen({ navigation }: any) {
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
         {/* Prominent Logo Visibility */}
         <View style={styles.headerContainer}>
-          <View style={styles.logoBadge}>
-            <Sparkles size={24} color="#2C5234" />
-          </View>
-          <Text style={styles.logoText}>N I V A R A</Text>
+          <Image
+            source={{ uri: 'http://192.168.1.93:3000/nivara_logo_transparent.png' }}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
           <Text style={styles.taglineText}>Reclaim your peaceful state.</Text>
         </View>
 
@@ -143,20 +145,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 32,
   },
-  logoBadge: {
-    backgroundColor: '#FAF8F5',
-    borderWidth: 1.5,
-    borderColor: '#2C5234', // Forest green border
-    padding: 12,
-    borderRadius: 20,
-    marginBottom: 12,
-  },
-  logoText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#0A2540', // Deep Navy brand color
-    letterSpacing: 6,
-    fontFamily: Platform.OS === 'ios' ? 'HelveticaNeue-CondensedBold' : 'sans-serif-condensed',
+  logoImage: {
+    width: 180,
+    height: 60,
+    marginBottom: 8,
   },
   taglineText: {
     fontSize: 13,

@@ -6,7 +6,7 @@ interface AuthContextType {
   user: any;
   loading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (name: string, email: string, password: string, role: 'CUSTOMER' | 'VENDOR', businessName?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
 }
@@ -59,9 +59,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const register = async (name: string, email: string, password: string) => {
+  const register = async (name: string, email: string, password: string, role: 'CUSTOMER' | 'VENDOR', businessName?: string) => {
     try {
-      const response = await apiClient.post('/auth/register', { name, email, password });
+      const response = await apiClient.post('/auth/register', { name, email, password, role, businessName });
       if (response.data.success) {
         // Automatically login the user after registration
         const { token, user: userData } = response.data;

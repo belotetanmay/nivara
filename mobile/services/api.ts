@@ -7,13 +7,14 @@ import { Platform } from 'react-native';
 // For iOS Simulator, 'localhost' points to your computer's localhost.
 // If testing on a physical device, replace this with your computer's local IP address (e.g., 'http://192.168.1.XX:3000/api').
 const getBaseUrl = () => {
-  return 'http://192.168.1.93:3000/api';
+  return 'https://metal-mangos-go.loca.lt/api';
 };
 
 const apiClient = axios.create({
   baseURL: getBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
+    'Bypass-Tunnel-Reminder': 'true',
   },
   timeout: 10000,
 });

@@ -10,9 +10,10 @@ import {
   Platform,
   ScrollView,
   StatusBar,
+  Image,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
-import { KeyRound, Mail, User, AlertCircle, Sparkles } from 'lucide-react-native';
+import { KeyRound, Mail, User, AlertCircle, Sparkles, Building2 } from 'lucide-react-native';
 
 export default function RegisterScreen({ navigation }: any) {
   const { register } = useAuth();
@@ -20,12 +21,22 @@ export default function RegisterScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  
+  // New Role Selector States
+  const [role, setRole] = useState<'CUSTOMER' | 'VENDOR'>('CUSTOMER');
+  const [businessName, setBusinessName] = useState('');
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleRegister = async () => {
     if (!name.trim() || !email.trim() || !password || !confirmPassword) {
       setError('Please fill in all fields');
+      return;
+    }
+
+    if (role === 'VENDOR' && !businessName.trim()) {
+      setError('Please enter your business name');
       return;
     }
 
@@ -43,7 +54,14 @@ export default function RegisterScreen({ navigation }: any) {
     setLoading(true);
 
     try {
-      const result = await register(name.trim(), email.trim(), password);
+      const result = await register(
+        name.trim(),
+        email.trim(),
+        password,
+        role,
+        role === 'VENDOR' ? businessName.trim() : undefined
+      );
+
       if (!result.success) {
         setError(result.error || 'Registration failed');
       }
@@ -63,16 +81,17 @@ export default function RegisterScreen({ navigation }: any) {
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
         {/* Prominent Logo Visibility */}
         <View style={styles.headerContainer}>
-          <View style={styles.logoBadge}>
-            <Sparkles size={24} color="#2C5234" />
-          </View>
-          <Text style={styles.logoText}>N I V A R A</Text>
+          <Image
+            source={{ uri: 'http://192.168.1.93:3000/nivara_logo_transparent.png' }}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
           <Text style={styles.taglineText}>Reclaim your peaceful state.</Text>
         </View>
 
         <View style={styles.cardContainer}>
           <Text style={styles.titleText}>Join Nivara</Text>
-          <Text style={styles.subtitleText}>Create an account to book your wellness pods.</Text>
+          <Text style={styles.subtitleText}>Create an account to escape the chaos.</Text>
 
           {error && (
             <View style={styles.errorContainer}>
@@ -80,6 +99,36 @@ export default function RegisterScreen({ navigation }: any) {
               <Text style={styles.errorText}>{error}</Text>
             </View>
           )}
+
+          {/* Account Type Selector (Customer vs Vendor Cards) */}
+          <Text style={styles.fieldLabel}>I want to sign up as:</Text>
+          <View style={styles.roleSelectorRow}>
+            <TouchableOpacity
+              style={[styles.roleCard, role === 'CUSTOMER' && styles.roleCardSelected]}
+              onPress={() => {
+                setRole('CUSTOMER');
+                setError(null);
+              }}
+            >
+              <Sparkles size={20} color={role === 'CUSTOMER' ? '#FFF' : '#0A2540'} style={{ marginBottom: 4 }} />
+              <Text style={[styles.roleCardText, role === 'CUSTOMER' && styles.roleCardTextSelected]}>
+                Customer
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.roleCard, role === 'VENDOR' && styles.roleCardSelected]}
+              onPress={() => {
+                setRole('VENDOR');
+                setError(null);
+              }}
+            >
+              <Building2 size={20} color={role === 'VENDOR' ? '#FFF' : '#0A2540'} style={{ marginBottom: 4 }} />
+              <Text style={[styles.roleCardText, role === 'VENDOR' && styles.roleCardTextSelected]}>
+                Wellness Partner
+              </Text>
+            </TouchableOpacity>
+          </View>
 
           {/* Name Input */}
           <Text style={styles.fieldLabel}>Full Name</Text>
@@ -97,6 +146,27 @@ export default function RegisterScreen({ navigation }: any) {
               }}
             />
           </View>
+
+          {/* Vendor specific Business Name Input */}
+          {role === 'VENDOR' && (
+            <>
+              <Text style={styles.fieldLabel}>Business / Company Name</Text>
+              <View style={styles.inputWrapper}>
+                <Building2 size={18} color="#0A2540" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="e.g. Vikas Wellness Vans"
+                  placeholderTextColor="#8F8C87"
+                  autoCapitalize="words"
+                  value={businessName}
+                  onChangeText={(text) => {
+                    setBusinessName(text);
+                    setError(null);
+                  }}
+                />
+              </View>
+            </>
+          )}
 
           {/* Email Input */}
           <Text style={styles.fieldLabel}>Email Address</Text>
@@ -186,25 +256,16 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     padding: 24,
+    paddingTop: Platform.OS === 'ios' ? 44 : 24,
   },
   headerContainer: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
   },
-  logoBadge: {
-    backgroundColor: '#FAF8F5',
-    borderWidth: 1.5,
-    borderColor: '#2C5234',
-    padding: 12,
-    borderRadius: 20,
-    marginBottom: 12,
-  },
-  logoText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#0A2540',
-    letterSpacing: 6,
-    fontFamily: Platform.OS === 'ios' ? 'HelveticaNeue-CondensedBold' : 'sans-serif-condensed',
+  logoImage: {
+    width: 180,
+    height: 60,
+    marginBottom: 8,
   },
   taglineText: {
     fontSize: 13,
@@ -252,6 +313,34 @@ const styles = StyleSheet.create({
     fontSize: 13,
     flex: 1,
     fontWeight: '600',
+  },
+  roleSelectorRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  roleCard: {
+    width: '48%',
+    backgroundColor: '#FAF8F5',
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#E5E1D8',
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  roleCardSelected: {
+    backgroundColor: '#0A2540',
+    borderColor: '#0A2540',
+  },
+  roleCardText: {
+    color: '#0A2540',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginTop: 2,
+  },
+  roleCardTextSelected: {
+    color: '#FFF',
   },
   fieldLabel: {
     color: '#0A2540',
