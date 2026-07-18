@@ -24,6 +24,15 @@ interface Van {
   address: string;
   price30: number;
   status: 'UNDER_REVIEW' | 'ACTIVE' | 'INACTIVE';
+  vehicleNumber: string | null;
+  chassisNumber: string | null;
+  insuranceUrl: string | null;
+  pucUrl: string | null;
+  rcUrl: string | null;
+  isCommercial: boolean;
+  onSiteInspectionCertUrl: string | null;
+  fakePhotoDeclaration: boolean;
+  photos: string[];
 }
 
 interface VendorProfile {
@@ -33,6 +42,16 @@ interface VendorProfile {
   payoutDetails: string;
   verificationStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
   rejectionReason: string | null;
+  businessRegistrationNo: string | null;
+  businessLicenseNo: string | null;
+  gstNumber: string | null;
+  panNumber: string | null;
+  bankName: string | null;
+  bankAccountNumber: string | null;
+  bankIfsc: string | null;
+  driverName: string | null;
+  driverLicenseNo: string | null;
+  driverKycUrl: string | null;
   user: {
     name: string;
     email: string;
@@ -500,14 +519,52 @@ export default function AdminApprovals() {
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-muted-foreground leading-normal">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-muted-foreground leading-normal border-b border-[#FAF8F5] pb-3">
                       <div>
                         <span className="font-semibold text-primary block">Owner Name:</span>
                         <span>{vendor.user.name} ({vendor.user.email})</span>
                       </div>
                       <div>
-                        <span className="font-semibold text-primary block">Payout Dest Account Details:</span>
-                        <span className="font-bold">{vendor.payoutDetails}</span>
+                        <span className="font-semibold text-primary block">Payout Dest Bank Account:</span>
+                        <span className="font-mono text-primary font-bold">
+                          {vendor.bankName} • Acc: {vendor.bankAccountNumber} • IFSC: {vendor.bankIfsc}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-muted-foreground leading-normal border-b border-[#FAF8F5] pb-3">
+                      <div>
+                        <span className="font-semibold text-primary block">Business Reg No:</span>
+                        <span className="font-mono text-primary">{vendor.businessRegistrationNo}</span>
+                      </div>
+                      <div>
+                        <span className="font-semibold text-primary block">GSTIN / License No:</span>
+                        <span className="font-mono text-primary">{vendor.gstNumber} • {vendor.businessLicenseNo}</span>
+                      </div>
+                      <div>
+                        <span className="font-semibold text-primary block">PAN Card Number:</span>
+                        <span className="font-mono text-primary">{vendor.panNumber}</span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-muted-foreground leading-normal border-b border-[#FAF8F5] pb-3 bg-secondary/5 p-3 rounded-lg border border-secondary/15">
+                      <div>
+                        <span className="font-semibold text-primary block">Staff Driver Name:</span>
+                        <span>{vendor.driverName}</span>
+                      </div>
+                      <div>
+                        <span className="font-semibold text-primary block">Driver License No & Documents:</span>
+                        <span className="font-mono text-primary block">{vendor.driverLicenseNo}</span>
+                        {vendor.driverKycUrl && (
+                          <a
+                            href={vendor.driverKycUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-secondary hover:underline font-bold mt-1 inline-block"
+                          >
+                            📄 View Driver KYC Credentials Document
+                          </a>
+                        )}
                       </div>
                     </div>
 
@@ -597,9 +654,81 @@ export default function AdminApprovals() {
                         </span>
                       </div>
 
-                      <div className="leading-relaxed text-muted-foreground">
+                      <div className="leading-relaxed text-muted-foreground border-b border-[#FAF8F5] pb-3">
                         <span className="font-semibold text-primary block">Vehicle address:</span>
                         <span>{van.address}</span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-muted-foreground leading-normal border-b border-[#FAF8F5] pb-3">
+                        <div>
+                          <span className="font-semibold text-primary block">Vehicle Plate Number:</span>
+                          <span className="font-mono text-primary font-bold">{van.vehicleNumber}</span>
+                        </div>
+                        <div>
+                          <span className="font-semibold text-primary block">Chassis Number:</span>
+                          <span className="font-mono text-primary">{van.chassisNumber}</span>
+                        </div>
+                        <div>
+                          <span className="font-semibold text-primary block">Passing Classification:</span>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${van.isCommercial ? 'bg-secondary/15 text-secondary border border-secondary/20' : 'bg-red-50 text-red-600'}`}>
+                            {van.isCommercial ? '⚠️ COMMERCIAL PASSING' : 'PRIVATE PASSING'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-muted-foreground leading-normal border-b border-[#FAF8F5] pb-3">
+                        <div>
+                          <span className="font-semibold text-primary block">RC Document Proof:</span>
+                          {van.rcUrl ? (
+                            <a href={van.rcUrl} target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline font-bold">
+                              📄 View Registration Certificate (RC)
+                            </a>
+                          ) : <span className="text-red-500">Not Uploaded</span>}
+                        </div>
+                        <div>
+                          <span className="font-semibold text-primary block">Vehicle Insurance:</span>
+                          {van.insuranceUrl ? (
+                            <a href={van.insuranceUrl} target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline font-bold">
+                              📄 View Valid Insurance Document
+                            </a>
+                          ) : <span className="text-red-500">Not Uploaded</span>}
+                        </div>
+                        <div>
+                          <span className="font-semibold text-primary block">PUC Emissions Cert:</span>
+                          {van.pucUrl ? (
+                            <a href={van.pucUrl} target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline font-bold">
+                              📄 View Pollution (PUC) Cert
+                            </a>
+                          ) : <span className="text-red-500">Not Uploaded</span>}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-muted-foreground leading-normal border-b border-[#FAF8F5] pb-3 bg-secondary/5 p-3 rounded-lg border border-secondary/15">
+                        <div>
+                          <span className="font-semibold text-primary block">On-Sight Inspection Cert:</span>
+                          {van.onSiteInspectionCertUrl ? (
+                            <a href={van.onSiteInspectionCertUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-secondary hover:underline font-extrabold flex items-center gap-1 mt-0.5">
+                              📋 View Certified Inspection Report
+                            </a>
+                          ) : <span className="text-red-500">Not Uploaded</span>}
+                        </div>
+                        <div>
+                          <span className="font-semibold text-primary block">Photos Trust Declaration:</span>
+                          <span className="font-semibold text-[#2C5234]">
+                            {van.fakePhotoDeclaration ? '✓ Declared Original & Inspected (Verified)' : '❌ Not Declared'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <span className="font-semibold text-primary block mb-2">Uploaded Cabin Photos:</span>
+                        <div className="flex flex-wrap gap-2">
+                          {van.photos && van.photos.map((photo, i) => (
+                            <a key={i} href={photo} target="_blank" rel="noopener noreferrer" className="border border-[#E5E1D8] rounded overflow-hidden">
+                              <img src={photo.startsWith('/images/') ? '/van_demo.jpg' : photo} className="w-14 h-14 object-cover hover:opacity-80 transition-opacity" alt="preview" />
+                            </a>
+                          ))}
+                        </div>
                       </div>
 
                       {rejectingId === van.id ? (

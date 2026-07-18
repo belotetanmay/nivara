@@ -92,6 +92,19 @@ model VendorProfile {
   payoutDetails      String       // Text or JSON
   ratingAvg          Float        @default(0.0)
   totalBookings      Int          @default(0)
+  
+  // Business Validation Fields
+  businessRegistrationNo String?
+  businessLicenseNo      String?
+  gstNumber              String?
+  panNumber              String?
+  bankName               String?
+  bankAccountNumber      String?
+  bankIfsc               String?
+  driverName             String?
+  driverLicenseNo        String?
+  driverKycUrl           String?
+
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
   
@@ -118,6 +131,17 @@ model Van {
   hasAttendant   Boolean        @default(false)
   attendantName  String?
   serviceType    String         @default("STEADY") // "STEADY", "PICK_AND_DROP", or "BOTH"
+  
+  // Vehicle Details & Certifications
+  vehicleNumber  String?
+  chassisNumber  String?
+  insuranceUrl   String?
+  pucUrl         String?
+  rcUrl          String?
+  isCommercial   Boolean        @default(false)
+  onSiteInspectionCertUrl String?
+  fakePhotoDeclaration   Boolean        @default(false)
+
   currentLatitude Float?
   currentLongitude Float?
   createdAt      DateTime       @default(now())

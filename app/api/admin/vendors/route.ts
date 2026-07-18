@@ -25,13 +25,7 @@ export async function GET() {
             phone: true,
           },
         },
-        vans: {
-          select: {
-            id: true,
-            title: true,
-            status: true,
-          },
-        },
+        vans: true,
       },
       orderBy: {
         createdAt: 'desc',
