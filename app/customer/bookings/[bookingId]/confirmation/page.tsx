@@ -19,6 +19,7 @@ interface Booking {
     longitude: number;
     currentLatitude?: number | null;
     currentLongitude?: number | null;
+    photos: string[];
   };
   availability: {
     startTime: string;
@@ -122,14 +123,21 @@ export default function BookingConfirmation({ params }: { params: Promise<{ book
 
           {/* Ticket Ticket Design */}
           <div className="border-2 border-dashed border-[#D4A373] bg-[#FCF9F6]/40 p-6 rounded-xl space-y-5 text-left relative">
-            <div className="flex justify-between items-start border-b border-[#E5E1D8]/40 pb-4">
-              <div>
-                <span className="text-[10px] text-muted-foreground uppercase tracking-widest block font-bold">Wellness Pod</span>
-                <h3 className="font-serif text-base font-bold text-primary">{booking.van.title}</h3>
+            <div className="flex flex-col sm:flex-row gap-4 items-start border-b border-[#E5E1D8]/40 pb-4">
+              <div className="w-full sm:w-28 h-16 rounded-lg overflow-hidden border border-[#E5E1D8]/40 flex-shrink-0 relative">
+                <img
+                  src={(booking.van.photos && booking.van.photos.length > 0 && !booking.van.photos[0].startsWith('/images/')) ? booking.van.photos[0] : "/van_demo.jpg"}
+                  alt={booking.van.title}
+                  className="w-full h-full object-cover"
+                />
               </div>
-              <div className="text-right">
+              <div className="flex-grow">
+                <span className="text-[10px] text-muted-foreground uppercase tracking-widest block font-bold">Wellness Pod</span>
+                <h3 className="font-serif text-lg font-bold text-primary">{booking.van.title}</h3>
+              </div>
+              <div className="text-right sm:text-right w-full sm:w-auto">
                 <span className="text-[10px] text-muted-foreground uppercase tracking-widest block font-bold">Total Paid</span>
-                <span className="font-bold text-primary text-sm">₹{booking.payment?.amount || 0}</span>
+                <span className="font-bold text-primary text-base">₹{booking.payment?.amount || 0}</span>
               </div>
             </div>
 

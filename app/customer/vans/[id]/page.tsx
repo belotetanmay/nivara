@@ -296,7 +296,7 @@ export default function VanDetailPage({ params }: { params: Promise<{ id: string
             {/* Visual Header / Photo Grid */}
             <div className="relative w-full h-64 sm:h-80 rounded-xl border border-[#E5E1D8] shadow-sm overflow-hidden">
               <img
-                src={(van.photos && van.photos.length > 0) ? van.photos[0] : "/van_demo.jpg"}
+                src={(van.photos && van.photos.length > 0 && !van.photos[0].startsWith('/images/')) ? van.photos[0] : "/van_demo.jpg"}
                 alt={van.title}
                 className="w-full h-full object-cover"
               />

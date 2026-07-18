@@ -419,7 +419,7 @@ export default function CustomerSearch() {
                     {/* Visual Placeholder */}
                     <div className="w-full sm:w-28 h-28 rounded-lg flex-shrink-0 border border-[#E5E1D8]/40 overflow-hidden relative">
                       <img
-                        src={(van.photos && van.photos.length > 0) ? van.photos[0] : "/van_demo.jpg"}
+                        src={(van.photos && van.photos.length > 0 && !van.photos[0].startsWith('/images/')) ? van.photos[0] : "/van_demo.jpg"}
                         alt={van.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />

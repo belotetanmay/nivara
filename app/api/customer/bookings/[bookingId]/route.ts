@@ -34,6 +34,7 @@ export async function GET(
             longitude: true,
             currentLatitude: true,
             currentLongitude: true,
+            photos: true,
           },
         },
         availability: {

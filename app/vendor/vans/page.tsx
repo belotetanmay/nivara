@@ -18,6 +18,7 @@ interface Van {
   status: 'UNDER_REVIEW' | 'ACTIVE' | 'INACTIVE';
   hasAttendant: boolean;
   attendantName: string | null;
+  photos: string[];
 }
 
 export default function VendorVans() {
@@ -160,6 +161,15 @@ export default function VendorVans() {
                   key={van.id}
                   className="bg-white rounded-xl border border-[#E5E1D8] shadow-sm flex flex-col hover:shadow-md transition-all group"
                 >
+                  {/* Visual Header / Photo */}
+                  <div className="w-full h-36 rounded-t-xl overflow-hidden relative">
+                    <img
+                      src={(van.photos && van.photos.length > 0 && !van.photos[0].startsWith('/images/')) ? van.photos[0] : "/van_demo.jpg"}
+                      alt={van.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+
                   {/* Visual Header */}
                   <div className="p-5 border-b border-[#FAF8F5] flex justify-between items-start gap-2">
                     <div>

@@ -19,6 +19,7 @@ interface Booking {
   van: {
     title: string;
     address: string;
+    photos: string[];
   };
   availability: {
     startTime: string;
@@ -163,23 +164,34 @@ export default function BookingCheckout({ params }: { params: Promise<{ bookingI
 
           {/* Details Summary Card */}
           <div className="border-b border-[#FAF8F5] pb-6 space-y-4">
-            <h3 className="font-serif text-base font-bold text-primary">{booking.van.title}</h3>
+            <div className="flex flex-col sm:flex-row gap-4 items-start pb-4 border-b border-[#FAF8F5]/80">
+              <div className="w-full sm:w-32 h-20 rounded-lg overflow-hidden border border-[#E5E1D8]/40 flex-shrink-0 relative">
+                <img
+                  src={(booking.van.photos && booking.van.photos.length > 0 && !booking.van.photos[0].startsWith('/images/')) ? booking.van.photos[0] : "/van_demo.jpg"}
+                  alt={booking.van.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="space-y-1 pt-1">
+                <h3 className="font-serif text-lg font-bold text-primary">{booking.van.title}</h3>
+                <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                  <MapPin className="w-3.5 h-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <span className="leading-relaxed">{booking.van.address}</span>
+                </div>
+              </div>
+            </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              <div className="flex items-start gap-2">
-                <MapPin className="w-4.5 h-4.5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                <div className="space-y-1">
-                  <span className="leading-relaxed text-muted-foreground block">{booking.van.address}</span>
-                  <span className="inline-block bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded text-[10px] font-bold">
-                    Mode: {booking.serviceModel === 'PICK_AND_DROP' ? '🚗 Pick & Drop' : '📍 Steady Station'}
-                  </span>
-                  {booking.serviceModel === 'PICK_AND_DROP' && (
-                    <div className="text-[10px] text-slate-500 space-y-0.5 pt-1.5 border-t border-[#FAF8F5]">
-                      <p><span className="font-bold">Pick-up:</span> {booking.pickupAddress}</p>
-                      <p><span className="font-bold">Drop-off:</span> {booking.dropoffAddress}</p>
-                    </div>
-                  )}
-                </div>
+              <div className="space-y-1.5">
+                <span className="inline-block bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded text-[10px] font-bold">
+                  Mode: {booking.serviceModel === 'PICK_AND_DROP' ? '🚗 Pick & Drop' : '📍 Steady Station'}
+                </span>
+                {booking.serviceModel === 'PICK_AND_DROP' && (
+                  <div className="text-[10px] text-slate-500 space-y-0.5 pt-1.5 border-t border-[#FAF8F5]">
+                    <p><span className="font-bold">Pick-up:</span> {booking.pickupAddress}</p>
+                    <p><span className="font-bold">Drop-off:</span> {booking.dropoffAddress}</p>
+                  </div>
+                )}
               </div>
               
               <div className="space-y-2">

@@ -12,6 +12,7 @@ interface Van {
   address: string;
   price30: number;
   amenities: string[];
+  photos: string[];
 }
 
 interface Review {
@@ -185,6 +186,15 @@ export default function VendorPortfolio({ params }: { params: Promise<{ vendorId
                     key={van.id}
                     className="bg-white border border-[#E5E1D8] rounded-xl p-5 flex flex-col justify-between gap-4 hover:shadow-md transition-all shadow-sm group"
                   >
+                    {/* Visual Header / Photo */}
+                    <div className="w-full h-36 rounded-lg border border-[#E5E1D8]/40 overflow-hidden relative">
+                      <img
+                        src={(van.photos && van.photos.length > 0 && !van.photos[0].startsWith('/images/')) ? van.photos[0] : "/van_demo.jpg"}
+                        alt={van.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+
                     <div className="space-y-3.5">
                       <div className="space-y-1">
                         <h3 className="font-serif text-lg font-bold text-primary leading-tight group-hover:text-secondary transition-colors">
