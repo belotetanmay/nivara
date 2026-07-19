@@ -77,6 +77,7 @@ export async function PATCH(
       message: `User successfully ${statusMsg}`,
     });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    console.error('Admin user suspend error:', error);
+    return NextResponse.json({ success: false, error: 'An unexpected internal error occurred.' }, { status: 500 });
   }
 }

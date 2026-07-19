@@ -35,6 +35,7 @@ export async function GET() {
       logs,
     });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    console.error('Admin audit logs API error:', error);
+    return NextResponse.json({ success: false, error: 'An unexpected internal error occurred.' }, { status: 500 });
   }
 }

@@ -60,6 +60,7 @@ export async function GET(request: Request) {
       users,
     });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    console.error('Admin users API error:', error);
+    return NextResponse.json({ success: false, error: 'An unexpected internal error occurred.' }, { status: 500 });
   }
 }
