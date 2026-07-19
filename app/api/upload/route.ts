@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
 import { verifyToken } from '@/lib/auth';
 
 export async function POST(request: Request) {
@@ -19,7 +17,7 @@ export async function POST(request: Request) {
     }
 
     const formData = await request.formData();
-    const file = (formData as any).get('file') as File | null;
+    const file = formData.get('file') as File | null;
     
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
@@ -33,15 +31,67 @@ export async function POST(request: Request) {
     const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
     const filename = `${Date.now()}_${uniqueSuffix}_${cleanFileName}`;
 
-    const uploadDir = join(process.cwd(), 'public', 'uploads');
-    
-    // Ensure directory exists
-    await mkdir(uploadDir, { recursive: true });
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    const fullPath = join(uploadDir, filename);
-    await writeFile(fullPath, buffer);
+    if (supabaseUrl && supabaseKey) {
+      try {
+        // Try uploading to 'uploads' bucket in Supabase storage
+        const uploadUrl = `${supabaseUrl}/storage/v1/object/uploads/${filename}`;
+        let uploadRes = await fetch(uploadUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${supabaseKey}`,
+            'Content-Type': file.type || 'application/octet-stream',
+          },
+          body: buffer,
+        });
 
-    const fileUrl = `/uploads/${filename}`;
+        // If bucket doesn't exist, try to create it and retry upload
+        if (uploadRes.status === 404 || uploadRes.status === 400) {
+          const createBucketUrl = `${supabaseUrl}/storage/v1/bucket`;
+          const createRes = await fetch(createBucketUrl, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${supabaseKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              id: 'uploads',
+              name: 'uploads',
+              public: true,
+              file_size_limit: 52428800, // 50MB
+            }),
+          });
+
+          if (createRes.ok) {
+            // Retry upload
+            uploadRes = await fetch(uploadUrl, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${supabaseKey}`,
+                'Content-Type': file.type || 'application/octet-stream',
+              },
+              body: buffer,
+            });
+          }
+        }
+
+        if (uploadRes.ok) {
+          const fileUrl = `${supabaseUrl}/storage/v1/object/public/uploads/${filename}`;
+          return NextResponse.json({
+            success: true,
+            fileUrl,
+          });
+        }
+      } catch (storageError) {
+        console.error('Supabase storage upload error:', storageError);
+      }
+    }
+
+    // Fallback: Base64 data URL (works 100% serverless without write/read filesystem)
+    const base64Data = buffer.toString('base64');
+    const fileUrl = `data:${file.type || 'image/png'};base64,${base64Data}`;
 
     return NextResponse.json({
       success: true,
