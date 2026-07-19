@@ -32,7 +32,7 @@ export default function TermsOfService() {
             {[
               { id: 'users', label: 'User Terms (Part A)', icon: Scale },
               { id: 'cancellation', label: 'Cancellation & Refunds (Part B)', icon: RotateCcw },
-              { id: 'vendors', label: 'Partner Provisions (Part E)', icon: Award },
+              { id: 'vendors', label: 'Partner Provisions (Part C)', icon: Award },
               { id: 'grievance', label: 'Grievance Redressal (Part D)', icon: ShieldCheck }
             ].map((tab) => {
               const Icon = tab.icon;
@@ -154,7 +154,7 @@ export default function TermsOfService() {
               <div className="space-y-6 animate-fadeIn">
                 <h2 className="font-serif text-lg font-bold text-[#0A2540] border-b pb-2">Wellness Partner (Vendor) Key Provisions</h2>
                 <p>
-                  These provisions apply to Wellness Partners in addition to Parts A–D, and are supplemented by the separate Wellness Partner Agreement signed at onboarding.
+                  These provisions apply to Wellness Partners in addition to Parts A–B, and are supplemented by the separate Wellness Partner Agreement signed at onboarding.
                 </p>
 
                 <div className="space-y-4">
