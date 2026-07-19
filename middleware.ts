@@ -1,10 +1,41 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-function parseJwt(token: string) {
+// Cryptographically verify HMAC SHA-256 JWT signature using native Web Crypto APIs (compatible with Next.js Edge runtime)
+async function verifyJwtSignature(token: string, secret: string): Promise<any | null> {
   try {
     const parts = token.split('.');
     if (parts.length !== 3) return null;
+
+    const [header, payload, signature] = parts;
+    const dataToVerify = `${header}.${payload}`;
+
+    const encoder = new TextEncoder();
+    const secretKeyData = encoder.encode(secret);
+
+    // Import secret key for HMAC
+    const key = await crypto.subtle.importKey(
+      'raw',
+      secretKeyData,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['verify']
+    );
+    // Decode base64url signature
+    const signatureBytes = base64UrlToBytes(signature);
+    const dataBytes = encoder.encode(dataToVerify);
+
+    // Verify cryptographic signature
+    const isValid = await crypto.subtle.verify(
+      'HMAC',
+      key,
+      signatureBytes as any,
+      dataBytes as any
+    );
+
+    if (!isValid) return null;
+
+    // Decode and parse payload
     const base64Url = parts[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     const raw = atob(base64);
@@ -12,11 +43,25 @@ function parseJwt(token: string) {
     const decoder = new TextDecoder();
     return JSON.parse(decoder.decode(bytes));
   } catch (e) {
+    console.error('Edge cryptographic JWT verification failed:', e);
     return null;
   }
 }
 
-export function middleware(request: NextRequest) {
+function base64UrlToBytes(base64Url: string): Uint8Array {
+  let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+  while (base64.length % 4) {
+    base64 += '=';
+  }
+  const binaryString = atob(base64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+}
+
+export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   
   // Define protected paths
@@ -35,12 +80,15 @@ export function middleware(request: NextRequest) {
 
   const tokenCookie = request.cookies.get('auth_token');
   const token = tokenCookie?.value;
+  const JWT_SECRET = process.env.JWT_SECRET;
 
-  if (token) {
-    const payload = parseJwt(token);
+  if (token && JWT_SECRET) {
+    // Perform cryptographic verification of the signature
+    const payload = await verifyJwtSignature(token, JWT_SECRET);
     const currentTime = Math.floor(Date.now() / 1000);
+
     if (!payload || !payload.role || !payload.userId || (payload.exp && currentTime >= payload.exp)) {
-      // Clear invalid or expired token
+      // Clear invalid or signature-failed token
       const response = NextResponse.redirect(new URL('/login', request.url));
       response.cookies.delete('auth_token');
       return response;

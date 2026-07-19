@@ -59,6 +59,8 @@ model User {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   walletBalance Float         @default(2500.0)
+  failedLoginAttempts Int       @default(0)
+  lockoutUntil        DateTime?
   kycDocuments  KYCDocument[]
   vendorProfile VendorProfile?
   bookings      Booking[]     @relation("CustomerBookings")

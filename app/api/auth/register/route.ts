@@ -16,6 +16,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid role specified' }, { status: 400 });
     }
 
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json({ error: 'Please provide a valid email address format.' }, { status: 400 });
+    }
+
+    // Password strength complexity validation
+    if (password.length < 8) {
+      return NextResponse.json({ error: 'Password must be at least 8 characters long.' }, { status: 400 });
+    }
+    const hasLetter = /[a-zA-Z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    if (!hasLetter || !hasNumber) {
+      return NextResponse.json({ error: 'Password security constraint: Must contain both letters and numbers.' }, { status: 400 });
+    }
+
     const existingUser = await db.user.findUnique({
       where: { email },
     });
