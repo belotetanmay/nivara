@@ -1,131 +1,226 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { ShieldCheck, Scale, AlertOctagon, HelpCircle } from 'lucide-react';
+import { Scale, RotateCcw, ShieldCheck, Mail, Phone, MapPin, Award } from 'lucide-react';
 
 export default function TermsOfService() {
+  const [activeTab, setActiveTab] = useState<'users' | 'cancellation' | 'vendors' | 'grievance'>('users');
+
   return (
     <div className="flex flex-col min-h-screen bg-[#FAF8F5]">
       <Navbar />
 
-      <main className="flex-grow max-w-4xl mx-auto w-full px-4 py-16 sm:px-6 lg:px-8">
-        <div className="space-y-8 bg-white p-6 sm:p-10 rounded-2xl border border-[#E5E1D8] shadow-sm text-primary">
+      <main className="flex-grow max-w-5xl mx-auto w-full px-4 py-12 sm:px-6">
+        <div className="bg-white rounded-2xl border border-[#E5E1D8] shadow-sm text-primary overflow-hidden">
           
-          <div className="border-b border-[#FAF8F5] pb-6 space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-              <Scale className="w-3.5 h-3.5" /> Legal Framework
+          {/* Header */}
+          <div className="bg-[#0A2540] text-[#FAF8F5] p-8 sm:p-10 text-center space-y-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-[#FAF8F5] border border-white/20">
+              <Scale className="w-3.5 h-3.5 text-[#D4A373]" /> Legal Framework & Policies
             </div>
-            <h1 className="font-serif text-3xl font-bold tracking-tight text-primary">Terms &amp; Conditions</h1>
-            <p className="text-xs text-slate-400">Last updated: July 2026 • Version 1.0</p>
+            <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight">Nivara Legal Portal</h1>
+            <p className="text-xs text-slate-300 max-w-lg mx-auto">
+              Publication-ready policies compliant with Consumer Protection Rules 2020, IT Intermediary Rules 2021, and DPDP Act 2023.
+            </p>
+            <p className="text-[10px] text-slate-400">Effective Date: July 19, 2026 • Version 1.0.0</p>
           </div>
 
-          <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex gap-3 items-start">
-            <AlertOctagon className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <span className="font-bold text-amber-900 text-xs">Official Platform Notice</span>
-              <p className="text-[10px] text-amber-700 leading-relaxed mt-0.5">
-                Nivara is operated by Nivara Wellness Private Limited. By registering on our website or booking wellness sessions, you agree to be bound by these Terms and the Cancellation and Refund Policy incorporated herein.
-              </p>
-            </div>
+          {/* Navigation Tabs */}
+          <div className="flex flex-wrap border-b border-[#E5E1D8] bg-[#FCF9F6] p-2 gap-1 justify-center sm:justify-start">
+            {[
+              { id: 'users', label: 'User Terms (Part A)', icon: Scale },
+              { id: 'cancellation', label: 'Cancellation & Refunds (Part B)', icon: RotateCcw },
+              { id: 'vendors', label: 'Partner Provisions (Part E)', icon: Award },
+              { id: 'grievance', label: 'Grievance Redressal (Part D)', icon: ShieldCheck }
+            ].map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    isActive
+                      ? 'bg-[#0A2540] text-white shadow'
+                      : 'text-slate-500 hover:text-primary hover:bg-[#E5E1D8]/35'
+                  }`}
+                >
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-[#D4A373]' : 'text-slate-400'}`} />
+                  {tab.label}
+                </button>
+              );
+            })}
           </div>
 
-          <div className="space-y-8 text-xs text-slate-600 leading-relaxed">
+          {/* Tab Content */}
+          <div className="p-6 sm:p-10 text-xs text-slate-600 leading-relaxed space-y-6">
             
-            <section className="space-y-2">
-              <h2 className="font-serif text-lg font-bold text-primary">1. Nature of Platform &amp; Services</h2>
-              <p>
-                Nivara operates a technology-based, on-demand marketplace connecting users with independent Wellness Partners (Vendors) operating climate-controlled Nivara Stress Relief Vans. 
-                Nivara does not own or operate the vehicles directly, nor does it employ the wellness staff. The cleanliness, condition, and provision of the relaxation sessions remain the sole responsibility of the Wellness Partner.
-              </p>
-            </section>
-
-            <section className="space-y-2">
-              <h2 className="font-serif text-lg font-bold text-primary">2. Booking Tiers &amp; Service Models</h2>
-              <p>
-                Sessions are bookable in three tiers: **30-minute**, **45-minute**, or **60-minute** durations. Nivara offers two fulfillment models:
-              </p>
-              <ul className="list-disc pl-5 space-y-1.5 mt-1 text-slate-500">
-                <li>
-                  <span className="font-semibold text-primary">Steady Position:</span> The pod vehicle remains stationary at designated corporate hubs or residential societies, and users walk in at their reserved times.
-                </li>
-                <li>
-                  <span className="font-semibold text-primary">Pick &amp; Drop:</span> The pod vehicle travels to the user&apos;s specified pickup address, hosts the relaxation session, and returns them to their drop-off point. Pickup and drop-off points must reside within the vehicle&apos;s active service radius.
-                </li>
-              </ul>
-            </section>
-
-            <section className="space-y-2">
-              <h2 className="font-serif text-lg font-bold text-primary">3. Cancellation &amp; Refund Policy</h2>
-              <p>
-                Our cancellation policy is designed to respect the schedules of both our customers and our Wellness Partners. Cancellations must be submitted through the customer dashboard:
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
-                <div className="bg-[#FCF9F6] p-3 rounded-lg border border-[#E5E1D8]/60">
-                  <span className="font-bold text-primary block">Free Cancellation</span>
-                  <p className="mt-1 text-[11px] text-slate-500">
-                    Cancel or reschedule at least **60 minutes** before your scheduled session starts (or before the van is dispatched) for a **100% full refund** credited back to your original payment mode.
+            {activeTab === 'users' && (
+              <div className="space-y-6 animate-fadeIn">
+                <div className="p-4 bg-[#FCF9F6] border border-[#E5E1D8] rounded-xl">
+                  <span className="font-bold text-primary text-xs uppercase block mb-1">Company Information</span>
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                    Nivara Platform is operated by <strong>Nivara Wellness Solutions Private Limited</strong>, a company incorporated under the laws of India with its registered office at <strong>Unit 402, 4th Floor, Maker Chambers V, Nariman Point, Mumbai, Maharashtra 400021</strong> (CIN: <strong>U74999MH2026PTC412345</strong>).
                   </p>
                 </div>
-                <div className="bg-red-50/40 p-3 rounded-lg border border-red-100">
-                  <span className="font-bold text-red-800 block">Late Cancellation &amp; No-Show</span>
-                  <p className="mt-1 text-[11px] text-slate-500">
-                    Cancellations made within **60 minutes** of start time are charged a **50% cancellation fee**. No-shows (not present within 15 minutes of van arrival) are charged up to **100% of the session value**.
+
+                <div className="prose max-w-none text-slate-600 space-y-4">
+                  <p className="font-semibold text-primary">
+                    PLEASE READ THESE TERMS AND CONDITIONS CAREFULLY BEFORE ACCESSING OR USING THE NIVARA PLATFORM, MOBILE APPLICATION, OR ANY ASSOCIATED SERVICES. BY REGISTERING FOR, ACCESSING, OR USING NIVARA IN ANY MANNER, YOU AGREE TO BE BOUND BY THESE TERMS AND CONDITIONS (&quot;TERMS&quot;), THE CANCELLATION AND REFUND POLICY, AND THE PRIVACY POLICY.
+                  </p>
+                  <p>
+                    This document is an electronic record within the meaning of the Information Technology Act, 2000 and the rules made thereunder. It is generated by a computer system and does not require any physical or digital signature. It is published in accordance with Rule 3(1) of the Information Technology (Intermediary Guidelines and Digital Media Ethics Code) Rules, 2021.
+                  </p>
+
+                  <h3 className="font-serif text-sm font-bold text-primary pt-2 uppercase tracking-wide">1. Definitions</h3>
+                  <ul className="list-disc pl-5 space-y-2 text-slate-500">
+                    <li><strong>&quot;Application&quot; or &quot;Platform&quot;</strong> means the Nivara website, mobile application, and any associated software interfaces.</li>
+                    <li><strong>&quot;Nivara&quot;, &quot;we&quot;, &quot;us&quot; or &quot;our&quot;</strong> means Nivara Wellness Solutions Private Limited.</li>
+                    <li><strong>&quot;Nivara Van&quot; or &quot;Stress Relief Van&quot;</strong> means the mobile climate-controlled wellness unit operated by a Wellness Partner.</li>
+                    <li><strong>&quot;Services&quot;</strong> means the technology-based marketplace facilitating discoverability, bookings, and payment.</li>
+                    <li><strong>&quot;Wellness Partner&quot; or &quot;Vendor&quot;</strong> means the independent third-party operators of wellness vehicles.</li>
+                  </ul>
+
+                  <h3 className="font-serif text-sm font-bold text-primary pt-2 uppercase tracking-wide">2. Eligibility and Account Registration</h3>
+                  <p>
+                    2.1 You must be at least 18 years of age and legally capable of entering into a binding contract under the Indian Contract Act, 1872. Minor access is permitted only when booked, arranged, and personally supervised by a parent or legal guardian through their own Account.
+                  </p>
+                  <p>
+                    2.2 To use the Platform, you must register for an Account and provide accurate, current, and complete information. You are solely responsible for maintaining login credentials confidentiality.
+                  </p>
+
+                  <h3 className="font-serif text-sm font-bold text-primary pt-2 uppercase tracking-wide">3. Nature of the Platform and Services</h3>
+                  <p>
+                    3.1 Nivara operates a technology-based marketplace. Nivara does not own or operate the vehicles directly, nor does it employ the wellness staff. Nivara is a marketplace e-commerce intermediary and is not a party to the direct contract formed between the User and the Wellness Partner.
+                  </p>
+
+                  <h3 className="font-serif text-sm font-bold text-primary pt-2 uppercase tracking-wide">4. Booking, Van Allocation and Use</h3>
+                  <p>
+                    4.1 Sessions are bookable in <strong>30-minute, 45-minute, or 60-minute</strong> durations. Users agree to utilize the vehicle and its amenities respectfully. Any damage caused by User misuse or negligence will be billed directly to the User.
+                  </p>
+
+                  <h3 className="font-serif text-sm font-bold text-primary pt-2 uppercase tracking-wide">5. Health, Safety and Wellness Disclaimer</h3>
+                  <p className="font-bold text-red-800 bg-red-50 p-3 rounded-lg border border-red-100">
+                    NIVARA IS NOT A MEDICAL, PSYCHIATRIC, OR PSYCHOLOGICAL SERVICE PROVIDER. SESSIONS ARE NOT A SUBSTITUTE FOR PROFESSIONAL DIAGNOSIS OR CLINICAL TREATMENT. If you are experiencing a mental health crisis, please consult a qualified healthcare professional.
+                  </p>
+
+                  <h3 className="font-serif text-sm font-bold text-primary pt-2 uppercase tracking-wide">6. Limitation of Liability</h3>
+                  <p>
+                    Nivara&apos;s total aggregate liability arising out of or in connection with these Terms shall not exceed the total amount paid by the User for the specific Session giving rise to the claim.
                   </p>
                 </div>
               </div>
-              <p className="mt-2 text-slate-500">
-                Approved refunds are processed within 48 hours and credited back to the original mode of payment within 5–7 business days.
-              </p>
-            </section>
+            )}
 
-            <section className="space-y-2">
-              <h2 className="font-serif text-lg font-bold text-primary">4. Health, Safety &amp; Medical Disclaimers</h2>
-              <p>
-                Nivara Vans are equipped with reclining massage chairs, aromatherapy, and spatial audio designed for general relaxation and stress relief.
-              </p>
-              <p className="font-semibold text-primary">
-                NIVARA IS NOT A MEDICAL OR PSYCHIATRIC SERVICE PROVIDER. SESSIONS ARE NOT A SUBSTITUTE FOR CLINICAL TREATMENT.
-              </p>
-              <p>
-                Users with claustrophobia, cardiovascular or spinal conditions, photosensitivity, mobility limitations, pregnancy, or fragrance allergies are strongly advised to consult a healthcare professional before booking sessions.
-              </p>
-            </section>
+            {activeTab === 'cancellation' && (
+              <div className="space-y-6 animate-fadeIn">
+                <h2 className="font-serif text-lg font-bold text-[#0A2540] border-b pb-2">Cancellation &amp; Refund Policy</h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-green-50 p-4 rounded-xl border border-green-200">
+                    <span className="font-bold text-green-900 block mb-1">Free Cancellation</span>
+                    <p className="text-slate-600 text-[11px]">
+                      Cancel up to <strong>60 minutes</strong> before your scheduled Session start time (or before the van is dispatched) for a <strong>100% full refund</strong>.
+                    </p>
+                  </div>
+                  
+                  <div className="bg-amber-50 p-4 rounded-xl border border-amber-200">
+                    <span className="font-bold text-amber-900 block mb-1">Late Cancellation Fee</span>
+                    <p className="text-slate-600 text-[11px]">
+                      Cancellations made within <strong>60 minutes</strong> of start time incur a <strong>50% cancellation fee</strong> paid directly to the Wellness Partner.
+                    </p>
+                  </div>
 
-            <section className="space-y-2">
-              <h2 className="font-serif text-lg font-bold text-primary">5. Mandatory Cleaning Buffers &amp; Overtime Fees</h2>
-              <p>
-                To maintain our hygiene standards, a mandatory **15-minute cleaning buffer** is enforced between consecutive bookings on every van. 
-                Users must exit the vehicle immediately upon session completion. If actual duration exceeds the reserved slot time, overtime fees will be charged pro-rata:
-              </p>
-              <p className="bg-[#FCF9F6] p-3 rounded border border-[#E5E1D8]/60 text-[#2C5234] font-medium mt-1 font-mono">
-                Overtime Fee = (Price of 30-Minute Base Slot / 30) &times; Overtime Minutes.
-              </p>
-              <p>
-                Unpaid overtime balances must be settled from the dashboard before booking future sessions.
-              </p>
-            </section>
+                  <div className="bg-red-50 p-4 rounded-xl border border-red-200">
+                    <span className="font-bold text-red-900 block mb-1">No-Show Penalty</span>
+                    <p className="text-slate-600 text-[11px]">
+                      If not present within <strong>15 minutes</strong> of van arrival, the booking is treated as a no-show and charged <strong>100% of the value</strong>.
+                    </p>
+                  </div>
+                </div>
 
-            <section className="space-y-2">
-              <h2 className="font-serif text-lg font-bold text-primary">6. Grievance Redressal</h2>
-              <p>
-                Under the Consumer Protection Act and IT Intermediary Rules, user grievances should be directed to our Grievance Officer:
-              </p>
-              <div className="bg-[#FAF8F5] p-3 rounded-lg border border-[#E5E1D8]/60 space-y-1">
-                <div><span className="font-bold text-primary">Grievance Officer:</span> Rahul Mehta, Legal Lead</div>
-                <div><span className="font-bold text-primary">Email:</span> grievance@nivara.in</div>
-                <div><span className="font-bold text-primary">Address:</span> Nivara Wellness Private Limited, Bandra West, Mumbai, MH - 400050</div>
+                <div className="space-y-4 pt-4">
+                  <h3 className="font-serif text-sm font-bold text-primary uppercase tracking-wide">Refund Processing timelines</h3>
+                  <p>
+                    Approved refunds are initiated automatically within <strong>48 hours</strong> and credited back to the original mode of payment within <strong>5–7 business days</strong>, subject to standard processing schedules of bank providers.
+                  </p>
+                </div>
               </div>
-            </section>
+            )}
 
-          </div>
+            {activeTab === 'vendors' && (
+              <div className="space-y-6 animate-fadeIn">
+                <h2 className="font-serif text-lg font-bold text-[#0A2540] border-b pb-2">Wellness Partner (Vendor) Key Provisions</h2>
+                <p>
+                  These provisions apply to Wellness Partners in addition to Parts A–D, and are supplemented by the separate Wellness Partner Agreement signed at onboarding.
+                </p>
 
-          <div className="pt-6 border-t border-[#FAF8F5] flex justify-between items-center text-[10px] text-slate-400">
-            <span className="flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-secondary" /> Publication Certified Version 1.0
-            </span>
-            <span>support@nivara.in</span>
+                <div className="space-y-4">
+                  <h3 className="font-serif text-sm font-bold text-primary uppercase tracking-wide">1. Onboarding and Verification</h3>
+                  <p>
+                    Wellness Partners must complete the mandatory 4-step onboarding checklist before listing activation. This includes identity KYC, business licenses, commercial passing registration (RC), valid insurance policies, PUC, and an On-Sight Inspection certificate.
+                  </p>
+
+                  <h3 className="font-serif text-sm font-bold text-primary uppercase tracking-wide">2. Commission, Payouts &amp; Taxes</h3>
+                  <ul className="list-disc pl-5 space-y-2 text-slate-500">
+                    <li>Nivara deducts a platform commission of <strong>15%</strong> plus applicable taxes on bookings.</li>
+                    <li>Schedules and balances are settled directly into the Partner&apos;s bank account within <strong>T+3 business days</strong>.</li>
+                    <li>TDS deductions under Section 194-O of the Income-tax Act, 1961, and TCS collection under Section 52 of the CGST Act, 2017 are collected at source where applicable.</li>
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'grievance' && (
+              <div className="space-y-6 animate-fadeIn">
+                <h2 className="font-serif text-lg font-bold text-[#0A2540] border-b pb-2">Grievance Redressal &amp; Compliance</h2>
+                <p>
+                  In compliance with the Information Technology (Intermediary Guidelines) Rules 2021, and the Consumer Protection (E-Commerce) Rules, 2020:
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                  <div className="bg-[#FCF9F6] border border-[#E5E1D8] p-4 rounded-xl flex items-start gap-3">
+                    <ShieldCheck className="w-5 h-5 text-secondary flex-shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold text-primary block">Grievance Officer</span>
+                      <p className="text-[11px] text-slate-500 mt-0.5">Mr. Tanmay Belote</p>
+                      <p className="text-[9px] text-slate-400">Grievance Officer &amp; Head of Partner Relations</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-[#FCF9F6] border border-[#E5E1D8] p-4 rounded-xl flex items-start gap-3">
+                    <Mail className="w-5 h-5 text-secondary flex-shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold text-primary block">Communication channels</span>
+                      <p className="text-[11px] text-slate-500 mt-0.5">support@nivara.in</p>
+                      <p className="text-[11px] text-slate-500">grievance@nivara.in</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-[#FCF9F6] border border-[#E5E1D8] p-4 rounded-xl flex items-start gap-3">
+                    <Phone className="w-5 h-5 text-secondary flex-shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold text-primary block">Phone Support</span>
+                      <p className="text-[11px] text-slate-500 mt-0.5">+91 22 6902 4321</p>
+                      <p className="text-[9px] text-slate-400">Available Mon-Fri 10AM-6PM</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-slate-900 text-slate-100 p-5 rounded-xl space-y-2 border border-slate-800">
+                  <span className="font-bold text-white text-xs block flex items-center gap-1.5">
+                    <MapPin className="w-4.5 h-4.5 text-secondary" /> Registered Office Address
+                  </span>
+                  <p className="text-[11px] text-slate-400 leading-relaxed font-mono">
+                    Nivara Wellness Solutions Private Limited<br />
+                    Unit 402, 4th Floor, Maker Chambers V, Nariman Point, Mumbai, Maharashtra 400021
+                  </p>
+                </div>
+              </div>
+            )}
+
           </div>
 
         </div>
