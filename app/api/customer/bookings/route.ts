@@ -124,9 +124,9 @@ export async function POST(request: Request) {
     }
 
     // Determine price: 30 min (van.price15), 45 min (van.price30), 60 min (van.price45)
-    let baseAmount = van.price15;
-    if (sessionLength === 45) baseAmount = van.price30;
-    if (sessionLength === 60) baseAmount = van.price45;
+    let baseAmount = Number(van.price15);
+    if (sessionLength === 45) baseAmount = Number(van.price30);
+    if (sessionLength === 60) baseAmount = Number(van.price45);
 
     const parkingFeeAmount = includeParkingFee ? 150.0 : 0.0;
     const totalAmount = baseAmount + parkingFeeAmount;

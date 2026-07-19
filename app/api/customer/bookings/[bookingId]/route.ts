@@ -133,7 +133,7 @@ export async function DELETE(
     let cancellationFee = 0;
 
     if (booking.payment && booking.payment.status === PaymentStatus.SUCCESS && booking.payment.gatewayRef) {
-      const totalPaid = booking.payment.amount;
+      const totalPaid = Number(booking.payment.amount);
       if (isLateCancellation) {
         // Late cancellation: 50% fee applies, 50% balance refunded
         cancellationFee = Number((totalPaid * 0.5).toFixed(2));

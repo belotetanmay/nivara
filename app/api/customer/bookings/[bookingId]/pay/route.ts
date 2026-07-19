@@ -96,7 +96,7 @@ export async function POST(
 
     const session = await createCheckoutSession({
       bookingId: booking.id,
-      amount: payment.amount,
+      amount: Number(payment.amount),
       currency: payment.currency,
       successUrl: `${appUrl}/customer/bookings/${booking.id}/confirmation`,
       cancelUrl: `${appUrl}/customer/search`,

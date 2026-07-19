@@ -48,25 +48,67 @@ enum PaymentStatus {
   REFUNDED
 }
 
+enum ServiceType {
+  STEADY
+  PICK_AND_DROP
+  BOTH
+}
+
+enum ServiceModel {
+  STEADY
+  PICK_AND_DROP
+}
+
+enum OvertimeStatus {
+  NONE
+  UNPAID
+  PAID
+}
+
+enum ContactStatus {
+  NEW
+  READ
+  CLOSED
+}
+
+enum TransactionType {
+  CREDIT
+  DEBIT
+}
+
 model User {
-  id            String        @id @default(uuid())
-  name          String
-  email         String        @unique
-  phone         String?
-  passwordHash  String
-  role          Role          @default(CUSTOMER)
-  kycStatus     KYCStatus     @default(UNVERIFIED)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  walletBalance Float         @default(2500.0)
-  failedLoginAttempts Int       @default(0)
+  id                  String              @id @default(uuid())
+  name                String
+  email               String              @unique
+  phone               String?
+  passwordHash        String
+  role                Role                @default(CUSTOMER)
+  kycStatus           KYCStatus           @default(UNVERIFIED)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  walletBalance       Decimal             @db.Decimal(10, 2) @default(2500.0)
+  failedLoginAttempts Int                 @default(0)
   lockoutUntil        DateTime?
-  kycDocuments  KYCDocument[]
-  vendorProfile VendorProfile?
-  bookings      Booking[]     @relation("CustomerBookings")
-  reviews       Review[]
-  auditLogs     AdminAuditLog[] @relation("AdminActions")
-  conversations ChatConversation[] @relation("UserConversations")
+  kycDocuments        KYCDocument[]
+  vendorProfile       VendorProfile?
+  bookings            Booking[]           @relation("CustomerBookings")
+  reviews             Review[]
+  auditLogs           AdminAuditLog[]     @relation("AdminActions")
+  conversations       ChatConversation[]  @relation("UserConversations")
+  walletTransactions  WalletTransaction[]
+}
+
+model WalletTransaction {
+  id          String          @id @default(uuid())
+  userId      String
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount      Decimal         @db.Decimal(10, 2)
+  type        TransactionType
+  description String
+  createdAt   DateTime        @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model KYCDocument {
@@ -81,23 +123,29 @@ model KYCDocument {
   reviewedBy      String?
   reviewedAt      DateTime?
   createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @default(now()) @updatedAt
+
+  @@index([userId])
+  @@index([status])
 }
 
 model VendorProfile {
-  id                 String       @id @default(uuid())
-  userId             String       @unique
-  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  businessName       String
-  bio                String
-  verificationStatus VendorStatus @default(PENDING)
-  rejectionReason    String?
-  payoutDetails      String       // Text or JSON
-  ratingAvg          Float        @default(0.0)
-  totalBookings      Int          @default(0)
+  id                     String       @id @default(uuid())
+  userId                 String       @unique
+  user                   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessName           String
+  bio                    String
+  payoutDetails          String
+  verificationStatus     VendorStatus @default(PENDING)
+  rejectionReason        String?
+  ratingAvg              Float        @default(0.0)
+  totalBookings          Int          @default(0)
   
-  // Business Validation Fields
-  businessRegistrationNo String?
+  // Multi-step Business Validation
+  aadharNumber           String?
+  panCardNumber          String?
   businessLicenseNo      String?
+  businessRegistrationNo String?
   gstNumber              String?
   panNumber              String?
   bankName               String?
@@ -126,13 +174,13 @@ model Van {
   longitude      Float
   address        String
   serviceRadius  Float          // in km
-  price15        Float          // 15-min price tier
-  price30        Float          // 30-min price tier
-  price45        Float          // 45-min price tier
+  price15        Decimal        @db.Decimal(10, 2) // 15-min price tier
+  price30        Decimal        @db.Decimal(10, 2) // 30-min price tier
+  price45        Decimal        @db.Decimal(10, 2) // 45-min price tier
   status         VanStatus      @default(UNDER_REVIEW)
   hasAttendant   Boolean        @default(false)
   attendantName  String?
-  serviceType    String         @default("STEADY") // "STEADY", "PICK_AND_DROP", or "BOTH"
+  serviceType    ServiceType    @default(STEADY)
   
   // Vehicle Details & Certifications
   vehicleNumber  String?
@@ -152,6 +200,9 @@ model Van {
   availabilities Availability[]
   bookings       Booking[]
   reviews        Review[]
+
+  @@index([status])
+  @@index([vendorId, status])
 }
 
 model Availability {
@@ -165,6 +216,11 @@ model Availability {
   createdAt      DateTime @default(now())
   
   booking        Booking?
+
+  @@index([vanId])
+  @@index([date])
+  @@index([vanId, isBooked])
+  @@index([vanId, date])
 }
 
 model Booking {
@@ -184,32 +240,41 @@ model Booking {
   scent          String        @default("Lavender")
   lighting       String        @default("Sunset Copper")
   audio          String        @default("Binaural Beats")
-  serviceModel   String        @default("STEADY") // "STEADY" or "PICK_AND_DROP"
+  serviceModel   ServiceModel  @default(STEADY)
   pickupAddress  String?
   dropoffAddress String?
   includeParkingFee Boolean     @default(false)
-  parkingFeeAmount  Float       @default(0.0)
+  parkingFeeAmount  Decimal     @db.Decimal(10, 2) @default(0.0)
   actualDuration    Int?
   overtimeMinutes   Int         @default(0)
-  overtimeAmount    Float       @default(0.0)
-  overtimeStatus    String      @default("NONE") // "NONE", "UNPAID", "PAID"
+  overtimeAmount    Decimal     @db.Decimal(10, 2) @default(0.0)
+  overtimeStatus    OvertimeStatus @default(NONE)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   
   payment        Payment?
   review         Review?
+
+  @@index([customerId])
+  @@index([vendorId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([vendorId, status])
+  @@index([customerId, status])
 }
 
 model Payment {
   id          String        @id @default(uuid())
   bookingId   String        @unique
   booking     Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  amount      Float
+  amount      Decimal       @db.Decimal(10, 2)
   currency    String        @default("INR")
   gatewayRef  String?       // Gateway checkout session or charge ID
   status      PaymentStatus @default(INITIATED)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
+
+  @@index([status])
 }
 
 model Review {
@@ -223,6 +288,9 @@ model Review {
   rating     Int      // 1 to 5
   comment    String
   createdAt  DateTime @default(now())
+
+  @@index([customerId])
+  @@index([vanId])
 }
 
 model AdminAuditLog {
@@ -233,14 +301,21 @@ model AdminAuditLog {
   targetEntity String   // e.g. "User:123", "VendorProfile:456"
   details      String?  // JSON or description
   timestamp    DateTime @default(now())
+
+  @@index([adminId])
+  @@index([timestamp])
 }
 
 model ContactMessage {
-  id        String   @id @default(uuid())
+  id        String        @id @default(uuid())
   name      String
   email     String
   message   String
-  createdAt DateTime @default(now())
+  status    ContactStatus @default(NEW)
+  createdAt DateTime      @default(now())
+
+  @@index([status])
+  @@index([createdAt])
 }
 
 model ChatConversation {
@@ -250,6 +325,9 @@ model ChatConversation {
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
   messages  ChatMessage[]
+
+  @@index([userId])
+  @@index([updatedAt])
 }
 
 model ChatMessage {
@@ -259,4 +337,7 @@ model ChatMessage {
   sender         String           // "user" | "bot"
   content        String
   timestamp      DateTime         @default(now())
+
+  @@index([conversationId])
+  @@index([timestamp])
 }

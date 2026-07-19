@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { verifyToken, extractToken } from '@/lib/auth';
-import { BookingStatus } from '@prisma/client';
+import { BookingStatus, OvertimeStatus } from '@prisma/client';
 
 export async function PATCH(
   request: Request,
@@ -51,7 +51,7 @@ export async function PATCH(
 
     let overtimeMinutes = 0;
     let overtimeAmount = 0;
-    let overtimeStatus = 'NONE';
+    let overtimeStatus: OvertimeStatus = OvertimeStatus.NONE;
 
     const sessionLength = booking.sessionLength;
     if (actualDuration && actualDuration > sessionLength) {
@@ -62,9 +62,9 @@ export async function PATCH(
         where: { id: booking.vanId },
       });
       if (van) {
-        const ratePerMinute = van.price15 / 30;
+        const ratePerMinute = Number(van.price15) / 30;
         overtimeAmount = Number((ratePerMinute * overtimeMinutes).toFixed(2));
-        overtimeStatus = 'UNPAID';
+        overtimeStatus = OvertimeStatus.UNPAID;
       }
     }
 

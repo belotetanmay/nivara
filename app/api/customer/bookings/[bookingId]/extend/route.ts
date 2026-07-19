@@ -99,7 +99,7 @@ export async function POST(
         await tx.payment.update({
           where: { id: booking.payment.id },
           data: {
-            amount: booking.payment.amount + extensionPrice,
+            amount: Number(booking.payment.amount) + Number(extensionPrice),
           },
         });
       }

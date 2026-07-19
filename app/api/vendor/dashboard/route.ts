@@ -87,7 +87,7 @@ export async function GET(request: Request) {
       .filter((b) => b.payment && b.payment.status === PaymentStatus.SUCCESS)
       .map((b) => b.payment!.amount);
 
-    const totalEarnings = successPayments.reduce((sum, amt) => sum + amt, 0);
+    const totalEarnings = successPayments.reduce((sum, amt) => sum + Number(amt), 0);
     const completedSessionsCount = bookings.filter((b) => b.status === 'COMPLETED').length;
 
     return NextResponse.json({

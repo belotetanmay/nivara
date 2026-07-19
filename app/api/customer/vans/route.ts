@@ -54,7 +54,7 @@ export async function GET(request: Request) {
     // Filter by price (checking 30-min price tier as reference or maximum price)
     if (maxPrice) {
       const priceLimit = parseFloat(maxPrice);
-      filteredVans = filteredVans.filter((van) => van.price30 <= priceLimit);
+      filteredVans = filteredVans.filter((van) => Number(van.price30) <= priceLimit);
     }
 
     // Filter by attendant
