@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { BookingStatus, PaymentStatus } from '@prisma/client';
+import { verifyCheckoutSession } from '@/lib/services/payment';
 
 export async function POST(request: Request) {
   try {
@@ -8,6 +9,12 @@ export async function POST(request: Request) {
 
     if (!bookingId || !sessionId) {
       return NextResponse.json({ success: false, error: 'Booking ID and Session ID are required' }, { status: 400 });
+    }
+
+    // 1. Verify checkout session authenticity with Stripe (Issue 1)
+    const verification = await verifyCheckoutSession(sessionId);
+    if (!verification.success) {
+      return NextResponse.json({ success: false, error: verification.error || 'Payment transaction verification failed' }, { status: 400 });
     }
 
     const booking = await db.booking.findUnique({

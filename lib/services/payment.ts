@@ -98,11 +98,36 @@ export async function refundPayment(gatewayRef: string, amount?: number): Promis
     if (amount !== undefined) {
       refundParams.amount = Math.round(amount * 100);
     }
-
     await stripe.refunds.create(refundParams);
     return { success: true };
   } catch (error: any) {
     console.error('Stripe Refund error:', error);
     return { success: false, error: error.message || 'Refund failed' };
+  }
+}
+
+export async function verifyCheckoutSession(sessionId: string): Promise<{ success: boolean; error?: string; paymentStatus?: string; amountTotal?: number }> {
+  if (isMockStripe || !stripe || sessionId.startsWith('cs_mock')) {
+    return { success: true, paymentStatus: 'paid' };
+  }
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    if (session.payment_status === 'paid') {
+      return { 
+        success: true, 
+        paymentStatus: 'paid', 
+        amountTotal: session.amount_total ? session.amount_total / 100 : undefined 
+      };
+    } else {
+      return { 
+        success: false, 
+        paymentStatus: session.payment_status, 
+        error: 'Payment not completed' 
+      };
+    }
+  } catch (error: any) {
+    console.error('Stripe verify session error:', error);
+    return { success: false, error: error.message || 'Failed to verify session' };
   }
 }
