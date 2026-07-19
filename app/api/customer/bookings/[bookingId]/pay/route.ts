@@ -110,6 +110,7 @@ export async function POST(
       isMock: session.isMock,
     });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    console.error('Booking checkout initialization error:', error);
+    return NextResponse.json({ success: false, error: 'An unexpected internal error occurred while processing checkout.' }, { status: 500 });
   }
 }

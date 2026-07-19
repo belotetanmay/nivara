@@ -170,61 +170,96 @@ export async function POST(request: Request) {
       }
     }
 
-    // Generate unique booking code
-    const r1 = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const r2 = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const bookingCode = `NV-${r1}-${r2}`;
+    // Execute booking creation inside transaction to prevent double booking race conditions
+    try {
+      const booking = await db.$transaction(async (tx) => {
+        // 1. Verify slot is still unbooked inside the transaction
+        const slotInsideTx = await tx.availability.findUnique({
+          where: { id: slotId },
+        });
 
-    // Execute booking creation inside transaction
-    const booking = await db.$transaction(async (tx) => {
-      // 1. Lock slot and update its end time to the booking end time
-      await tx.availability.update({
-        where: { id: slotId },
-        data: { 
-          isBooked: true,
-          endTime: bookingEndTime,
-        },
+        if (!slotInsideTx || slotInsideTx.isBooked) {
+          throw new Error('SLOT_ALREADY_BOOKED');
+        }
+
+        // 2. Lock slot and update its end time to the booking end time
+        await tx.availability.update({
+          where: { id: slotId },
+          data: { 
+            isBooked: true,
+            endTime: bookingEndTime,
+          },
+        });
+
+        // 3. Generate unique booking code with collision checking
+        let bookingCode = '';
+        let isUnique = false;
+        let retries = 0;
+        while (!isUnique && retries < 10) {
+          const r1 = Math.random().toString(36).substring(2, 6).toUpperCase();
+          const r2 = Math.random().toString(36).substring(2, 6).toUpperCase();
+          bookingCode = `NV-${r1}-${r2}`;
+
+          const existing = await tx.booking.findUnique({
+            where: { bookingCode },
+          });
+          if (!existing) {
+            isUnique = true;
+          } else {
+            retries++;
+          }
+        }
+
+        if (!isUnique) {
+          throw new Error('BOOKING_CODE_COLLISION');
+        }
+
+        // 4. Create booking
+        const newBooking = await tx.booking.create({
+          data: {
+            customerId: payload.userId,
+            vanId,
+            vendorId: van.vendorId,
+            slotId,
+            sessionLength,
+            status: BookingStatus.PENDING,
+            bookingCode,
+            scent: scent || 'Lavender',
+            lighting: lighting || 'Sunset Copper',
+            audio: audio || 'Binaural Beats',
+            serviceModel: serviceModel || 'STEADY',
+            pickupAddress: serviceModel === 'PICK_AND_DROP' ? pickupAddress : null,
+            dropoffAddress: serviceModel === 'PICK_AND_DROP' ? dropoffAddress : null,
+            includeParkingFee: !!includeParkingFee,
+            parkingFeeAmount,
+          },
+        });
+
+        // 5. Create initial payment log
+        await tx.payment.create({
+          data: {
+            bookingId: newBooking.id,
+            amount: totalAmount,
+            currency: 'INR',
+            status: PaymentStatus.INITIATED,
+          },
+        });
+
+        return newBooking;
       });
 
-      // 2. Create booking
-      const newBooking = await tx.booking.create({
-        data: {
-          customerId: payload.userId,
-          vanId,
-          vendorId: van.vendorId,
-          slotId,
-          sessionLength,
-          status: BookingStatus.PENDING,
-          bookingCode,
-          scent: scent || 'Lavender',
-          lighting: lighting || 'Sunset Copper',
-          audio: audio || 'Binaural Beats',
-          serviceModel: serviceModel || 'STEADY',
-          pickupAddress: serviceModel === 'PICK_AND_DROP' ? pickupAddress : null,
-          dropoffAddress: serviceModel === 'PICK_AND_DROP' ? dropoffAddress : null,
-          includeParkingFee: !!includeParkingFee,
-          parkingFeeAmount,
-        },
+      return NextResponse.json({
+        success: true,
+        bookingId: booking.id,
       });
-
-      // 3. Create initial payment log
-      await tx.payment.create({
-        data: {
-          bookingId: newBooking.id,
-          amount: totalAmount,
-          currency: 'INR',
-          status: PaymentStatus.INITIATED,
-        },
-      });
-
-      return newBooking;
-    });
-
-    return NextResponse.json({
-      success: true,
-      bookingId: booking.id,
-    });
+    } catch (txError: any) {
+      if (txError.message === 'SLOT_ALREADY_BOOKED') {
+        return NextResponse.json({ success: false, error: 'The selected slot has already been booked by another user.' }, { status: 409 });
+      }
+      throw txError;
+    }
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    console.error('Booking creation error:', error);
+    return NextResponse.json({ success: false, error: 'An unexpected internal error occurred while processing your booking.' }, { status: 500 });
   }
 }

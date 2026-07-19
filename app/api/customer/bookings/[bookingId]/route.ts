@@ -188,6 +188,7 @@ export async function DELETE(
       message: successMsg,
     });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    console.error('Booking cancellation error:', error);
+    return NextResponse.json({ success: false, error: 'An unexpected internal error occurred while cancelling your booking.' }, { status: 500 });
   }
 }
