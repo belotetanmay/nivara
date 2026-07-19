@@ -70,10 +70,10 @@ export default function Footer() {
             <h3 className="font-sans text-sm font-extrabold tracking-wide mb-4 text-white uppercase">Support</h3>
             <ul className="space-y-2 text-xs text-slate-400">
               <li>
-                <span className="block">Email: support@nivara.in</span>
+                <span className="block">Email: support.nivara@gmail.com</span>
               </li>
               <li>
-                <span className="block">Phone: +91 22 6902 4321</span>
+                <span className="block">Phone: +91 7977425286</span>
               </li>
               <li>
                 <Link href="/terms" className="hover:text-white transition-colors">

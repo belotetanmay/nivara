@@ -24,7 +24,7 @@ export default function TermsOfService() {
             <p className="text-xs text-slate-300 max-w-lg mx-auto">
               Publication-ready policies compliant with Consumer Protection Rules 2020, IT Intermediary Rules 2021, and DPDP Act 2023.
             </p>
-            <p className="text-[10px] text-slate-400">Effective Date: July 19, 2026 • Version 1.0.0</p>
+            <p className="text-[10px] text-slate-400">Effective Date: July 2026 • Version 1.0</p>
           </div>
 
           {/* Navigation Tabs */}
@@ -62,7 +62,7 @@ export default function TermsOfService() {
                 <div className="p-4 bg-[#FCF9F6] border border-[#E5E1D8] rounded-xl">
                   <span className="font-bold text-primary text-xs uppercase block mb-1">Company Information</span>
                   <p className="text-[11px] text-slate-500 leading-relaxed">
-                    Nivara Platform is operated by <strong>Nivara Wellness Solutions Private Limited</strong>, a company incorporated under the laws of India with its registered office at <strong>Unit 402, 4th Floor, Maker Chambers V, Nariman Point, Mumbai, Maharashtra 400021</strong> (CIN: <strong>U74999MH2026PTC412345</strong>).
+                    Nivara Platform is operated by <strong>[Nivara legal entity name]</strong>, a company incorporated under the laws of India with its registered office at <strong>[registered address]</strong>.
                   </p>
                 </div>
 
@@ -77,7 +77,7 @@ export default function TermsOfService() {
                   <h3 className="font-serif text-sm font-bold text-primary pt-2 uppercase tracking-wide">1. Definitions</h3>
                   <ul className="list-disc pl-5 space-y-2 text-slate-500">
                     <li><strong>&quot;Application&quot; or &quot;Platform&quot;</strong> means the Nivara website, mobile application, and any associated software interfaces.</li>
-                    <li><strong>&quot;Nivara&quot;, &quot;we&quot;, &quot;us&quot; or &quot;our&quot;</strong> means Nivara Wellness Solutions Private Limited.</li>
+                    <li><strong>&quot;Nivara&quot;, &quot;we&quot;, &quot;us&quot; or &quot;our&quot;</strong> means [Nivara legal entity name].</li>
                     <li><strong>&quot;Nivara Van&quot; or &quot;Stress Relief Van&quot;</strong> means the mobile climate-controlled wellness unit operated by a Wellness Partner.</li>
                     <li><strong>&quot;Services&quot;</strong> means the technology-based marketplace facilitating discoverability, bookings, and payment.</li>
                     <li><strong>&quot;Wellness Partner&quot; or &quot;Vendor&quot;</strong> means the independent third-party operators of wellness vehicles.</li>
@@ -194,8 +194,8 @@ export default function TermsOfService() {
                     <Mail className="w-5 h-5 text-secondary flex-shrink-0 mt-0.5" />
                     <div>
                       <span className="font-bold text-primary block">Communication channels</span>
-                      <p className="text-[11px] text-slate-500 mt-0.5">support@nivara.in</p>
-                      <p className="text-[11px] text-slate-500">grievance@nivara.in</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">support.nivara@gmail.com</p>
+                      <p className="text-[11px] text-slate-500">[grievance email]</p>
                     </div>
                   </div>
 
@@ -203,7 +203,7 @@ export default function TermsOfService() {
                     <Phone className="w-5 h-5 text-secondary flex-shrink-0 mt-0.5" />
                     <div>
                       <span className="font-bold text-primary block">Phone Support</span>
-                      <p className="text-[11px] text-slate-500 mt-0.5">+91 22 6902 4321</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">+91 7977425286</p>
                       <p className="text-[9px] text-slate-400">Available Mon-Fri 10AM-6PM</p>
                     </div>
                   </div>
@@ -214,8 +214,8 @@ export default function TermsOfService() {
                     <MapPin className="w-4.5 h-4.5 text-secondary" /> Registered Office Address
                   </span>
                   <p className="text-[11px] text-slate-400 leading-relaxed font-mono">
-                    Nivara Wellness Solutions Private Limited<br />
-                    Unit 402, 4th Floor, Maker Chambers V, Nariman Point, Mumbai, Maharashtra 400021
+                    Nivara<br />
+                    [registered address]
                   </p>
                 </div>
               </div>

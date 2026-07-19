@@ -19,7 +19,7 @@ export default function PrivacyPolicy() {
               <Eye className="w-3.5 h-3.5 text-secondary" /> Privacy Protection Framework
             </div>
             <h1 className="font-serif text-3xl font-bold tracking-tight text-primary">Privacy Policy</h1>
-            <p className="text-xs text-slate-400">Effective Date: July 19, 2026 • Version 1.0.0</p>
+            <p className="text-xs text-slate-400">Effective Date: July 2026 • Version 1.0</p>
           </div>
 
           {/* Alert Notice */}
@@ -38,7 +38,7 @@ export default function PrivacyPolicy() {
             <section className="space-y-2">
               <h2 className="font-serif text-lg font-bold text-primary">1. Overview</h2>
               <p>
-                This Privacy Policy explains how <strong>Nivara Wellness Solutions Private Limited</strong> (&quot;Nivara&quot;, &quot;we&quot;, &quot;us&quot;) collects, uses, discloses, retains, and protects personal data in connection with the Nivara website, mobile application, and related on-demand wellness services (collectively, the &quot;Platform&quot;). It is issued in compliance with the Digital Personal Data Protection Act, 2023 (&quot;DPDP Act&quot;), the Information Technology Act, 2000, and the rules made thereunder.
+                This Privacy Policy explains how <strong>[Nivara legal entity name]</strong> (&quot;Nivara&quot;, &quot;we&quot;, &quot;us&quot;) collects, uses, discloses, retains, and protects personal data in connection with the Nivara website, mobile application, and related on-demand wellness services (collectively, the &quot;Platform&quot;). It is issued in compliance with the Digital Personal Data Protection Act, 2023 (&quot;DPDP Act&quot;), the Information Technology Act, 2000, and the rules made thereunder.
               </p>
             </section>
 
@@ -77,7 +77,7 @@ export default function PrivacyPolicy() {
             <section className="space-y-2">
               <h2 className="font-serif text-lg font-bold text-primary">5. Data Retention &amp; Rights</h2>
               <p>
-                Personal data is retained only for active account periods, or as necessary to complete transactional audits and legal tax compliance. In accordance with the DPDP Act, you have the right to access summaries of processed data, request corrections, withdraw consent, or trigger account deletion by reaching out to: <strong>privacy@nivara.in</strong>.
+                Personal data is retained only for active account periods, or as necessary to complete transactional audits and legal tax compliance. In accordance with the DPDP Act, you have the right to access summaries of processed data, request corrections, withdraw consent, or trigger account deletion by reaching out to: <strong>support.nivara@gmail.com</strong>.
               </p>
             </section>
 
@@ -92,13 +92,13 @@ export default function PrivacyPolicy() {
                   <span className="font-bold text-primary block">Grievance Officer:</span>
                   <span className="font-medium text-slate-700 block">Mr. Tanmay Belote</span>
                   <span className="text-[10px] text-slate-400 block">Grievance Officer &amp; Head of Partner Relations</span>
-                  <span className="text-[10px] text-slate-400 block">Email: grievance@nivara.in</span>
+                  <span className="text-[10px] text-slate-400 block">Email: support.nivara@gmail.com</span>
                 </div>
                 <div className="bg-[#FCF9F6] p-4 rounded-xl border border-[#E5E1D8] space-y-1">
                   <span className="font-bold text-primary block">Registered Address:</span>
                   <p className="text-[10px] text-slate-500 leading-normal">
-                    Nivara Wellness Solutions Private Limited<br />
-                    Unit 402, 4th Floor, Maker Chambers V, Nariman Point, Mumbai, Maharashtra 400021
+                    Nivara<br />
+                    [registered address]
                   </p>
                 </div>
               </div>
@@ -110,7 +110,7 @@ export default function PrivacyPolicy() {
             <span className="flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 text-secondary" /> DPDP Secure Protocol
             </span>
-            <span>support@nivara.in</span>
+            <span>support.nivara@gmail.com</span>
           </div>
 
         </div>
