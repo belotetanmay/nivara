@@ -1,7 +1,11 @@
 import * as jwt from 'jsonwebtoken';
 import * as bcrypt from 'bcryptjs';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'nivara_fallback_secret_key';
+const JWT_SECRET = process.env.JWT_SECRET as string;
+
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET environment variable is missing");
+}
 
 export interface TokenPayload {
   userId: string;
@@ -15,7 +19,7 @@ export function signToken(payload: TokenPayload): string {
 
 export function verifyToken(token: string): TokenPayload | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as TokenPayload;
+    return jwt.verify(token, JWT_SECRET) as any as TokenPayload;
   } catch (error) {
     return null;
   }
