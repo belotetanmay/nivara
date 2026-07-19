@@ -591,10 +591,9 @@ RULES:
     }
 
     // Default error response if database also fails
-    const errMessage = error.message || 'Failed to process chat response. Try again in a few seconds.';
     return NextResponse.json({
-      error: 'internal_error',
-      message: `AI error: ${errMessage}`
+      success: false,
+      error: 'An unexpected internal error occurred. Please try again later.'
     }, { status: 500 });
   }
 }

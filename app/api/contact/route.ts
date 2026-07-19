@@ -22,6 +22,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, contact });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    console.error('Contact form submission error:', error);
+    return NextResponse.json({ success: false, error: 'Failed to process inquiry. Please try again.' }, { status: 500 });
   }
 }

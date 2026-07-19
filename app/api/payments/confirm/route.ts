@@ -7,7 +7,7 @@ export async function POST(request: Request) {
     const { bookingId, sessionId } = await request.json();
 
     if (!bookingId || !sessionId) {
-      return NextResponse.json({ error: 'Booking ID and Session ID are required' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Booking ID and Session ID are required' }, { status: 400 });
     }
 
     const booking = await db.booking.findUnique({
@@ -18,11 +18,11 @@ export async function POST(request: Request) {
     });
 
     if (!booking) {
-      return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
+      return NextResponse.json({ success: false, error: 'Booking not found' }, { status: 404 });
     }
 
     if (!booking.payment) {
-      return NextResponse.json({ error: 'Payment details not found' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Payment details not found' }, { status: 400 });
     }
 
     // Update inside a transaction to ensure integrity
@@ -50,6 +50,7 @@ export async function POST(request: Request) {
       bookingId,
     });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    console.error('Payment confirmation API crash:', error);
+    return NextResponse.json({ success: false, error: 'Failed to confirm booking payment.' }, { status: 500 });
   }
 }
