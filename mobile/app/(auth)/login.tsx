@@ -6,6 +6,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import * as WebBrowser from 'expo-web-browser';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/feedback/Toast';
 import { Button } from '../../components/ui/Button';
@@ -111,20 +112,36 @@ export default function LoginScreen() {
   };
 
   const handleGoogleLogin = async () => {
-    setGoogleLoading(true);
-    const result = await googleMobileLogin();
-    setGoogleLoading(false);
+    try {
+      setGoogleLoading(true);
 
-    if (result.success && result.user) {
-      show('Signed in with Google successfully!', 'success');
-      const role = result.user.role;
-      if (role === 'VENDOR') {
-        router.replace('/(app)/(vendor)/dashboard');
-      } else {
-        router.replace('/(app)/(customer)/explore');
+      const redirectUri = 'https://nivara-ten.vercel.app/api/auth/google/callback';
+      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=GOOGLE_CLIENT_ID&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=openid%20email%20profile&prompt=select_account`;
+
+      const authSessionResult = await WebBrowser.openAuthSessionAsync(googleAuthUrl, redirectUri);
+
+      if (authSessionResult.type === 'cancel' || authSessionResult.type === 'dismiss') {
+        setGoogleLoading(false);
+        return; // User cancelled account prompt
       }
-    } else {
-      show(result.error || 'Google Sign-In failed', 'error');
+
+      const result = await googleMobileLogin();
+      setGoogleLoading(false);
+
+      if (result.success && result.user) {
+        show('Signed in with Google successfully!', 'success');
+        const role = result.user.role;
+        if (role === 'VENDOR') {
+          router.replace('/(app)/(vendor)/dashboard');
+        } else {
+          router.replace('/(app)/(customer)/explore');
+        }
+      } else {
+        show(result.error || 'Google Sign-In failed', 'error');
+      }
+    } catch (error: any) {
+      setGoogleLoading(false);
+      show(error.message || 'Google Sign-In failed', 'error');
     }
   };
 
