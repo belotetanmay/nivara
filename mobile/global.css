@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: System;
+  --font-mono: System;
+  --font-rounded: System;
+  --font-serif: System;
+}
