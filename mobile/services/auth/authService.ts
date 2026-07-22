@@ -123,6 +123,64 @@ export const authService = {
   },
 
   /**
+   * Google OAuth Mobile Authentication
+   */
+  googleMobileLogin: async (payload: { idToken?: string; email: string; name?: string; role?: string }): Promise<AuthResponse> => {
+    try {
+      const response = await apiClient.post('/auth/google/mobile', payload);
+      const data = response.data;
+      const token = data.token || extractTokenFromHeaders(response.headers);
+
+      if (token) {
+        await SecureStore.setItemAsync(AUTH_TOKEN_KEY, token);
+        if (data.user?.role) {
+          await SecureStore.setItemAsync(USER_ROLE_KEY, data.user.role);
+        }
+      }
+
+      return {
+        authenticated: !!token || data.success,
+        token: token || undefined,
+        user: data.user,
+      };
+    } catch (error: any) {
+      return {
+        authenticated: false,
+        error: error.response?.data?.error || error.message || 'Google login failed',
+      };
+    }
+  },
+
+  /**
+   * Apple Sign-In Authentication (iOS)
+   */
+  appleLogin: async (payload: { identityToken?: string; email?: string; name?: string; userIdentifier?: string; role?: string }): Promise<AuthResponse> => {
+    try {
+      const response = await apiClient.post('/auth/apple', payload);
+      const data = response.data;
+      const token = data.token || extractTokenFromHeaders(response.headers);
+
+      if (token) {
+        await SecureStore.setItemAsync(AUTH_TOKEN_KEY, token);
+        if (data.user?.role) {
+          await SecureStore.setItemAsync(USER_ROLE_KEY, data.user.role);
+        }
+      }
+
+      return {
+        authenticated: !!token || data.success,
+        token: token || undefined,
+        user: data.user,
+      };
+    } catch (error: any) {
+      return {
+        authenticated: false,
+        error: error.response?.data?.error || error.message || 'Apple Sign-In failed',
+      };
+    }
+  },
+
+  /**
    * Log out current user and clear local storage tokens
    */
   logout: async (): Promise<void> => {
