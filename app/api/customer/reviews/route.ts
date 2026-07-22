@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { verifyToken, extractToken } from '@/lib/auth';
+import { extractToken, verifyToken } from '@/lib/auth';
 import { BookingStatus } from '@prisma/client';
+import { sendNotification } from '@/lib/notifications';
 
 export async function POST(request: Request) {
   try {
@@ -21,76 +22,77 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Booking ID, rating, and comment are required' }, { status: 400 });
     }
 
-    if (rating < 1 || rating > 5) {
-      return NextResponse.json({ error: 'Rating must be between 1 and 5' }, { status: 400 });
-    }
-
-    if (comment.trim().length < 20) {
-      return NextResponse.json({ error: 'Comment must be at least 20 characters long' }, { status: 400 });
-    }
-
-    const booking = await db.booking.findUnique({
-      where: { id: bookingId },
+    const booking = await db.booking.findFirst({
+      where: {
+        id: bookingId,
+        customerId: payload.userId,
+      },
       include: {
-        review: true,
+        vendor: true,
       },
     });
 
-    if (!booking || booking.customerId !== payload.userId) {
+    if (!booking) {
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
     }
 
     if (booking.status !== BookingStatus.COMPLETED) {
-      return NextResponse.json({ error: 'You can only review completed sessions' }, { status: 400 });
+      return NextResponse.json({ error: 'Reviews can only be submitted for completed sessions' }, { status: 400 });
     }
 
-    if (booking.review) {
-      return NextResponse.json({ error: 'A review has already been submitted for this session' }, { status: 400 });
-    }
-
-    // Save review and update rating in a transaction
-    await db.$transaction(async (tx) => {
-      // 1. Create review
-      await tx.review.create({
-        data: {
-          bookingId,
-          customerId: payload.userId,
-          vanId: booking.vanId,
-          rating,
-          comment,
-        },
-      });
-
-      // 2. Fetch all reviews for this vendor's vans to recalculate avg
-      const allVendorReviews = await tx.review.findMany({
-        where: {
-          van: {
-            vendorId: booking.vendorId,
-          },
-        },
-        select: {
-          rating: true,
-        },
-      });
-
-      const totalReviewsCount = allVendorReviews.length;
-      const sumRatings = allVendorReviews.reduce((sum, r) => sum + r.rating, 0);
-      const ratingAvg = totalReviewsCount > 0 ? sumRatings / totalReviewsCount : 0;
-
-      // 3. Update vendor stats
-      await tx.vendorProfile.update({
-        where: { id: booking.vendorId },
-        data: {
-          ratingAvg,
-        },
-      });
+    // Check if review already exists
+    const existingReview = await db.review.findUnique({
+      where: { bookingId },
     });
+
+    if (existingReview) {
+      return NextResponse.json({ error: 'Review already submitted for this booking' }, { status: 400 });
+    }
+
+    // Create review
+    const review = await db.review.create({
+      data: {
+        bookingId,
+        customerId: payload.userId,
+        vanId: booking.vanId,
+        rating: Math.min(5, Math.max(1, parseInt(rating))),
+        comment,
+      },
+    });
+
+    // Recalculate Vendor average rating
+    const allVendorReviews = await db.review.findMany({
+      where: {
+        van: {
+          vendorId: booking.vendorId,
+        },
+      },
+      select: { rating: true },
+    });
+
+    if (allVendorReviews.length > 0) {
+      const avg = allVendorReviews.reduce((sum, r) => sum + r.rating, 0) / allVendorReviews.length;
+      await db.vendorProfile.update({
+        where: { id: booking.vendorId },
+        data: { ratingAvg: parseFloat(avg.toFixed(2)) },
+      });
+    }
+
+    // Notify vendor
+    if (booking.vendor?.userId) {
+      await sendNotification(
+        booking.vendor.userId,
+        'New Guest Review',
+        `A customer submitted a ${rating}-star review for your wellness session.`
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      message: 'Review submitted successfully',
+      review,
     });
   } catch (error: any) {
+    console.error('Failed to create review:', error);
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }
 }

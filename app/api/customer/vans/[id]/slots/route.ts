@@ -21,7 +21,7 @@ export async function GET(
     const endDate = new Date(dateStr);
     endDate.setHours(23, 59, 59, 999);
 
-    const whereClause: any = {
+    let whereClause: any = {
       vanId: id,
       date: {
         gte: startDate,
@@ -29,27 +29,55 @@ export async function GET(
       },
     };
 
-    // If not requesting all slots, only return unbooked ones
-    if (!all) {
-      whereClause.isBooked = false;
-    }
-
-    const slots = await db.availability.findMany({
+    let slots = await db.availability.findMany({
       where: whereClause,
       orderBy: {
         startTime: 'asc',
       },
-      select: {
-        id: true,
-        startTime: true,
-        endTime: true,
-        isBooked: true,
-      },
     });
+
+    // If zero slots exist for this van on this date, auto-generate default daily operating slots (9:00, 11:00, 13:00, 15:00, 17:00, 19:00)
+    if (slots.length === 0) {
+      const hours = [9, 11, 13, 15, 17, 19];
+      const newSlotsData = hours.map((h) => {
+        const slotStart = new Date(dateStr);
+        slotStart.setHours(h, 0, 0, 0);
+
+        const slotEnd = new Date(slotStart);
+        slotEnd.setMinutes(slotStart.getMinutes() + 45);
+
+        return {
+          vanId: id,
+          date: startDate,
+          startTime: slotStart,
+          endTime: slotEnd,
+          isBooked: false,
+        };
+      });
+
+      await db.availability.createMany({
+        data: newSlotsData,
+      });
+
+      slots = await db.availability.findMany({
+        where: whereClause,
+        orderBy: {
+          startTime: 'asc',
+        },
+      });
+    }
+
+    // Filter booked slots if not all requested
+    const filteredSlots = all ? slots : slots.filter((s) => !s.isBooked);
 
     return NextResponse.json({
       success: true,
-      slots,
+      slots: filteredSlots.map((s) => ({
+        id: s.id,
+        startTime: s.startTime,
+        endTime: s.endTime,
+        isBooked: s.isBooked,
+      })),
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });

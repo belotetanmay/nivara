@@ -1,0 +1,243 @@
+@import "tailwindcss";
+
+:root {
+  --background: #F8FAFC;
+  --foreground: #0F172A;
+  
+  --primary: #5B8DEF;
+  --primary-foreground: #FFFFFF;
+  
+  --secondary: #7FD6B5;
+  --secondary-foreground: #0F172A;
+  
+  --accent: #C5B3FF;
+  --accent-foreground: #0F172A;
+  
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B;
+  
+  --card: #FFFFFF;
+  --card-foreground: #0F172A;
+  
+  --border: #E2E8F0;
+  --ring: #5B8DEF;
+  
+  /* Modern brand tokens matching user's Netlify site precisely */
+  --sky-color: #5B8DEF;
+  --mint-color: #7FD6B5;
+  --lavender-color: #C5B3FF;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  
+  --color-nivara-sky: var(--sky-color);
+  --color-nivara-mint: var(--mint-color);
+  --color-nivara-lavender: var(--lavender-color);
+  
+  --font-serif: var(--font-playfair), Georgia, serif;
+  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-sans);
+  font-weight: 800;
+}
+
+/* Figma premium shadows & styling */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.04);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #3578e3, #64b99d 50%, #a991f3);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.card-luxury {
+  background: #ffffff;
+  border: 1px solid #E2E8F0;
+  border-radius: 24px;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-luxury:hover {
+  border-color: #5B8DEF;
+  box-shadow: 0 20px 48px -12px rgba(91, 141, 239, 0.08);
+  transform: translateY(-4px);
+}
+
+.btn-premium {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-premium:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px -8px rgba(91, 141, 239, 0.3);
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 40s linear infinite;
+}
+
+/* Wave visualizer animation */
+@keyframes wave-bounce {
+  0%, 100% {
+    transform: scaleY(0.3);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+.wave-bar {
+  animation: wave-bounce 1.2s ease-in-out infinite;
+}
+.wave-bar:nth-child(2n) {
+  animation-delay: 0.15s;
+}
+.wave-bar:nth-child(3n) {
+  animation-delay: 0.3s;
+}
+.wave-bar:nth-child(4n) {
+  animation-delay: 0.45s;
+}
+.wave-bar:nth-child(5n) {
+  animation-delay: 0.6s;
+}
+
+/* DESIGN SYSTEM TOKENS & PREMIUM UTILITIES */
+
+/* Unified Glassmorphism Card Style */
+.glass-card {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 8px 32px -4px rgba(91, 141, 239, 0.05);
+  transition: all 200ms ease-out;
+}
+
+.glass-card:hover {
+  border-color: rgba(91, 141, 239, 0.35);
+  box-shadow: 0 16px 40px -8px rgba(91, 141, 239, 0.08);
+}
+
+/* Branded Accent Gradient background */
+.brand-bg-gradient {
+  background-color: #F8FAFC;
+  background-image: 
+    radial-gradient(at 10% 20%, rgba(91, 141, 239, 0.03) 0px, transparent 50%),
+    radial-gradient(at 90% 10%, rgba(127, 214, 181, 0.03) 0px, transparent 50%),
+    radial-gradient(at 50% 80%, rgba(197, 179, 255, 0.03) 0px, transparent 50%);
+  position: relative;
+}
+
+/* Premium CTA buttons with scale & shadow transition */
+.btn-premium-action {
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 200ms ease-out;
+  cursor: pointer;
+}
+
+.btn-premium-action:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 20px -4px rgba(91, 141, 239, 0.25);
+}
+
+/* Shimmer animation for loading states */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer-skeleton {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite linear;
+  border-radius: 12px;
+}
+
+/* Page/Section Entrance animation */
+@keyframes fade-slide-up {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-entrance {
+  animation: fade-slide-up 250ms ease-out forwards;
+}

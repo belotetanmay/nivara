@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { verifyToken, extractToken } from '@/lib/auth';
-import { PaymentStatus } from '@prisma/client';
+import { extractToken, verifyToken } from '@/lib/auth';
+import { BookingStatus, PaymentStatus } from '@prisma/client';
 
 export async function GET(request: Request) {
   try {
@@ -15,7 +15,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get vendor profile
     const vendorProfile = await db.vendorProfile.findUnique({
       where: { userId: payload.userId },
     });
@@ -24,84 +23,36 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Vendor profile not found' }, { status: 404 });
     }
 
-    // Fetch bookings for this vendor
-    const bookings = await db.booking.findMany({
+    // Calculate total earnings from completed payments for this vendor
+    const completedPayments = await db.payment.findMany({
+      where: {
+        booking: {
+          vendorId: vendorProfile.id,
+          status: { in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED] },
+        },
+      },
+      select: { amount: true },
+    });
+
+    const totalEarnings = completedPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+
+    // Active bookings (PENDING or CONFIRMED)
+    const activeBookingsCount = await db.booking.count({
       where: {
         vendorId: vendorProfile.id,
-      },
-      include: {
-        customer: {
-          select: {
-            name: true,
-            email: true,
-            phone: true,
-            kycStatus: true,
-          },
-        },
-        van: {
-          select: {
-            title: true,
-            address: true,
-            price30: true,
-          },
-        },
-        availability: {
-          select: {
-            startTime: true,
-            endTime: true,
-          },
-        },
-        payment: {
-          select: {
-            amount: true,
-            status: true,
-            currency: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
+        status: { in: [BookingStatus.PENDING, BookingStatus.CONFIRMED] },
       },
     });
-
-    // 1. Get all vans owned by this vendor
-    const vans = await db.van.findMany({
-      where: { vendorId: vendorProfile.id },
-      select: { id: true },
-    });
-    const vanIds = vans.map((v) => v.id);
-
-    // 2. Count slots
-    const totalSlots = await db.availability.count({
-      where: { vanId: { in: vanIds } },
-    });
-    const bookedSlots = await db.availability.count({
-      where: { vanId: { in: vanIds }, isBooked: true },
-    });
-
-    // 3. Calculate utilization percentage
-    const utilizationRate = totalSlots > 0 ? Math.round((bookedSlots / totalSlots) * 100) : 0;
-
-    // Calculate earnings details
-    const successPayments = bookings
-      .filter((b) => b.payment && b.payment.status === PaymentStatus.SUCCESS)
-      .map((b) => b.payment!.amount);
-
-    const totalEarnings = successPayments.reduce((sum, amt) => sum + Number(amt), 0);
-    const completedSessionsCount = bookings.filter((b) => b.status === 'COMPLETED').length;
 
     return NextResponse.json({
       success: true,
-      vendorProfile,
-      bookings,
-      earnings: {
-        totalEarnings,
-        completedSessionsCount,
-        utilizationRate,
-        payoutDetails: vendorProfile.payoutDetails,
-      },
+      totalEarnings,
+      activeBookings: activeBookingsCount,
+      ratingAvg: vendorProfile.ratingAvg || 5.0,
+      totalBookings: vendorProfile.totalBookings || 0,
     });
   } catch (error: any) {
+    console.error('Failed to fetch vendor dashboard stats:', error);
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }
 }

@@ -18,9 +18,14 @@ export function signToken(payload: TokenPayload): string {
 }
 
 export function verifyToken(token: string): TokenPayload | null {
+  console.log('[Backend Auth] Verifying Token:', token.substring(0, 15) + '...');
+  console.log('[Backend Auth] Using JWT_SECRET length:', JWT_SECRET ? JWT_SECRET.length : 0);
   try {
-    return jwt.verify(token, JWT_SECRET) as any as TokenPayload;
-  } catch (error) {
+    const decoded = jwt.verify(token, JWT_SECRET) as any as TokenPayload;
+    console.log('[Backend Auth] Token Verified Successfully! Payload:', JSON.stringify(decoded));
+    return decoded;
+  } catch (error: any) {
+    console.error('[Backend Auth] Token Verification Failed! Error:', error.message || error);
     return null;
   }
 }
@@ -35,19 +40,29 @@ export async function comparePassword(password: string, hash: string): Promise<b
 }
 
 export function extractToken(request: Request): string | null {
+  console.log('[Backend Auth] Request URL:', request.url);
+  console.log('[Backend Auth] Request Headers:', JSON.stringify(Object.fromEntries(request.headers.entries())));
+
   // 1. Try to read from Authorization Header
   const authHeader = request.headers.get('authorization');
   if (authHeader && authHeader.startsWith('Bearer ')) {
-    return authHeader.substring(7);
+    const token = authHeader.substring(7);
+    console.log('[Backend Auth] Extracted from Auth Header:', token.substring(0, 15) + '...');
+    return token;
   }
 
   // 2. Try to read from Cookies (Fallback for web)
   const cookieHeader = request.headers.get('cookie');
   if (cookieHeader) {
     const match = cookieHeader.match(/auth_token=([^;]+)/);
-    if (match) return decodeURIComponent(match[1]);
+    if (match) {
+      const token = decodeURIComponent(match[1]);
+      console.log('[Backend Auth] Extracted from Cookies:', token.substring(0, 15) + '...');
+      return token;
+    }
   }
 
+  console.log('[Backend Auth] No token found in request!');
   return null;
 }
 

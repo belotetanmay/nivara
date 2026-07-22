@@ -85,7 +85,9 @@ export async function POST(request: Request) {
       },
     });
 
-    // Set Cookie
+    // Set Cookie and Custom Header for Mobile Clients
+    response.headers.set('X-Auth-Token', token);
+    response.headers.set('Access-Control-Expose-Headers', 'X-Auth-Token');
     response.cookies.set('auth_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -96,6 +98,7 @@ export async function POST(request: Request) {
 
     return response;
   } catch (error: any) {
-    return NextResponse.json({ error: 'An internal authentication error occurred.' }, { status: 500 });
+    console.error('[Login API Error]:', error);
+    return NextResponse.json({ error: `An internal authentication error occurred: ${error.message || error}` }, { status: 500 });
   }
 }

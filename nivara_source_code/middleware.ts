@@ -1,0 +1,144 @@
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+// Cryptographically verify HMAC SHA-256 JWT signature using native Web Crypto APIs (compatible with Next.js Edge runtime)
+async function verifyJwtSignature(token: string, secret: string): Promise<any | null> {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+
+    const [header, payload, signature] = parts;
+    const dataToVerify = `${header}.${payload}`;
+
+    const encoder = new TextEncoder();
+    const secretKeyData = encoder.encode(secret);
+
+    // Import secret key for HMAC
+    const key = await crypto.subtle.importKey(
+      'raw',
+      secretKeyData,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['verify']
+    );
+    // Decode base64url signature
+    const signatureBytes = base64UrlToBytes(signature);
+    const dataBytes = encoder.encode(dataToVerify);
+
+    // Verify cryptographic signature
+    const isValid = await crypto.subtle.verify(
+      'HMAC',
+      key,
+      signatureBytes as any,
+      dataBytes as any
+    );
+
+    if (!isValid) return null;
+
+    // Decode and parse payload
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const raw = atob(base64);
+    const bytes = Uint8Array.from(raw, (c) => c.charCodeAt(0));
+    const decoder = new TextDecoder();
+    return JSON.parse(decoder.decode(bytes));
+  } catch (e) {
+    console.error('Edge cryptographic JWT verification failed:', e);
+    return null;
+  }
+}
+
+function base64UrlToBytes(base64Url: string): Uint8Array {
+  let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+  while (base64.length % 4) {
+    base64 += '=';
+  }
+  const binaryString = atob(base64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+}
+
+export async function middleware(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+  
+  // Define protected paths
+  const isAdminPath = path.startsWith('/admin');
+  const isVendorPath = path.startsWith('/vendor');
+  const isCustomerPath = 
+    path.startsWith('/customer/dashboard') || 
+    path.startsWith('/customer/kyc') || 
+    path.startsWith('/customer/bookings') || 
+    path.startsWith('/customer/review');
+  const isLoginPath = path === '/login' || path === '/register';
+
+  if (!isAdminPath && !isVendorPath && !isCustomerPath && !isLoginPath) {
+    return NextResponse.next();
+  }
+
+  const tokenCookie = request.cookies.get('auth_token');
+  const token = tokenCookie?.value;
+  const JWT_SECRET = process.env.JWT_SECRET;
+
+  if (token && JWT_SECRET) {
+    // Perform cryptographic verification of the signature
+    const payload = await verifyJwtSignature(token, JWT_SECRET);
+    const currentTime = Math.floor(Date.now() / 1000);
+
+    if (!payload || !payload.role || !payload.userId || (payload.exp && currentTime >= payload.exp)) {
+      // Clear invalid or signature-failed token
+      const response = NextResponse.redirect(new URL('/login', request.url));
+      response.cookies.delete('auth_token');
+      return response;
+    }
+
+    const { role } = payload;
+
+    // If logged in, redirect away from login/register pages
+    if (isLoginPath) {
+      if (role === 'ADMIN') {
+        return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+      } else if (role === 'VENDOR') {
+        return NextResponse.redirect(new URL('/vendor/dashboard', request.url));
+      } else {
+        return NextResponse.redirect(new URL('/customer/dashboard', request.url));
+      }
+    }
+
+    // Role-based access control
+    if (isAdminPath && role !== 'ADMIN') {
+      return NextResponse.redirect(new URL('/login?unauthorized=true', request.url));
+    }
+    if (isVendorPath && role !== 'VENDOR') {
+      return NextResponse.redirect(new URL('/login?unauthorized=true', request.url));
+    }
+    if (isCustomerPath && role !== 'CUSTOMER') {
+      return NextResponse.redirect(new URL('/login?unauthorized=true', request.url));
+    }
+
+    return NextResponse.next();
+  } else {
+    // No token, redirect to login if accessing protected routes
+    if (isAdminPath || isVendorPath || isCustomerPath) {
+      let roleHint = 'customer';
+      if (isAdminPath) roleHint = 'admin';
+      if (isVendorPath) roleHint = 'vendor';
+      
+      return NextResponse.redirect(new URL(`/login?role=${roleHint}`, request.url));
+    }
+    return NextResponse.next();
+  }
+}
+
+// Config to specify matching paths
+export const config = {
+  matcher: [
+    '/admin/:path*',
+    '/vendor/:path*',
+    '/customer/:path*',
+    '/login',
+    '/register',
+  ],
+};

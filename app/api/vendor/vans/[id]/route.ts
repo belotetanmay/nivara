@@ -1,26 +1,23 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { db } from '@/lib/db';
-import { verifyToken } from '@/lib/auth';
-import { geocodeAddress } from '@/lib/services/location';
+import { extractToken, verifyToken } from '@/lib/auth';
+import { VanStatus } from '@prisma/client';
 
-export async function GET(
+export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const cookieStore = await cookies();
-    const tokenCookie = cookieStore.get('auth_token');
-    if (!tokenCookie) {
+    const { id } = await params;
+    const token = extractToken(request);
+    if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const payload = verifyToken(tokenCookie.value);
+    const payload = verifyToken(token);
     if (!payload || payload.role !== 'VENDOR') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    const { id } = await params;
 
     const vendorProfile = await db.vendorProfile.findUnique({
       where: { userId: payload.userId },
@@ -28,57 +25,6 @@ export async function GET(
 
     if (!vendorProfile) {
       return NextResponse.json({ error: 'Vendor profile not found' }, { status: 404 });
-    }
-
-    const van = await db.van.findUnique({
-      where: { id },
-    });
-
-    if (!van || van.vendorId !== vendorProfile.id) {
-      return NextResponse.json({ error: 'Van not found or unauthorized' }, { status: 404 });
-    }
-
-    return NextResponse.json({
-      success: true,
-      van,
-    });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
-  }
-}
-
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const cookieStore = await cookies();
-    const tokenCookie = cookieStore.get('auth_token');
-    if (!tokenCookie) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const payload = verifyToken(tokenCookie.value);
-    if (!payload || payload.role !== 'VENDOR') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { id } = await params;
-
-    const vendorProfile = await db.vendorProfile.findUnique({
-      where: { userId: payload.userId },
-    });
-
-    if (!vendorProfile) {
-      return NextResponse.json({ error: 'Vendor profile not found' }, { status: 404 });
-    }
-
-    const van = await db.van.findUnique({
-      where: { id },
-    });
-
-    if (!van || van.vendorId !== vendorProfile.id) {
-      return NextResponse.json({ error: 'Van not found or unauthorized' }, { status: 404 });
     }
 
     const body = await request.json();
@@ -96,36 +42,123 @@ export async function PATCH(
       attendantName,
     } = body;
 
-    let updateData: any = {
-      title,
-      description,
-      amenities,
-      photos,
-      price15: price15 !== undefined ? parseFloat(price15) : undefined,
-      price30: price30 !== undefined ? parseFloat(price30) : undefined,
-      price45: price45 !== undefined ? parseFloat(price45) : undefined,
-      serviceRadius: serviceRadius !== undefined ? parseFloat(serviceRadius) : undefined,
-      hasAttendant,
-      attendantName: hasAttendant ? attendantName : null,
-    };
-
-    if (address && address !== van.address) {
-      const coords = await geocodeAddress(address);
-      updateData.address = address;
-      updateData.latitude = coords.lat;
-      updateData.longitude = coords.lng;
-    }
-
-    await db.van.update({
-      where: { id },
-      data: updateData,
+    const updatedVan = await db.van.update({
+      where: {
+        id,
+        vendorId: vendorProfile.id,
+      },
+      data: {
+        ...(title !== undefined && { title }),
+        ...(description !== undefined && { description }),
+        ...(address !== undefined && { address }),
+        ...(amenities !== undefined && { amenities }),
+        ...(photos !== undefined && { photos }),
+        ...(price15 !== undefined && { price15: parseFloat(price15) }),
+        ...(price30 !== undefined && { price30: parseFloat(price30) }),
+        ...(price45 !== undefined && { price45: parseFloat(price45) }),
+        ...(serviceRadius !== undefined && { serviceRadius: parseFloat(serviceRadius) }),
+        ...(hasAttendant !== undefined && { hasAttendant: !!hasAttendant }),
+        ...(attendantName !== undefined && { attendantName }),
+      },
     });
 
     return NextResponse.json({
       success: true,
-      message: 'Van updated successfully',
+      van: updatedVan,
     });
   } catch (error: any) {
+    console.error('Failed to update van:', error);
+    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const token = extractToken(request);
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const payload = verifyToken(token);
+    if (!payload || payload.role !== 'VENDOR') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const vendorProfile = await db.vendorProfile.findUnique({
+      where: { userId: payload.userId },
+    });
+
+    if (!vendorProfile) {
+      return NextResponse.json({ error: 'Vendor profile not found' }, { status: 404 });
+    }
+
+    const { status } = await request.json();
+
+    if (!status || !Object.values(VanStatus).includes(status)) {
+      return NextResponse.json({ error: 'Valid status is required' }, { status: 400 });
+    }
+
+    const updatedVan = await db.van.update({
+      where: {
+        id,
+        vendorId: vendorProfile.id,
+      },
+      data: {
+        status,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      van: updatedVan,
+    });
+  } catch (error: any) {
+    console.error('Failed to patch van status:', error);
+    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const token = extractToken(request);
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const payload = verifyToken(token);
+    if (!payload || payload.role !== 'VENDOR') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const vendorProfile = await db.vendorProfile.findUnique({
+      where: { userId: payload.userId },
+    });
+
+    if (!vendorProfile) {
+      return NextResponse.json({ error: 'Vendor profile not found' }, { status: 404 });
+    }
+
+    await db.van.delete({
+      where: {
+        id,
+        vendorId: vendorProfile.id,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Van deleted successfully',
+    });
+  } catch (error: any) {
+    console.error('Failed to delete van:', error);
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }
 }

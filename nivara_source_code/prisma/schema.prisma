@@ -1,0 +1,343 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  CUSTOMER
+  VENDOR
+  ADMIN
+}
+
+enum KYCStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum VendorStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum VanStatus {
+  UNDER_REVIEW
+  ACTIVE
+  INACTIVE
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  INITIATED
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum ServiceType {
+  STEADY
+  PICK_AND_DROP
+  BOTH
+}
+
+enum ServiceModel {
+  STEADY
+  PICK_AND_DROP
+}
+
+enum OvertimeStatus {
+  NONE
+  UNPAID
+  PAID
+}
+
+enum ContactStatus {
+  NEW
+  READ
+  CLOSED
+}
+
+enum TransactionType {
+  CREDIT
+  DEBIT
+}
+
+model User {
+  id                  String              @id @default(uuid())
+  name                String
+  email               String              @unique
+  phone               String?
+  passwordHash        String
+  role                Role                @default(CUSTOMER)
+  kycStatus           KYCStatus           @default(UNVERIFIED)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  walletBalance       Decimal             @db.Decimal(10, 2) @default(2500.0)
+  failedLoginAttempts Int                 @default(0)
+  lockoutUntil        DateTime?
+  kycDocuments        KYCDocument[]
+  vendorProfile       VendorProfile?
+  bookings            Booking[]           @relation("CustomerBookings")
+  reviews             Review[]
+  auditLogs           AdminAuditLog[]     @relation("AdminActions")
+  conversations       ChatConversation[]  @relation("UserConversations")
+  walletTransactions  WalletTransaction[]
+}
+
+model WalletTransaction {
+  id          String          @id @default(uuid())
+  userId      String
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount      Decimal         @db.Decimal(10, 2)
+  type        TransactionType
+  description String
+  createdAt   DateTime        @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model KYCDocument {
+  id              String    @id @default(uuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  docType         String    // "ID_CARD", "PASSPORT", "DRIVER_LICENSE"
+  docNumber       String    // Masked/encrypted
+  fileUrl         String
+  status          KYCStatus @default(PENDING)
+  rejectionReason String?
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @default(now()) @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model VendorProfile {
+  id                     String       @id @default(uuid())
+  userId                 String       @unique
+  user                   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessName           String
+  bio                    String
+  payoutDetails          String
+  verificationStatus     VendorStatus @default(PENDING)
+  rejectionReason        String?
+  ratingAvg              Float        @default(0.0)
+  totalBookings          Int          @default(0)
+  
+  // Multi-step Business Validation
+  aadharNumber           String?
+  panCardNumber          String?
+  businessLicenseNo      String?
+  businessRegistrationNo String?
+  gstNumber              String?
+  panNumber              String?
+  bankName               String?
+  bankAccountNumber      String?
+  bankIfsc               String?
+  driverName             String?
+  driverLicenseNo        String?
+  driverKycUrl           String?
+
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  
+  vans               Van[]
+  bookings           Booking[]    @relation("VendorBookings")
+}
+
+model Van {
+  id             String         @id @default(uuid())
+  vendorId       String
+  vendor         VendorProfile  @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  title          String
+  description    String
+  amenities      String[]       // e.g. ["Aromatherapy", "Zero Gravity Chair", "Soundproofing"]
+  photos         String[]
+  latitude       Float
+  longitude      Float
+  address        String
+  serviceRadius  Float          // in km
+  price15        Decimal        @db.Decimal(10, 2) // 15-min price tier
+  price30        Decimal        @db.Decimal(10, 2) // 30-min price tier
+  price45        Decimal        @db.Decimal(10, 2) // 45-min price tier
+  status         VanStatus      @default(UNDER_REVIEW)
+  hasAttendant   Boolean        @default(false)
+  attendantName  String?
+  serviceType    ServiceType    @default(STEADY)
+  
+  // Vehicle Details & Certifications
+  vehicleNumber  String?
+  chassisNumber  String?
+  insuranceUrl   String?
+  pucUrl         String?
+  rcUrl          String?
+  isCommercial   Boolean        @default(false)
+  onSiteInspectionCertUrl String?
+  fakePhotoDeclaration   Boolean        @default(false)
+
+  currentLatitude Float?
+  currentLongitude Float?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  
+  availabilities Availability[]
+  bookings       Booking[]
+  reviews        Review[]
+
+  @@index([status])
+  @@index([vendorId, status])
+}
+
+model Availability {
+  id             String   @id @default(uuid())
+  vanId          String
+  van            Van      @relation(fields: [vanId], references: [id], onDelete: Cascade)
+  date           DateTime // Date of availability
+  startTime      DateTime // Start time slot
+  endTime        DateTime // End time slot
+  isBooked       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  
+  booking        Booking?
+
+  @@index([vanId])
+  @@index([date])
+  @@index([vanId, isBooked])
+  @@index([vanId, date])
+}
+
+model Booking {
+  id             String        @id @default(uuid())
+  customerId     String
+  customer       User          @relation("CustomerBookings", fields: [customerId], references: [id], onDelete: Cascade)
+  vanId          String
+  van            Van           @relation(fields: [vanId], references: [id], onDelete: Cascade)
+  vendorId       String
+  vendor         VendorProfile @relation("VendorBookings", fields: [vendorId], references: [id], onDelete: Cascade)
+  slotId         String        @unique
+  availability   Availability  @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  sessionLength  Int           // 15 | 30 | 45
+  status         BookingStatus @default(PENDING)
+  bookingCode    String        @unique // e.g. NV-XXXX-XXXX
+  qrCodeUrl      String?
+  scent          String        @default("Lavender")
+  lighting       String        @default("Sunset Copper")
+  audio          String        @default("Binaural Beats")
+  serviceModel   ServiceModel  @default(STEADY)
+  pickupAddress  String?
+  dropoffAddress String?
+  includeParkingFee Boolean     @default(false)
+  parkingFeeAmount  Decimal     @db.Decimal(10, 2) @default(0.0)
+  actualDuration    Int?
+  overtimeMinutes   Int         @default(0)
+  overtimeAmount    Decimal     @db.Decimal(10, 2) @default(0.0)
+  overtimeStatus    OvertimeStatus @default(NONE)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  
+  payment        Payment?
+  review         Review?
+
+  @@index([customerId])
+  @@index([vendorId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([vendorId, status])
+  @@index([customerId, status])
+}
+
+model Payment {
+  id          String        @id @default(uuid())
+  bookingId   String        @unique
+  booking     Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  amount      Decimal       @db.Decimal(10, 2)
+  currency    String        @default("INR")
+  gatewayRef  String?       // Gateway checkout session or charge ID
+  status      PaymentStatus @default(INITIATED)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([status])
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  bookingId  String   @unique
+  booking    Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  vanId      String
+  van        Van      @relation(fields: [vanId], references: [id], onDelete: Cascade)
+  rating     Int      // 1 to 5
+  comment    String
+  createdAt  DateTime @default(now())
+
+  @@index([customerId])
+  @@index([vanId])
+}
+
+model AdminAuditLog {
+  id           String   @id @default(uuid())
+  adminId      String
+  admin        User     @relation("AdminActions", fields: [adminId], references: [id], onDelete: Cascade)
+  action       String   // e.g. "APPROVE_KYC", "REJECT_VENDOR", "REFUND_PAYMENT"
+  targetEntity String   // e.g. "User:123", "VendorProfile:456"
+  details      String?  // JSON or description
+  timestamp    DateTime @default(now())
+
+  @@index([adminId])
+  @@index([timestamp])
+}
+
+model ContactMessage {
+  id        String        @id @default(uuid())
+  name      String
+  email     String
+  message   String
+  status    ContactStatus @default(NEW)
+  createdAt DateTime      @default(now())
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ChatConversation {
+  id        String        @id @default(uuid())
+  userId    String?
+  user      User?         @relation("UserConversations", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  messages  ChatMessage[]
+
+  @@index([userId])
+  @@index([updatedAt])
+}
+
+model ChatMessage {
+  id             String           @id @default(uuid())
+  conversationId String
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         String           // "user" | "bot"
+  content        String
+  timestamp      DateTime         @default(now())
+
+  @@index([conversationId])
+  @@index([timestamp])
+}
