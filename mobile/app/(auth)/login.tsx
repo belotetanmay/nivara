@@ -115,14 +115,17 @@ export default function LoginScreen() {
     try {
       setGoogleLoading(true);
 
+      const clientId = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID?.trim();
       const redirectUri = 'https://nivara-ten.vercel.app/api/auth/google/callback';
-      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=GOOGLE_CLIENT_ID&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=openid%20email%20profile&prompt=select_account`;
 
-      const authSessionResult = await WebBrowser.openAuthSessionAsync(googleAuthUrl, redirectUri);
+      if (clientId && !clientId.includes('GOOGLE_CLIENT_ID')) {
+        const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=openid%20email%20profile&prompt=select_account`;
+        const authSessionResult = await WebBrowser.openAuthSessionAsync(googleAuthUrl, redirectUri);
 
-      if (authSessionResult.type === 'cancel' || authSessionResult.type === 'dismiss') {
-        setGoogleLoading(false);
-        return; // User cancelled account prompt
+        if (authSessionResult.type === 'cancel' || authSessionResult.type === 'dismiss') {
+          setGoogleLoading(false);
+          return;
+        }
       }
 
       const result = await googleMobileLogin();
