@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Image, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Image, StyleSheet, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
@@ -20,9 +20,10 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, appleLogin, googleMobileLogin } = useAuth();
   const { show } = useToast();
   const [loading, setLoading] = useState(false);
+  const [socialLoading, setSocialLoading] = useState(false);
 
   const {
     control,
@@ -44,7 +45,6 @@ export default function LoginScreen() {
     if (result.success && result.user) {
       show('Successfully logged in!', 'success');
       const role = result.user.role;
-      console.log('[Login Submit Navigation Decision]: User role is', role);
       if (role === 'VENDOR') {
         router.replace('/(app)/(vendor)/dashboard');
       } else if (role === 'ADMIN') {
@@ -54,6 +54,42 @@ export default function LoginScreen() {
       }
     } else {
       show(result.error || 'Invalid email or password', 'error');
+    }
+  };
+
+  const handleAppleLogin = async () => {
+    setSocialLoading(true);
+    const result = await appleLogin();
+    setSocialLoading(false);
+
+    if (result.success && result.user) {
+      show('Signed in with Apple successfully!', 'success');
+      const role = result.user.role;
+      if (role === 'VENDOR') {
+        router.replace('/(app)/(vendor)/dashboard');
+      } else {
+        router.replace('/(app)/(customer)/explore');
+      }
+    } else {
+      show(result.error || 'Apple Sign-In failed', 'error');
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setSocialLoading(true);
+    const result = await googleMobileLogin();
+    setSocialLoading(false);
+
+    if (result.success && result.user) {
+      show('Signed in with Google successfully!', 'success');
+      const role = result.user.role;
+      if (role === 'VENDOR') {
+        router.replace('/(app)/(vendor)/dashboard');
+      } else {
+        router.replace('/(app)/(customer)/explore');
+      }
+    } else {
+      show(result.error || 'Google Sign-In failed', 'error');
     }
   };
 
@@ -131,7 +167,7 @@ export default function LoginScreen() {
           </View>
 
           {/* Action Buttons */}
-          <View className="space-y-4">
+          <View className="space-y-3">
             <Button
               title="Access Nivara Dashboard"
               onPress={handleSubmit(onSubmit)}
@@ -139,17 +175,29 @@ export default function LoginScreen() {
               className="w-full py-4 rounded-xl"
             />
             
-            <View className="flex-row items-center justify-center py-4">
+            <View className="flex-row items-center justify-center py-3">
               <View className="flex-1 h-[1px] bg-[#E5E1D8]" />
               <Text className="text-gray-400 text-xs px-3 uppercase font-semibold">or</Text>
               <View className="flex-1 h-[1px] bg-[#E5E1D8]" />
             </View>
 
+            {/* Apple Sign-In (iOS Exclusive) */}
+            {Platform.OS === 'ios' && (
+              <Button
+                title="Continue with Apple"
+                onPress={handleAppleLogin}
+                isLoading={socialLoading}
+                style={styles.appleBtn}
+                className="w-full py-3.5 rounded-xl mb-2"
+              />
+            )}
+
+            {/* Google Sign-In */}
             <Button
               title="Continue with Google"
-              onPress={() => show('Google Sign-In is currently disabled. Social OAuth login has not been implemented for this environment.', 'info')}
+              onPress={handleGoogleLogin}
+              isLoading={socialLoading}
               variant="outline"
-              style={styles.disabledBtn}
               className="w-full py-3.5 rounded-xl border-[#E5E1D8]"
             />
           </View>
@@ -185,5 +233,10 @@ const styles = StyleSheet.create({
   },
   disabledBtn: {
     opacity: 0.5,
+  },
+  appleBtn: {
+    backgroundColor: '#000000',
+    borderColor: '#000000',
+    borderRadius: 12,
   },
 });
