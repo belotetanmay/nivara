@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/feedback/Toast';
 import { Button } from '../../components/ui/Button';
@@ -23,7 +24,8 @@ export default function LoginScreen() {
   const { login, appleLogin, googleMobileLogin } = useAuth();
   const { show } = useToast();
   const [loading, setLoading] = useState(false);
-  const [socialLoading, setSocialLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const {
     control,
@@ -58,27 +60,60 @@ export default function LoginScreen() {
   };
 
   const handleAppleLogin = async () => {
-    setSocialLoading(true);
-    const result = await appleLogin();
-    setSocialLoading(false);
+    try {
+      setAppleLoading(true);
+      const isAvailable = await AppleAuthentication.isAvailableAsync();
+      
+      let payload: any;
+      if (isAvailable) {
+        const credential = await AppleAuthentication.signInAsync({
+          requestedScopes: [
+            AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+            AppleAuthentication.AppleAuthenticationScope.EMAIL,
+          ],
+        });
 
-    if (result.success && result.user) {
-      show('Signed in with Apple successfully!', 'success');
-      const role = result.user.role;
-      if (role === 'VENDOR') {
-        router.replace('/(app)/(vendor)/dashboard');
-      } else {
-        router.replace('/(app)/(customer)/explore');
+        const name = credential.fullName
+          ? `${credential.fullName.givenName || ''} ${credential.fullName.familyName || ''}`.trim()
+          : undefined;
+
+        payload = {
+          identityToken: credential.identityToken,
+          email: credential.email || undefined,
+          name: name || undefined,
+          userIdentifier: credential.user,
+          role: 'CUSTOMER',
+        };
       }
-    } else {
-      show(result.error || 'Apple Sign-In failed', 'error');
+
+      const result = await appleLogin(payload);
+      setAppleLoading(false);
+
+      if (result.success && result.user) {
+        show('Signed in with Apple successfully!', 'success');
+        const role = result.user.role;
+        if (role === 'VENDOR') {
+          router.replace('/(app)/(vendor)/dashboard');
+        } else {
+          router.replace('/(app)/(customer)/explore');
+        }
+      } else {
+        show(result.error || 'Apple Sign-In failed', 'error');
+      }
+    } catch (error: any) {
+      setAppleLoading(false);
+      if (error.code === 'ERR_REQUEST_CANCELED') {
+        // User cancelled native Apple ID prompt
+        return;
+      }
+      show(error.message || 'Apple Sign-In failed', 'error');
     }
   };
 
   const handleGoogleLogin = async () => {
-    setSocialLoading(true);
+    setGoogleLoading(true);
     const result = await googleMobileLogin();
-    setSocialLoading(false);
+    setGoogleLoading(false);
 
     if (result.success && result.user) {
       show('Signed in with Google successfully!', 'success');
@@ -186,7 +221,7 @@ export default function LoginScreen() {
               <Button
                 title="Continue with Apple"
                 onPress={handleAppleLogin}
-                isLoading={socialLoading}
+                isLoading={appleLoading}
                 style={styles.appleBtn}
                 className="w-full py-3.5 rounded-xl mb-2"
               />
@@ -196,7 +231,7 @@ export default function LoginScreen() {
             <Button
               title="Continue with Google"
               onPress={handleGoogleLogin}
-              isLoading={socialLoading}
+              isLoading={googleLoading}
               variant="outline"
               className="w-full py-3.5 rounded-xl border-[#E5E1D8]"
             />
