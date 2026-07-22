@@ -218,9 +218,9 @@ export default function Home() {
   // Pricing multipliers based on time of day
   const getSessionPrice = (duration: 30 | 45 | 60) => {
     let base = 0;
-    if (duration === 30) base = 299;
-    else if (duration === 45) base = 449;
-    else if (duration === 60) base = 599;
+    if (duration === 30) base = 999;
+    else if (duration === 45) base = 1499;
+    else if (duration === 60) base = 1999;
 
     let multiplier = 1.0;
     if (timeOfDay === 'morning') multiplier = 1.0;
@@ -292,7 +292,7 @@ export default function Home() {
             
             <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-yellow-400 leading-tight drop-shadow-[0_4px_16px_rgba(0,0,0,0.85)]">
               {marketingMode === 'individual' ? (
-                <>Relax. Recharge.<br /><span className="text-yellow-300">Right at Your Doorstep.</span></>
+                <>Relax. Rejuvenate.<br /><span className="text-yellow-300">Experience NIVARA.</span></>
               ) : (
                 <>Power Your Fleet.<br /><span className="text-yellow-300">Scale Your Business.</span></>
               )}
@@ -300,7 +300,7 @@ export default function Home() {
             
             <p className="text-yellow-100/95 text-xs sm:text-base max-w-2xl mx-auto leading-relaxed font-sans font-medium drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)]">
               {marketingMode === 'individual' ? (
-                'Smart mobile recovery suites delivering climate-controlled, synchronized bio-hacking therapies directly to your doorstep via real-time cloud automation.'
+                'Luxury Wellness Delivered to Your Doorstep. Wellness Designed Around Your Lifestyle. Every Session is Curated for Comfort and Excellence.'
               ) : (
                 'List your custom-retrofitted stress relief van on the Nivara marketplace. Set your own schedules, tap into corporate clusters, and watch your business grow.'
               )}
@@ -618,56 +618,105 @@ export default function Home() {
                   </div>
 
                   {/* Pricing Cards Column */}
-                  <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
+                  <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
                     {[
-                      { title: 'Standard Session', min: 30, desc: 'Ideal for quick breathers', features: ['Zero-gravity seating', 'Sensory customizer access', '15-min post cycle cleanup'] },
-                      { title: 'Extended Session', min: 45, desc: 'Deep recovery cycle', features: ['Full sensory sync presets', 'Extended haptic massage', 'Acoustic masking engine', 'HEPA filter oxygenation'], highlight: true },
-                      { title: 'Premium Session', min: 60, desc: 'Maximum metabolic reset', features: ['All extended options', 'Immune sound guide', 'Aroma blend reserve bottles', 'Cognitive wellness report'] }
-                    ].map((card) => (
-                      <div 
-                        key={card.min} 
-                        className={`bg-white p-6 rounded-3xl border flex flex-col justify-between space-y-6 shadow-sm transition-all ${
-                          card.highlight ? 'border-primary relative ring-2 ring-primary/10 shadow-md' : 'border-slate-200'
-                        }`}
-                      >
-                        {card.highlight && (
-                          <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-secondary text-slate-900 text-[8px] font-black uppercase tracking-wider">
-                            Recommended
-                          </span>
-                        )}
-                        <div className="space-y-4">
-                          <div>
-                            <h4 className="text-xs font-bold text-slate-900">{card.title}</h4>
-                            <p className="text-[10px] text-slate-400">{card.min} minutes</p>
-                          </div>
-                          
-                          <div>
-                            <span className="text-3xl font-black text-slate-900">₹{getSessionPrice(card.min as any)}</span>
-                            <span className="text-[10px] text-slate-400 block mt-1">{card.desc}</span>
-                          </div>
+                      { 
+                        title: '30 Minutes', 
+                        min: 30, 
+                        original: 1499,
+                        launch: 999,
+                        desc: 'Perfect for a quick recharge and stress relief.', 
+                        label: 'Exclusive Early Access',
+                        cta: 'Book Premium Session',
+                        icon: Zap,
+                        features: ['Zero-gravity seating', 'Sensory customizer access', '15-min post cycle cleanup'] 
+                      },
+                      { 
+                        title: '45 Minutes', 
+                        min: 45, 
+                        original: 1999,
+                        launch: 1499,
+                        desc: 'Balanced wellness experience for mind and body.', 
+                        label: 'Founding Member Price',
+                        cta: 'Reserve Your Session',
+                        icon: Headphones,
+                        highlight: true,
+                        features: ['Full sensory sync presets', 'Extended haptic massage', 'Acoustic masking engine', 'HEPA filter oxygenation'] 
+                      },
+                      { 
+                        title: '60 Minutes', 
+                        min: 60, 
+                        original: 2499,
+                        launch: 1999,
+                        desc: 'Complete luxury wellness experience with personalized care.', 
+                        label: 'Limited-Time Introductory Offer',
+                        cta: 'Experience Premium Wellness',
+                        icon: Award,
+                        features: ['All extended options', 'Immune sound guide', 'Aroma blend reserve bottles', 'Cognitive wellness report'] 
+                      }
+                    ].map((card) => {
+                      const IconComponent = card.icon;
+                      // Dynamic calculation for launch price based on segment
+                      const dynamicLaunchPrice = getSessionPrice(card.min as any);
+                      const dynamicOriginalPrice = Math.round(card.original * (timeOfDay === 'morning' ? 1.0 : timeOfDay === 'afternoon' ? 1.15 : timeOfDay === 'evening' ? 1.35 : 0.90));
 
-                          <ul className="space-y-2 text-[9px] font-semibold text-slate-500 border-t border-slate-100 pt-4">
-                            {card.features.map((f, idx) => (
-                              <li key={idx} className="flex items-center gap-1">
-                                <CheckCircle className="w-3 h-3 text-secondary flex-shrink-0" />
-                                <span>{f}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        
-                        <Link
-                          href="/customer/search"
-                          className={`w-full text-center py-2.5 rounded-full font-bold text-[10px] transition-all ${
-                            card.highlight 
-                              ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md hover:opacity-95' 
-                              : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                      return (
+                        <div 
+                          key={card.min} 
+                          className={`bg-white p-6 rounded-3xl border flex flex-col justify-between space-y-6 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${
+                            card.highlight ? 'border-[#2C5234] relative ring-4 ring-[#2C5234]/10' : 'border-[#E5E1D8]'
                           }`}
                         >
-                          Book {card.min} mins
-                        </Link>
-                      </div>
-                    ))}
+                          {card.highlight && (
+                            <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-[#2C5234] text-white text-[9px] font-bold uppercase tracking-wider shadow-sm">
+                              Most Popular
+                            </span>
+                          )}
+                          <div className="space-y-4">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h4 className="font-serif text-base font-bold text-primary">{card.title}</h4>
+                                <span className="inline-block mt-1 text-[9px] font-semibold text-[#D4A373] tracking-wide uppercase">
+                                  {card.label}
+                                </span>
+                              </div>
+                              <span className="p-2 bg-[#FAF8F5] rounded-xl text-primary border border-[#E5E1D8]/40">
+                                <IconComponent className="w-4 h-4 text-secondary" />
+                              </span>
+                            </div>
+                            
+                            <div className="pt-2 border-t border-slate-100">
+                              <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Launch Price</p>
+                              <div className="flex items-baseline gap-2 mt-1">
+                                <span className="text-2xl font-bold text-primary">₹{dynamicLaunchPrice}</span>
+                                <span className="text-xs text-muted-foreground line-through">₹{dynamicOriginalPrice}</span>
+                              </div>
+                              <span className="text-[10px] text-slate-500 block mt-2 leading-relaxed italic">{card.desc}</span>
+                            </div>
+
+                            <ul className="space-y-2.5 text-[10px] font-medium text-slate-600 border-t border-slate-100 pt-4">
+                              {card.features.map((f, idx) => (
+                                <li key={idx} className="flex items-start gap-2">
+                                  <CheckCircle className="w-3.5 h-3.5 text-secondary flex-shrink-0 mt-0.5" />
+                                  <span className="leading-tight">{f}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                          
+                          <Link
+                            href="/customer/search"
+                            className={`w-full text-center py-3 rounded-xl font-bold text-xs transition-all duration-300 ${
+                              card.highlight 
+                                ? 'bg-secondary text-white shadow-md hover:bg-secondary/95 hover:shadow-lg' 
+                                : 'bg-[#FCF9F6] border border-[#E5E1D8] text-primary hover:bg-[#FAF8F5]'
+                            }`}
+                          >
+                            {card.cta}
+                          </Link>
+                        </div>
+                      );
+                    })}
                   </div>
 
                 </div>
@@ -750,6 +799,45 @@ export default function Home() {
                       ✓ Calm & Restored
                     </div>
                   </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Why Choose NIVARA? Trust Indicators */}
+            <section className="py-24 bg-[#FCF9F6] border-b border-border">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
+                  <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-[#D4A373]/15 text-[#D4A373] border border-[#D4A373]/25">
+                    NIVARA Excellence
+                  </span>
+                  <h2 className="font-serif text-3xl font-bold tracking-tight text-primary">
+                    Why Choose NIVARA?
+                  </h2>
+                  <p className="text-muted-foreground text-xs leading-relaxed max-w-md mx-auto">
+                    We deliver an unparalleled, curated wellness experience tailored entirely to your lifestyle and comfort.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                  {[
+                    { title: 'Verified Wellness Professionals', desc: 'Every partner undergoes rigorous background checks and professional vetting.', icon: ShieldCheck },
+                    { title: 'Premium At-Home Experience', desc: 'No traveling needed. Our luxury pods bring serenity directly to your preferred address.', icon: Sparkles },
+                    { title: 'Safe & Secure Payments', desc: 'Fully encrypted Stripe integrations guarantee safe transactions every time.', icon: CreditCard },
+                    { title: 'Personalized Wellness Sessions', desc: 'Tailor your climate, spatial audio, lighting, and aromatherapies for custom comfort.', icon: UserCheck },
+                    { title: 'Flexible Scheduling', desc: 'Book in advance or schedule real-time slots seamlessly within seconds.', icon: Clock },
+                    { title: 'Exceptional Customer Support', desc: 'Our dedicated concierge desk is available to assist you with any request.', icon: Headphones }
+                  ].map((item, idx) => {
+                    const TrustIcon = item.icon;
+                    return (
+                      <div key={idx} className="bg-white border border-[#E5E1D8] p-6 rounded-3xl space-y-4 shadow-sm hover:shadow-md transition-all duration-300">
+                        <span className="inline-block p-3 bg-[#FCF9F6] rounded-2xl text-[#2C5234] border border-[#E5E1D8]/60">
+                          <TrustIcon className="w-5 h-5" />
+                        </span>
+                        <h4 className="font-serif text-sm font-bold text-primary">{item.title}</h4>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">{item.desc}</p>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </section>

@@ -49,9 +49,9 @@ export default function VendorOnboarding() {
   const [vanTitle, setVanTitle] = useState('');
   const [vanDescription, setVanDescription] = useState('');
   const [vanAmenities, setVanAmenities] = useState<string[]>(['Aromatherapy', 'Zero Gravity Chair', 'Soundproofing']);
-  const [vanPrice15, setVanPrice15] = useState(199);
-  const [vanPrice30, setVanPrice30] = useState(399);
-  const [vanPrice45, setVanPrice45] = useState(599);
+  const [vanPrice15, setVanPrice15] = useState(999);
+  const [vanPrice30, setVanPrice30] = useState(1499);
+  const [vanPrice45, setVanPrice45] = useState(1999);
   const [vanPhotos, setVanPhotos] = useState<string[]>([]);
   const [onSiteInspectionCertUrl, setOnSiteInspectionCertUrl] = useState('');
   const [fakePhotoDeclaration, setFakePhotoDeclaration] = useState(false);

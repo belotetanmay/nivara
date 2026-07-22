@@ -472,8 +472,8 @@ export default function CustomerSearch() {
 
                         <div className="flex items-center gap-3">
                           <div className="text-right">
-                            <span className="text-[10px] text-muted-foreground block">30 Min Session</span>
-                            <span className="font-bold text-primary text-sm">₹{van.price30}</span>
+                            <span className="text-[10px] text-muted-foreground block font-medium">30 Min Session</span>
+                            <span className="font-bold text-primary text-sm">₹{van.price15}</span>
                           </div>
                           <Link
                             href={`/customer/vans/${van.id}`}
