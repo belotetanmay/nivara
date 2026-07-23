@@ -7,12 +7,12 @@ export async function GET(request: Request) {
   try {
     const token = extractToken(request);
     if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const payload = verifyToken(token);
     if (!payload || payload.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const todayStart = new Date();
@@ -27,10 +27,10 @@ export async function GET(request: Request) {
       vansUnderReview,
       totalBookings,
       bookingsToday,
-      successfulPayments,
       pendingKycCount,
       pendingVendorCount,
-      recentBookings
+      recentBookings,
+      successfulBookings
     ] = await Promise.all([
       db.user.count({ where: { role: Role.CUSTOMER } }),
       db.user.count({ where: { role: Role.VENDOR } }),
@@ -43,14 +43,6 @@ export async function GET(request: Request) {
           createdAt: {
             gte: todayStart,
           },
-        },
-      }),
-      db.payment.aggregate({
-        where: {
-          status: PaymentStatus.SUCCESS,
-        },
-        _sum: {
-          amount: true,
         },
       }),
       db.kYCDocument.count({
@@ -86,10 +78,60 @@ export async function GET(request: Request) {
             },
           },
         },
+      }),
+      db.booking.findMany({
+        where: {
+          payment: {
+            status: PaymentStatus.SUCCESS
+          }
+        },
+        include: {
+          payment: true,
+          availability: true,
+        }
       })
     ]);
 
-    const gmv = successfulPayments._sum.amount || 0;
+    // Financial calculations based on the revenue split (80% Vendor / 20% Platform)
+    const totalGrossRevenue = successfulBookings.reduce((sum, b) => sum + Number(b.payment?.amount || 0), 0);
+    const vendorPayouts = totalGrossRevenue * 0.80;
+    const platformRevenue = totalGrossRevenue * 0.20;
+
+    // Platform share splits
+    const operatingExpenses = totalGrossRevenue * 0.10;
+    const platformReinvestment = totalGrossRevenue * 0.05;
+    const businessProfit = totalGrossRevenue * 0.05;
+
+    // Revenue by Session Duration
+    const duration30Revenue = successfulBookings
+      .filter(b => b.sessionLength === 30)
+      .reduce((sum, b) => sum + Number(b.payment?.amount || 0), 0);
+
+    const duration45Revenue = successfulBookings
+      .filter(b => b.sessionLength === 45)
+      .reduce((sum, b) => sum + Number(b.payment?.amount || 0), 0);
+
+    const duration60Revenue = successfulBookings
+      .filter(b => b.sessionLength === 60)
+      .reduce((sum, b) => sum + Number(b.payment?.amount || 0), 0);
+
+    // Timeframe-based revenue (daily, weekly, monthly) using availability startTime
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const startOfMonth = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    const dailyRevenue = successfulBookings
+      .filter(b => new Date(b.availability.startTime) >= startOfToday)
+      .reduce((sum, b) => sum + Number(b.payment?.amount || 0), 0);
+
+    const weeklyRevenue = successfulBookings
+      .filter(b => new Date(b.availability.startTime) >= startOfWeek)
+      .reduce((sum, b) => sum + Number(b.payment?.amount || 0), 0);
+
+    const monthlyRevenue = successfulBookings
+      .filter(b => new Date(b.availability.startTime) >= startOfMonth)
+      .reduce((sum, b) => sum + Number(b.payment?.amount || 0), 0);
 
     return NextResponse.json({
       success: true,
@@ -101,10 +143,22 @@ export async function GET(request: Request) {
         vansUnderReview,
         totalBookings,
         bookingsToday,
-        gmv,
         pendingKycCount,
         pendingVendorCount,
         recentBookings,
+        // Financial metrics
+        totalGrossRevenue,
+        vendorPayouts,
+        platformRevenue,
+        operatingExpenses,
+        platformReinvestment,
+        businessProfit,
+        dailyRevenue,
+        weeklyRevenue,
+        monthlyRevenue,
+        duration30Revenue,
+        duration45Revenue,
+        duration60Revenue
       },
     });
   } catch (error: any) {

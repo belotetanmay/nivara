@@ -59,7 +59,18 @@ export default function VendorDashboard() {
   
   const [vendorProfile, setVendorProfile] = useState<VendorProfile | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [earnings, setEarnings] = useState({ totalEarnings: 0, completedSessionsCount: 0, utilizationRate: 0, payoutDetails: '' });
+  const [earnings, setEarnings] = useState<any>({
+    totalEarnings: 0,
+    vendorEarnings: 0,
+    todayRevenue: 0,
+    weeklyRevenue: 0,
+    monthlyRevenue: 0,
+    totalBookings: 0,
+    averageBookingValue: 0,
+    completedSessionsCount: 0,
+    utilizationRate: 0,
+    payoutDetails: ''
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -742,33 +753,63 @@ export default function VendorDashboard() {
               {/* Earnings Overview */}
               <div className="glass-card space-y-6">
                 <div className="flex items-center gap-2 pb-3 border-b border-[#FAF8F5]">
-                  <BarChart3 className="w-5 h-5 text-secondary" />
-                  <h2 className="font-serif text-lg font-bold text-primary">Earnings Ledger</h2>
+                  <BarChart3 className="w-5 h-5 text-[#2C5234]" />
+                  <h2 className="font-serif text-lg font-bold text-primary">Financial Summary (80% Share)</h2>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-6">
+                  {/* Main Vendor Earnings */}
                   <div>
-                    <span className="text-[10px] text-muted-foreground uppercase tracking-widest block font-bold">Total Disbursed Revenue</span>
-                    <span className="text-3xl font-serif font-bold text-primary mt-1 block">
-                      ₹{earnings.totalEarnings.toLocaleString('en-IN')}
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-widest block font-bold">Your Total Earnings (80%)</span>
+                    <span className="text-3xl font-serif font-bold text-[#2C5234] mt-1 block">
+                      ₹{(earnings?.vendorEarnings || 0).toLocaleString('en-IN')}
                     </span>
+                    <span className="text-[9px] text-slate-400 block mt-1">From total gross bookings of ₹{(earnings?.totalEarnings || 0).toLocaleString('en-IN')}</span>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 pt-4 border-t border-[#FAF8F5] text-center">
+                  {/* Revenue Splits by Timeframe */}
+                  <div className="grid grid-cols-3 gap-3 border-t border-slate-100 pt-4 text-center">
                     <div>
-                      <span className="text-[9px] text-slate-400 block font-bold">Sessions</span>
-                      <span className="text-sm font-serif font-extrabold text-slate-900 mt-0.5 block">{earnings.completedSessionsCount}</span>
+                      <span className="text-[9px] text-slate-400 block font-bold">Today</span>
+                      <span className="text-xs font-bold text-slate-900 mt-1 block">₹{((earnings?.todayRevenue || 0) * 0.8).toLocaleString('en-IN')}</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-slate-400 block font-bold">Weekly</span>
+                      <span className="text-xs font-bold text-slate-900 mt-1 block">₹{((earnings?.weeklyRevenue || 0) * 0.8).toLocaleString('en-IN')}</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-slate-400 block font-bold">Monthly</span>
+                      <span className="text-xs font-bold text-slate-900 mt-1 block">₹{((earnings?.monthlyRevenue || 0) * 0.8).toLocaleString('en-IN')}</span>
+                    </div>
+                  </div>
+
+                  {/* Average and count stats */}
+                  <div className="grid grid-cols-2 gap-4 border-t border-slate-100 pt-4 text-center">
+                    <div>
+                      <span className="text-[9px] text-slate-400 block font-bold">Total Bookings</span>
+                      <span className="text-sm font-serif font-extrabold text-primary mt-1 block">{earnings?.totalBookings || 0}</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-slate-400 block font-bold">Average Booking</span>
+                      <span className="text-sm font-serif font-extrabold text-primary mt-1 block">₹{Math.round(earnings?.averageBookingValue || 0).toLocaleString('en-IN')}</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 pt-4 border-t border-slate-100 text-center">
+                    <div>
+                      <span className="text-[9px] text-slate-400 block font-bold">Completed</span>
+                      <span className="text-xs font-bold text-slate-900 mt-0.5 block">{earnings?.completedSessionsCount || 0}</span>
                     </div>
                     <div>
                       <span className="text-[9px] text-slate-400 block font-bold">Utilization</span>
-                      <span className="text-sm font-serif font-extrabold text-secondary mt-0.5 block">
-                        {earnings.utilizationRate || 0}%
+                      <span className="text-xs font-bold text-secondary mt-0.5 block">
+                        {earnings?.utilizationRate || 0}%
                       </span>
                     </div>
                     <div>
                       <span className="text-[9px] text-slate-400 block font-bold">Rating</span>
-                      <span className="text-sm font-serif font-extrabold text-primary mt-0.5 block">
-                        {vendorProfile?.ratingAvg ? vendorProfile.ratingAvg.toFixed(1) : '0.0'} ★
+                      <span className="text-xs font-bold text-[#D4A373] mt-0.5 block">
+                        {vendorProfile?.ratingAvg ? vendorProfile.ratingAvg.toFixed(1) : '5.0'} ★
                       </span>
                     </div>
                   </div>

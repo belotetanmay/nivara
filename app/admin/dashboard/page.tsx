@@ -34,6 +34,18 @@ interface Stats {
   pendingKycCount: number;
   pendingVendorCount: number;
   recentBookings: Booking[];
+  totalGrossRevenue: number;
+  vendorPayouts: number;
+  platformRevenue: number;
+  operatingExpenses: number;
+  platformReinvestment: number;
+  businessProfit: number;
+  dailyRevenue: number;
+  weeklyRevenue: number;
+  monthlyRevenue: number;
+  duration30Revenue: number;
+  duration45Revenue: number;
+  duration60Revenue: number;
 }
 
 export default function AdminDashboard() {
@@ -112,41 +124,125 @@ export default function AdminDashboard() {
 
       {/* 4 Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        
-        {/* GMV */}
-        <div className="glass-card space-y-2">
-          <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block">Gross Merchandise Value</span>
+        {/* Gross Revenue */}
+        <div className="glass-card space-y-2 border border-[#E5E1D8] bg-white">
+          <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block">Total Gross Revenue</span>
           <div className="flex justify-between items-baseline">
-            <span className="text-2xl font-sans font-bold text-[#0F2D52]">₹{stats.gmv.toLocaleString('en-IN')}</span>
-            <span className="text-[10px] text-[#16A34A] font-semibold">100% SUCCESS</span>
+            <span className="text-2xl font-bold text-[#0A2540]">₹{stats.totalGrossRevenue.toLocaleString('en-IN')}</span>
+            <span className="text-[9px] bg-green-50 text-green-700 px-2 py-0.5 rounded font-bold">100% Volume</span>
           </div>
         </div>
 
-        {/* Users */}
-        <div className="glass-card space-y-2">
-          <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block">Registered Customers</span>
+        {/* Vendor Payouts */}
+        <div className="glass-card space-y-2 border border-[#E5E1D8] bg-white">
+          <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block">Host Payouts (80%)</span>
           <div className="flex justify-between items-baseline">
-            <span className="text-2xl font-sans font-bold text-[#0F2D52]">{stats.totalUsers}</span>
-            <span className="text-[10px] text-muted-foreground">Travelers</span>
+            <span className="text-2xl font-bold text-[#2C5234]">₹{stats.vendorPayouts.toLocaleString('en-IN')}</span>
+            <span className="text-[9px] text-[#2C5234] font-bold">To Van Partners</span>
           </div>
         </div>
 
-        {/* Vendors */}
-        <div className="glass-card space-y-2">
-          <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block">Registered Hosts</span>
+        {/* Platform Share */}
+        <div className="glass-card space-y-2 border border-[#E5E1D8] bg-white">
+          <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block">Platform Revenue (20%)</span>
           <div className="flex justify-between items-baseline">
-            <span className="text-2xl font-sans font-bold text-[#0F2D52]">{stats.totalVendors}</span>
-            <span className="text-[10px] text-muted-foreground">Van Operators</span>
+            <span className="text-2xl font-bold text-primary">₹{stats.platformRevenue.toLocaleString('en-IN')}</span>
+            <span className="text-[9px] text-primary font-bold">Nivara Share</span>
           </div>
         </div>
 
-        {/* Vans */}
-        <div className="glass-card space-y-2">
-          <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block">Wellness Vehicles Fleet</span>
+        {/* Business Profit */}
+        <div className="glass-card space-y-2 border border-[#E5E1D8] bg-white">
+          <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block">Business Profit (5%)</span>
           <div className="flex justify-between items-baseline">
-            <span className="text-2xl font-sans font-bold text-[#0F2D52]">{stats.totalVans}</span>
-            <span className="text-[10px] text-[#16A34A] font-semibold">{stats.activeVans} active</span>
+            <span className="text-2xl font-bold text-[#D4A373]">₹{stats.businessProfit.toLocaleString('en-IN')}</span>
+            <span className="text-[9px] text-[#D4A373] font-bold">Net Margin</span>
           </div>
+        </div>
+      </div>
+
+      {/* Financial Splits & Timeframe Analytics Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Platform Splits card */}
+        <div className="glass-card border border-[#E5E1D8] bg-[#FCF9F6] p-6 rounded-2xl space-y-4">
+          <div className="border-b border-[#E5E1D8]/60 pb-3 flex justify-between items-center">
+            <h3 className="font-serif text-sm font-bold text-primary uppercase tracking-wider">Platform Allocation Splits</h3>
+            <span className="text-[9px] bg-primary/10 text-primary border border-primary/20 font-bold px-2 py-0.5 rounded">20% Platform</span>
+          </div>
+          <div className="space-y-3.5 text-xs text-primary font-medium">
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Operating Expenses (10%):</span>
+              <span className="font-bold">₹{stats.operatingExpenses.toLocaleString('en-IN')}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Platform Reinvestment (5%):</span>
+              <span className="font-bold">₹{stats.platformReinvestment.toLocaleString('en-IN')}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Net Business Profit (5%):</span>
+              <span className="font-[#D4A373] font-bold">₹{stats.businessProfit.toLocaleString('en-IN')}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Duration stats card */}
+        <div className="glass-card border border-[#E5E1D8] bg-[#FCF9F6] p-6 rounded-2xl space-y-4">
+          <div className="border-b border-[#E5E1D8]/60 pb-3 flex justify-between items-center">
+            <h3 className="font-serif text-sm font-bold text-primary uppercase tracking-wider">Revenue by Session Duration</h3>
+            <span className="text-[9px] bg-secondary/15 text-secondary border border-secondary/20 font-bold px-2 py-0.5 rounded">Duration Tiers</span>
+          </div>
+          <div className="space-y-3.5 text-xs text-primary font-medium">
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">30-Minute Sessions (₹1,499):</span>
+              <span className="font-bold">₹{stats.duration30Revenue.toLocaleString('en-IN')}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">45-Minute Sessions (₹1,999):</span>
+              <span className="font-bold">₹{stats.duration45Revenue.toLocaleString('en-IN')}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">60-Minute Sessions (₹2,499):</span>
+              <span className="font-bold">₹{stats.duration60Revenue.toLocaleString('en-IN')}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Trends stats card */}
+        <div className="glass-card border border-[#E5E1D8] bg-[#FCF9F6] p-6 rounded-2xl space-y-4">
+          <div className="border-b border-[#E5E1D8]/60 pb-3 flex justify-between items-center">
+            <h3 className="font-serif text-sm font-bold text-primary uppercase tracking-wider">Revenue Timeframes</h3>
+            <span className="text-[9px] bg-amber-50 text-amber-700 border border-amber-200 font-bold px-2 py-0.5 rounded">Active Trends</span>
+          </div>
+          <div className="space-y-3.5 text-xs text-primary font-medium">
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Today's Revenue:</span>
+              <span className="font-bold text-secondary">₹{stats.dailyRevenue.toLocaleString('en-IN')}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Weekly Revenue (7d):</span>
+              <span className="font-bold">₹{stats.weeklyRevenue.toLocaleString('en-IN')}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Monthly Revenue (30d):</span>
+              <span className="font-bold">₹{stats.monthlyRevenue.toLocaleString('en-IN')}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Basic Platform Statistics Row */}
+      <div className="grid grid-cols-3 gap-6">
+        <div className="bg-white border border-[#E5E1D8] p-4 rounded-xl text-center space-y-1 shadow-sm">
+          <span className="text-[10px] text-muted-foreground uppercase font-semibold">Customers</span>
+          <span className="text-xl font-bold text-primary block">{stats.totalUsers} Travelers</span>
+        </div>
+        <div className="bg-white border border-[#E5E1D8] p-4 rounded-xl text-center space-y-1 shadow-sm">
+          <span className="text-[10px] text-muted-foreground uppercase font-semibold">Hosts</span>
+          <span className="text-xl font-bold text-primary block">{stats.totalVendors} Operators</span>
+        </div>
+        <div className="bg-white border border-[#E5E1D8] p-4 rounded-xl text-center space-y-1 shadow-sm">
+          <span className="text-[10px] text-muted-foreground uppercase font-semibold">Fleet Count</span>
+          <span className="text-xl font-bold text-primary block">{stats.totalVans} Vans ({stats.activeVans} active)</span>
         </div>
       </div>
 

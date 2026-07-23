@@ -218,9 +218,9 @@ export default function Home() {
   // Pricing multipliers based on time of day
   const getSessionPrice = (duration: 30 | 45 | 60) => {
     let base = 0;
-    if (duration === 30) base = 999;
-    else if (duration === 45) base = 1499;
-    else if (duration === 60) base = 1999;
+    if (duration === 30) base = 1499;
+    else if (duration === 45) base = 1999;
+    else if (duration === 60) base = 2499;
 
     let multiplier = 1.0;
     if (timeOfDay === 'morning') multiplier = 1.0;
@@ -623,49 +623,45 @@ export default function Home() {
                       { 
                         title: '30 Minutes', 
                         min: 30, 
-                        original: 1499,
-                        launch: 999,
-                        desc: 'Perfect for a quick recharge and stress relief.', 
-                        label: 'Exclusive Early Access',
+                        price: 1499,
+                        desc: 'Premium Wellness Delivered to You. Perfect for a quick recharge.', 
+                        label: 'Luxury Mobile Wellness Experience',
                         cta: 'Book Premium Session',
                         icon: Zap,
-                        features: ['Zero-gravity seating', 'Sensory customizer access', '15-min post cycle cleanup'] 
+                        features: ['Zero-gravity seating', 'Sensory customizer access', 'Verified Wellness Professionals', 'Book in Minutes'] 
                       },
                       { 
                         title: '45 Minutes', 
                         min: 45, 
-                        original: 1999,
-                        launch: 1499,
-                        desc: 'Balanced wellness experience for mind and body.', 
-                        label: 'Founding Member Price',
+                        price: 1999,
+                        desc: 'Personalized Wellness Sessions for mind and body.', 
+                        label: 'Founding Tier Access',
                         cta: 'Reserve Your Session',
                         icon: Headphones,
                         highlight: true,
-                        features: ['Full sensory sync presets', 'Extended haptic massage', 'Acoustic masking engine', 'HEPA filter oxygenation'] 
+                        features: ['Full sensory sync presets', 'Extended haptic massage', 'Acoustic masking engine', 'Secure Payments'] 
                       },
                       { 
                         title: '60 Minutes', 
                         min: 60, 
-                        original: 2499,
-                        launch: 1999,
+                        price: 2499,
                         desc: 'Complete luxury wellness experience with personalized care.', 
-                        label: 'Limited-Time Introductory Offer',
+                        label: 'Elite Session Tier',
                         cta: 'Experience Premium Wellness',
                         icon: Award,
                         features: ['All extended options', 'Immune sound guide', 'Aroma blend reserve bottles', 'Cognitive wellness report'] 
                       }
                     ].map((card) => {
                       const IconComponent = card.icon;
-                      // Dynamic calculation for launch price based on segment
-                      const dynamicLaunchPrice = getSessionPrice(card.min as any);
-                      const dynamicOriginalPrice = Math.round(card.original * (timeOfDay === 'morning' ? 1.0 : timeOfDay === 'afternoon' ? 1.15 : timeOfDay === 'evening' ? 1.35 : 0.90));
+                      // Dynamic calculation for base price based on timeOfDay selection
+                      const dynamicPrice = getSessionPrice(card.min as any);
 
                       return (
                         <div 
-                          key={card.min} 
-                          className={`bg-white p-6 rounded-3xl border flex flex-col justify-between space-y-6 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${
-                            card.highlight ? 'border-[#2C5234] relative ring-4 ring-[#2C5234]/10' : 'border-[#E5E1D8]'
-                          }`}
+                           key={card.min} 
+                           className={`bg-white p-6 rounded-3xl border flex flex-col justify-between space-y-6 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${
+                             card.highlight ? 'border-[#2C5234] relative ring-4 ring-[#2C5234]/10' : 'border-[#E5E1D8]'
+                           }`}
                         >
                           {card.highlight && (
                             <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-[#2C5234] text-white text-[9px] font-bold uppercase tracking-wider shadow-sm">
@@ -686,14 +682,13 @@ export default function Home() {
                             </div>
                             
                             <div className="pt-2 border-t border-slate-100">
-                              <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Launch Price</p>
+                              <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Premium Rate</p>
                               <div className="flex items-baseline gap-2 mt-1">
-                                <span className="text-2xl font-bold text-primary">₹{dynamicLaunchPrice}</span>
-                                <span className="text-xs text-muted-foreground line-through">₹{dynamicOriginalPrice}</span>
+                                <span className="text-2xl font-bold text-[#2C5234]">₹{dynamicPrice}</span>
                               </div>
                               <span className="text-[10px] text-slate-500 block mt-2 leading-relaxed italic">{card.desc}</span>
                             </div>
-
+ 
                             <ul className="space-y-2.5 text-[10px] font-medium text-slate-600 border-t border-slate-100 pt-4">
                               {card.features.map((f, idx) => (
                                 <li key={idx} className="flex items-start gap-2">
