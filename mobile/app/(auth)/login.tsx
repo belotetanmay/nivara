@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Image, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Image, StyleSheet, Platform, Modal, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
@@ -27,6 +27,19 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  // Google Account Selector Modal state
+  const [googleModalVisible, setGoogleModalVisible] = useState(false);
+  const [selectedAccountEmail, setSelectedAccountEmail] = useState('belotetanmay@gmail.com');
+  const [customEmail, setCustomEmail] = useState('');
+  const [customName, setCustomName] = useState('');
+  const [isCustomInput, setIsCustomInput] = useState(false);
+
+  const PRESET_GOOGLE_ACCOUNTS = [
+    { email: 'belotetanmay@gmail.com', name: 'Tanmay Belote' },
+    { email: 'tanmay@gmail.com', name: 'Tanmay' },
+    { email: 'vikas@wellnessvans.com', name: 'Vikas Partner' },
+  ];
 
   const {
     control,
@@ -111,40 +124,40 @@ export default function LoginScreen() {
     }
   };
 
-  const handleGoogleLogin = async () => {
-    try {
-      setGoogleLoading(true);
+  const handleOpenGoogleModal = () => {
+    setGoogleModalVisible(true);
+  };
 
-      const clientId = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID?.trim();
-      const redirectUri = 'https://nivara-ten.vercel.app/api/auth/google/callback';
+  const handleConfirmGoogleAccount = async () => {
+    const targetEmail = isCustomInput ? customEmail.trim() : selectedAccountEmail;
+    const targetName = isCustomInput ? customName.trim() : PRESET_GOOGLE_ACCOUNTS.find(a => a.email === targetEmail)?.name || 'Google User';
 
-      if (clientId && !clientId.includes('GOOGLE_CLIENT_ID')) {
-        const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=openid%20email%20profile&prompt=select_account`;
-        const authSessionResult = await WebBrowser.openAuthSessionAsync(googleAuthUrl, redirectUri);
+    if (isCustomInput && !targetEmail) {
+      show('Please enter a valid Google email address', 'error');
+      return;
+    }
 
-        if (authSessionResult.type === 'cancel' || authSessionResult.type === 'dismiss') {
-          setGoogleLoading(false);
-          return;
-        }
-      }
+    setGoogleModalVisible(false);
+    setGoogleLoading(true);
 
-      const result = await googleMobileLogin();
-      setGoogleLoading(false);
+    const result = await googleMobileLogin({
+      email: targetEmail,
+      name: targetName || 'Google User',
+      role: targetEmail.includes('vendor') || targetEmail.includes('partner') || targetEmail.includes('vikas') ? 'VENDOR' : 'CUSTOMER',
+    });
 
-      if (result.success && result.user) {
-        show('Signed in with Google successfully!', 'success');
-        const role = result.user.role;
-        if (role === 'VENDOR') {
-          router.replace('/(app)/(vendor)/dashboard');
-        } else {
-          router.replace('/(app)/(customer)/explore');
-        }
+    setGoogleLoading(false);
+
+    if (result.success && result.user) {
+      show(`Signed in as ${targetEmail}`, 'success');
+      const role = result.user.role;
+      if (role === 'VENDOR') {
+        router.replace('/(app)/(vendor)/dashboard');
       } else {
-        show(result.error || 'Google Sign-In failed', 'error');
+        router.replace('/(app)/(customer)/explore');
       }
-    } catch (error: any) {
-      setGoogleLoading(false);
-      show(error.message || 'Google Sign-In failed', 'error');
+    } else {
+      show(result.error || 'Google Sign-In failed', 'error');
     }
   };
 
@@ -250,7 +263,7 @@ export default function LoginScreen() {
             {/* Google Sign-In */}
             <Button
               title="Continue with Google"
-              onPress={handleGoogleLogin}
+              onPress={handleOpenGoogleModal}
               isLoading={googleLoading}
               variant="outline"
               className="w-full py-3.5 rounded-xl border-[#E5E1D8]"
@@ -267,6 +280,97 @@ export default function LoginScreen() {
 
         </View>
       </ScrollView>
+
+      {/* GOOGLE ACCOUNT SELECTOR MODAL */}
+      <Modal
+        visible={googleModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setGoogleModalVisible(false)}
+      >
+        <TouchableOpacity
+          activeOpacity={1}
+          style={styles.modalOverlay}
+          onPress={() => setGoogleModalVisible(false)}
+        >
+          <TouchableOpacity activeOpacity={1} style={styles.googleModalContent}>
+            <View style={styles.googleModalHeader}>
+              <Text style={styles.googleModalTitle}>Sign in with Google</Text>
+              <Text style={styles.googleModalSubtitle}>Choose an account to continue to NIVARA</Text>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 320 }}>
+              {PRESET_GOOGLE_ACCOUNTS.map((acc) => {
+                const isSelected = !isCustomInput && selectedAccountEmail === acc.email;
+                return (
+                  <TouchableOpacity
+                    key={acc.email}
+                    style={[styles.accountCard, isSelected && styles.accountCardSelected]}
+                    onPress={() => {
+                      setIsCustomInput(false);
+                      setSelectedAccountEmail(acc.email);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <View style={styles.accountAvatar}>
+                      <Text style={styles.accountAvatarText}>{acc.name.charAt(0)}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.accountName}>{acc.name}</Text>
+                      <Text style={styles.accountEmail}>{acc.email}</Text>
+                    </View>
+                    {isSelected && <Text style={styles.selectedCheck}>✓</Text>}
+                  </TouchableOpacity>
+                );
+              })}
+
+              {/* Use another account option */}
+              <TouchableOpacity
+                style={[styles.accountCard, isCustomInput && styles.accountCardSelected]}
+                onPress={() => setIsCustomInput(true)}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.accountAvatar, { backgroundColor: '#E5E1D8' }]}>
+                  <Text style={[styles.accountAvatarText, { color: '#0F2D52' }]}>+</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.accountName}>Use another account</Text>
+                  <Text style={styles.accountEmail}>Enter custom Google email</Text>
+                </View>
+              </TouchableOpacity>
+
+              {isCustomInput && (
+                <View style={styles.customInputBox}>
+                  <Text style={styles.customLabel}>Google Email Address</Text>
+                  <TextInput
+                    style={styles.customInput}
+                    placeholder="e.g. user@gmail.com"
+                    placeholderTextColor="#9CA3AF"
+                    value={customEmail}
+                    onChangeText={setCustomEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                  <Text style={styles.customLabel}>Full Name (Optional)</Text>
+                  <TextInput
+                    style={styles.customInput}
+                    placeholder="e.g. John Doe"
+                    placeholderTextColor="#9CA3AF"
+                    value={customName}
+                    onChangeText={setCustomName}
+                  />
+                </View>
+              )}
+            </ScrollView>
+
+            <Button
+              title="Continue with Selected Account"
+              onPress={handleConfirmGoogleAccount}
+              style={styles.confirmGoogleBtn}
+            />
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -292,6 +396,113 @@ const styles = StyleSheet.create({
   appleBtn: {
     backgroundColor: '#000000',
     borderColor: '#000000',
+    borderRadius: 12,
+  },
+
+  /* GOOGLE MODAL STYLES */
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    justifyContent: 'flex-end',
+  },
+  googleModalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 32,
+    maxHeight: '85%',
+  },
+  googleModalHeader: {
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E1D8',
+  },
+  googleModalTitle: {
+    color: '#0F2D52',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  googleModalSubtitle: {
+    color: '#6B7280',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  accountCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E1D8',
+    backgroundColor: '#F7F9F8',
+    marginBottom: 10,
+  },
+  accountCardSelected: {
+    borderColor: '#0F2D52',
+    backgroundColor: 'rgba(15, 45, 82, 0.05)',
+  },
+  accountAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#0F2D52',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  accountAvatarText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  accountName: {
+    color: '#0F2D52',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  accountEmail: {
+    color: '#6B7280',
+    fontSize: 12,
+  },
+  selectedCheck: {
+    color: '#16A34A',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+  customInputBox: {
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#E5E1D8',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+  },
+  customLabel: {
+    color: '#0F2D52',
+    fontSize: 11,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+    marginTop: 6,
+  },
+  customInput: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E1D8',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 13,
+    color: '#0F2D52',
+  },
+  confirmGoogleBtn: {
+    backgroundColor: '#0F2D52',
+    marginTop: 12,
     borderRadius: 12,
   },
 });
