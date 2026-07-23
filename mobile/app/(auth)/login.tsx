@@ -128,7 +128,11 @@ export default function LoginScreen() {
     try {
       setGoogleLoading(true);
 
-      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://nivara-ten.vercel.app/api';
+      let apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://nivara-ten.vercel.app/api';
+      // If apiUrl is a local unencrypted IP address (http://192.168...), use live production HTTPS Vercel endpoint
+      if (apiUrl.startsWith('http://192.168.') || apiUrl.startsWith('http://localhost')) {
+        apiUrl = 'https://nivara-ten.vercel.app/api';
+      }
       const baseUrl = apiUrl.replace(/\/api\/?$/, '');
       const googleLoginUrl = `${baseUrl}/api/auth/google/login?role=CUSTOMER&mobile=true`;
 
