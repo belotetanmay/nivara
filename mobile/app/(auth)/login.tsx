@@ -138,11 +138,6 @@ export default function LoginScreen() {
 
       const authResult = await WebBrowser.openAuthSessionAsync(googleLoginUrl);
 
-      if (authResult.type === 'cancel' || authResult.type === 'dismiss') {
-        setGoogleLoading(false);
-        return;
-      }
-
       let extractedEmail = 'belotetanmay@gmail.com';
       let extractedToken = '';
 
