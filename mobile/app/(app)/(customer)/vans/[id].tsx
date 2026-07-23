@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator, Share, Modal, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator, Share, Modal, StyleSheet, Linking, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, Star, Heart, Share2, MapPin, Compass, ShieldCheck, Clock, Award, Calendar as CalendarIcon, CheckCircle2, X } from 'lucide-react-native';
+import { ArrowLeft, Star, Heart, Share2, MapPin, Compass, ShieldCheck, Clock, Award, Calendar as CalendarIcon, CheckCircle2, X, Navigation, ExternalLink } from 'lucide-react-native';
 import { customerService, Van, Review } from '../../../../services/customer/customerService';
 import { useToast } from '../../../../components/feedback/Toast';
 import { Card } from '../../../../components/ui/Card';
@@ -322,12 +322,28 @@ export default function VanDetailsScreen() {
           {/* Map Preview Box */}
           <Text style={styles.sectionTitle}>Sanctuary Base Location</Text>
           <Text style={styles.addressText}>{van.address}</Text>
-          <Card style={styles.mapPreviewCard}>
-            <MapPin size={28} color="#16A34A" />
-            <Text style={styles.mapPreviewTitle}>Static Map Location Preview</Text>
-            <Text style={styles.mapPreviewSubtitle}>GPS coordinates: {van.latitude.toFixed(4)}, {van.longitude.toFixed(4)}</Text>
-            <Text style={styles.mapPreviewNote}>Live location routing active upon session confirmation.</Text>
-          </Card>
+          <TouchableOpacity
+            style={styles.mapPreviewCard}
+            activeOpacity={0.85}
+            onPress={() => {
+              const url = `https://www.google.com/maps/search/?api=1&query=${van.latitude},${van.longitude}`;
+              Linking.openURL(url).catch(() => show('Could not launch Google Maps', 'error'));
+            }}
+          >
+            <View style={styles.mapBadgeHeader}>
+              <MapPin size={24} color="#16A34A" />
+              <View style={{ flex: 1, marginLeft: 10 }}>
+                <Text style={styles.mapPreviewTitle}>{van.vendor.businessName}</Text>
+                <Text style={styles.mapPreviewSubtitle}>Coordinates: {van.latitude.toFixed(4)}, {van.longitude.toFixed(4)}</Text>
+              </View>
+            </View>
+
+            <View style={styles.openMapBtn}>
+              <Navigation size={14} color="#FFFFFF" style={{ marginRight: 6 }} />
+              <Text style={styles.openMapBtnText}>Open in Google Maps</Text>
+              <ExternalLink size={12} color="#FFFFFF" style={{ marginLeft: 6 }} />
+            </View>
+          </TouchableOpacity>
 
           {/* Partner Policies */}
           <Text style={styles.sectionTitle}>Partner Policies</Text>
@@ -733,28 +749,40 @@ const styles = StyleSheet.create({
   },
   mapPreviewCard: {
     backgroundColor: '#FFFFFF',
+    borderWidth: 1,
     borderColor: '#E5E1D8',
     borderRadius: 16,
-    padding: 20,
+    padding: 16,
+    marginBottom: 16,
+  },
+  mapBadgeHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   mapPreviewTitle: {
     color: '#0F2D52',
     fontSize: 14,
     fontWeight: 'bold',
-    marginTop: 8,
   },
   mapPreviewSubtitle: {
     color: '#6B7280',
     fontSize: 12,
     marginTop: 2,
   },
-  mapPreviewNote: {
-    color: '#9CA3AF',
-    fontSize: 10,
-    fontStyle: 'italic',
-    marginTop: 8,
+  openMapBtn: {
+    backgroundColor: '#0F2D52',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginTop: 4,
+  },
+  openMapBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: 'bold',
   },
   policyCard: {
     backgroundColor: '#FFFFFF',
