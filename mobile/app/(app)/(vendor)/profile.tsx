@@ -115,6 +115,34 @@ export default function VendorProfileScreen() {
           />
         </Card>
 
+        {/* Support & Terms */}
+        <Text style={styles.sectionTitle}>Partner Support & Legal</Text>
+        <Card style={styles.infoCard}>
+          <TouchableOpacity
+            style={styles.infoRow}
+            onPress={() => router.push('/(app)/(customer)/settings/help-support' as any)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.infoLeft}>
+              <ShieldCheck size={18} color="#0F2D52" style={styles.infoIcon} />
+              <Text style={styles.infoLabel}>Partner Support & FAQs</Text>
+            </View>
+            <Text style={styles.linkText}>View</Text>
+          </TouchableOpacity>
+
+          <View style={[styles.infoRow, styles.marginTop]}>
+            <TouchableOpacity
+              style={styles.infoLeft}
+              onPress={() => router.push('/(app)/(customer)/settings/legal-viewer?doc=vendor' as any)}
+              activeOpacity={0.7}
+            >
+              <Award size={18} color="#0F2D52" style={styles.infoIcon} />
+              <Text style={styles.infoLabel}>Wellness Partner (Vendor) Terms</Text>
+            </TouchableOpacity>
+            <Text style={styles.linkText}>Read</Text>
+          </View>
+        </Card>
+
         {/* Logout action */}
         <Button
           title="Sign Out Partner Dashboard"
@@ -436,5 +464,10 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 20,
     borderRadius: 12,
+  },
+  linkText: {
+    color: '#0F2D52',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 }) as any;

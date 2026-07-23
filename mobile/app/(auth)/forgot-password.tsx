@@ -10,6 +10,8 @@ import { useToast } from '../../components/feedback/Toast';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 
+import { FormContainer } from '../../components/layout/FormContainer';
+
 const forgotPasswordSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Please enter a valid email address'),
 });
@@ -50,9 +52,8 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#FAF8F5]">
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-        <View className="flex-1 px-6 justify-center py-8">
+    <FormContainer>
+      <View className="flex-1 px-6 justify-center py-8">
           
           {/* Logo brand */}
           <View className="items-center mb-8">
@@ -114,8 +115,7 @@ export default function ForgotPasswordScreen() {
           </View>
 
         </View>
-      </ScrollView>
-    </SafeAreaView>
+    </FormContainer>
   );
 }
 

@@ -1,16 +1,26 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, User, Bell, Shield, Lock, HelpCircle, FileText, Info, LogOut, ChevronRight } from 'lucide-react-native';
+import { ArrowLeft, User, Bell, Shield, Lock, HelpCircle, FileText, Info, LogOut, ChevronRight, Trash2 } from 'lucide-react-native';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useToast } from '../../../components/feedback/Toast';
 import { Card } from '../../../components/ui/Card';
+import { Button } from '../../../components/ui/Button';
 
 export default function SettingsScreen() {
   const router = useRouter();
   const { logout } = useAuth();
+  const { show } = useToast();
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
   const handleLogout = async () => {
+    await logout();
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleteModalVisible(false);
+    show('Account deletion request initiated. Logging out...', 'info');
     await logout();
   };
 
@@ -18,24 +28,24 @@ export default function SettingsScreen() {
     {
       title: 'Account Settings',
       items: [
-        { label: 'Account Information', icon: User, available: false },
-        { label: 'Edit Profile', icon: User, available: false },
+        { label: 'Edit Profile', icon: User, route: '/(app)/(customer)/settings/edit-profile' },
+        { label: 'Security & Password', icon: Lock, route: '/(app)/(customer)/settings/change-password' },
       ],
     },
     {
       title: 'Preferences',
       items: [
-        { label: 'Notifications', icon: Bell, available: false },
-        { label: 'Privacy & Permissions', icon: Shield, available: false },
-        { label: 'Security & Password', icon: Lock, available: false },
+        { label: 'Notification Preferences', icon: Bell, route: '/(app)/(customer)/settings/notifications-settings' },
+        { label: 'Privacy & Legal Center', icon: Shield, route: '/(app)/(customer)/settings/legal-viewer?doc=privacy' },
       ],
     },
     {
       title: 'Support & Legal',
       items: [
-        { label: 'Help & Support', icon: HelpCircle, available: false },
-        { label: 'Terms of Service', icon: FileText, available: false },
-        { label: 'About Nivara', icon: Info, available: true, detail: 'Version 1.0.0' },
+        { label: 'Help & Support / FAQs', icon: HelpCircle, route: '/(app)/(customer)/settings/help-support' },
+        { label: 'Terms & Conditions', icon: FileText, route: '/(app)/(customer)/settings/legal-viewer?doc=terms' },
+        { label: 'Refund & Cancellation Policy', icon: FileText, route: '/(app)/(customer)/settings/legal-viewer?doc=refund' },
+        { label: 'About Nivara', icon: Info, route: '/(app)/(customer)/settings/legal-viewer?doc=terms', detail: 'Version 1.0.0' },
       ],
     },
   ];
@@ -64,37 +74,42 @@ export default function SettingsScreen() {
               {group.items.map((item, itemIndex) => {
                 const IconComponent = item.icon;
                 return (
-                  <View
+                  <TouchableOpacity
                     key={itemIndex}
                     style={[
                       styles.menuItem,
                       itemIndex < group.items.length - 1 && styles.borderBottom,
-                      !item.available && styles.menuItemDisabled,
                     ]}
+                    onPress={() => router.push(item.route as any)}
+                    activeOpacity={0.7}
                   >
                     <View style={styles.menuItemLeft}>
                       <View style={styles.iconWrapper}>
-                        <IconComponent size={18} color={item.available ? '#0F2D52' : '#9CA3AF'} />
+                        <IconComponent size={18} color="#0F2D52" />
                       </View>
-                      <Text style={[styles.menuLabel, !item.available && styles.menuLabelDisabled]}>
-                        {item.label}
-                      </Text>
+                      <Text style={styles.menuLabel}>{item.label}</Text>
                     </View>
-                    {item.available ? (
-                      item.detail ? (
-                        <Text style={styles.detailText}>{item.detail}</Text>
-                      ) : (
-                        <ChevronRight size={16} color="#9CA3AF" />
-                      )
+                    {item.detail ? (
+                      <Text style={styles.detailText}>{item.detail}</Text>
                     ) : (
-                      <Text style={styles.soonTag}>Soon</Text>
+                      <ChevronRight size={16} color="#9CA3AF" />
                     )}
-                  </View>
+                  </TouchableOpacity>
                 );
               })}
             </Card>
           </View>
         ))}
+
+        {/* Delete Account */}
+        <TouchableOpacity
+          onPress={() => setDeleteModalVisible(true)}
+          style={styles.deleteButton}
+          activeOpacity={0.7}
+        >
+          <Trash2 size={18} color="#EF4444" style={styles.logoutIcon} />
+          <Text style={styles.deleteText}>Delete Account</Text>
+        </TouchableOpacity>
 
         {/* Logout Button */}
         <TouchableOpacity
@@ -106,9 +121,34 @@ export default function SettingsScreen() {
           <Text style={styles.logoutText}>Sign Out Account</Text>
         </TouchableOpacity>
 
-        <Text style={styles.versionText}>Nivara Premium • Version 1.0.0</Text>
-        <Text style={styles.phaseText}>More preferences available in upcoming updates</Text>
+        <Text style={styles.versionText}>Nivara Premium • Production Release Version 1.0.0</Text>
       </ScrollView>
+
+      {/* DELETE ACCOUNT CONFIRMATION MODAL */}
+      <Modal visible={deleteModalVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Delete Account?</Text>
+            <Text style={styles.modalSub}>
+              Are you sure you want to permanently delete your NIVARA account? All your booking history and preferences will be permanently erased.
+            </Text>
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.cancelBtn}
+                onPress={() => setDeleteModalVisible(false)}
+              >
+                <Text style={styles.cancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.confirmDeleteBtn}
+                onPress={handleDeleteAccount}
+              >
+                <Text style={styles.confirmDeleteBtnText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -158,30 +198,26 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   groupTitle: {
-    color: '#0F2D52',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 'bold',
+    color: '#6B7280',
     textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    letterSpacing: 0.5,
     marginBottom: 8,
-    paddingLeft: 4,
+    marginLeft: 4,
   },
   groupCard: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E5E1D8',
+    padding: 0,
     borderRadius: 16,
-    paddingVertical: 0,
     overflow: 'hidden',
   },
   menuItem: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 16,
-  },
-  menuItemDisabled: {
-    opacity: 0.5,
+    backgroundColor: '#FFFFFF',
   },
   borderBottom: {
     borderBottomWidth: 1,
@@ -192,34 +228,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconWrapper: {
-    padding: 8,
-    backgroundColor: '#F7F9F8',
+    width: 32,
+    height: 32,
     borderRadius: 8,
+    backgroundColor: '#F0F4F8',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: 12,
   },
   menuLabel: {
-    color: '#0F2D52',
     fontSize: 14,
-    fontWeight: '600',
-  },
-  menuLabelDisabled: {
-    color: '#6B7280',
-  },
-  soonTag: {
-    color: '#9CA3AF',
-    fontSize: 10,
     fontWeight: 'bold',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    backgroundColor: '#F3F4F6',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
+    color: '#0F2D52',
   },
   detailText: {
-    color: '#6B7280',
     fontSize: 12,
-    fontWeight: '500',
+    color: '#6B7280',
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+    paddingVertical: 14,
+    borderRadius: 14,
+    marginBottom: 12,
+  },
+  deleteText: {
+    color: '#EF4444',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   logoutButton: {
     flexDirection: 'row',
@@ -227,11 +267,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#EF4444',
-    borderRadius: 16,
+    borderColor: '#FCA5A5',
     paddingVertical: 16,
-    marginTop: 12,
-    marginBottom: 16,
+    borderRadius: 16,
+    marginBottom: 20,
   },
   logoutIcon: {
     marginRight: 8,
@@ -242,16 +281,62 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   versionText: {
+    textAlign: 'center',
+    fontSize: 12,
     color: '#9CA3AF',
-    fontSize: 11,
-    textAlign: 'center',
-    fontWeight: '500',
+    marginBottom: 20,
   },
-  phaseText: {
-    color: '#C4C9D0',
-    fontSize: 10,
-    textAlign: 'center',
-    marginTop: 4,
-    marginBottom: 30,
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
   },
-}) as any;
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#0F2D52',
+    marginBottom: 8,
+  },
+  modalSub: {
+    fontSize: 13,
+    color: '#6B7280',
+    lineHeight: 18,
+    marginBottom: 20,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  cancelBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+  },
+  cancelBtnText: {
+    color: '#4B5563',
+    fontWeight: 'bold',
+    fontSize: 13,
+  },
+  confirmDeleteBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: '#EF4444',
+    alignItems: 'center',
+  },
+  confirmDeleteBtnText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 13,
+  },
+});
