@@ -10,6 +10,7 @@ import { useToast } from '../../components/feedback/Toast';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { PasswordInput } from '../../components/ui/PasswordInput';
+import { FormContainer } from '../../components/layout/FormContainer';
 import { User, Store } from 'lucide-react-native';
 
 const registerSchema = z.object({
@@ -94,9 +95,8 @@ export default function RegisterScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#FAF8F5]">
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-        <View className="flex-1 px-6 justify-center py-8">
+    <FormContainer>
+      <View className="flex-1 px-6 justify-center py-8">
           
           {/* Logo brand */}
           <View className="items-center mb-6">
@@ -321,8 +321,7 @@ export default function RegisterScreen() {
           </View>
 
         </View>
-      </ScrollView>
-    </SafeAreaView>
+    </FormContainer>
   );
 }
 

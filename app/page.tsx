@@ -223,11 +223,6 @@ export default function Home() {
     else if (duration === 60) base = 2499;
 
     let multiplier = 1.0;
-    if (timeOfDay === 'morning') multiplier = 1.0;
-    else if (timeOfDay === 'afternoon') multiplier = 1.15;
-    else if (timeOfDay === 'evening') multiplier = 1.35;
-    else if (timeOfDay === 'night') multiplier = 0.90;
-
     return Math.round(base * multiplier);
   };
 
@@ -581,7 +576,7 @@ export default function Home() {
                     Choose Your Session <span className="text-gradient">Duration</span>
                   </h2>
                   <p className="text-slate-500 text-xs">
-                    Our dynamic pricing engine adapts to peak hours. Toggle the time segment below to review calculations.
+                    Flat rate standard pricing applies to all timing segments. Select a duration below to proceed.
                   </p>
                 </div>
 
@@ -593,9 +588,9 @@ export default function Home() {
                     
                     {[
                       { id: 'morning', label: 'Morning (9 AM - 12 PM)', sub: 'Standard Rate (× 1.00)' },
-                      { id: 'afternoon', label: 'Afternoon (12 PM - 4 PM)', sub: 'Lunch Demand (× 1.15)' },
-                      { id: 'evening', label: 'Evening (4 PM - 9 PM)', sub: 'Peak Commute (× 1.35)' },
-                      { id: 'night', label: 'Night (9 PM - 12 AM)', sub: 'Decompression Discount (× 0.90)' }
+                      { id: 'afternoon', label: 'Afternoon (12 PM - 4 PM)', sub: 'Standard Rate (× 1.00)' },
+                      { id: 'evening', label: 'Evening (4 PM - 9 PM)', sub: 'Standard Rate (× 1.00)' },
+                      { id: 'night', label: 'Night (9 PM - 12 AM)', sub: 'Standard Rate (× 1.00)' }
                     ].map((t) => (
                       <button
                         key={t.id}

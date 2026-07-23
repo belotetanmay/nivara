@@ -9,6 +9,8 @@ import { AuthProvider } from '../contexts/AuthContext';
 import { ToastProvider } from '../components/feedback/Toast';
 import '../global.css';
 
+import { OfflineBanner } from '../components/feedback/OfflineBanner';
+
 LogBox.ignoreLogs(['SafeAreaView has been deprecated']);
 
 const queryClient = new QueryClient({
@@ -27,6 +29,7 @@ export default function RootLayout() {
         <ThemeProvider>
           <AuthProvider>
             <ToastProvider>
+              <OfflineBanner />
               <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="index" />
                 <Stack.Screen name="offline" options={{ gestureEnabled: false }} />

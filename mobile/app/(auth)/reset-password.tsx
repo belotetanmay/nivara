@@ -10,6 +10,8 @@ import { useToast } from '../../components/feedback/Toast';
 import { Button } from '../../components/ui/Button';
 import { PasswordInput } from '../../components/ui/PasswordInput';
 
+import { FormContainer } from '../../components/layout/FormContainer';
+
 const resetPasswordSchema = z.object({
   password: z.string()
     .min(1, 'Password is required')
@@ -57,9 +59,8 @@ export default function ResetPasswordScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#FAF8F5]">
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-        <View className="flex-1 px-6 justify-center py-8">
+    <FormContainer>
+      <View className="flex-1 px-6 justify-center py-8">
           
           {/* Logo brand */}
           <View className="items-center mb-8">
@@ -127,8 +128,7 @@ export default function ResetPasswordScreen() {
           </View>
 
         </View>
-      </ScrollView>
-    </SafeAreaView>
+    </FormContainer>
   );
 }
 
