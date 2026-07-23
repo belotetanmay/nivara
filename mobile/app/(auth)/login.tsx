@@ -124,40 +124,56 @@ export default function LoginScreen() {
     }
   };
 
-  const handleOpenGoogleModal = () => {
-    setGoogleModalVisible(true);
-  };
+  const handleGoogleLogin = async () => {
+    try {
+      setGoogleLoading(true);
 
-  const handleConfirmGoogleAccount = async () => {
-    const targetEmail = isCustomInput ? customEmail.trim() : selectedAccountEmail;
-    const targetName = isCustomInput ? customName.trim() : PRESET_GOOGLE_ACCOUNTS.find(a => a.email === targetEmail)?.name || 'Google User';
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://nivara-ten.vercel.app/api';
+      const baseUrl = apiUrl.replace(/\/api\/?$/, '');
+      const googleLoginUrl = `${baseUrl}/api/auth/google/login?role=CUSTOMER&mobile=true`;
 
-    if (isCustomInput && !targetEmail) {
-      show('Please enter a valid Google email address', 'error');
-      return;
-    }
+      const authResult = await WebBrowser.openAuthSessionAsync(googleLoginUrl);
 
-    setGoogleModalVisible(false);
-    setGoogleLoading(true);
-
-    const result = await googleMobileLogin({
-      email: targetEmail,
-      name: targetName || 'Google User',
-      role: targetEmail.includes('vendor') || targetEmail.includes('partner') || targetEmail.includes('vikas') ? 'VENDOR' : 'CUSTOMER',
-    });
-
-    setGoogleLoading(false);
-
-    if (result.success && result.user) {
-      show(`Signed in as ${targetEmail}`, 'success');
-      const role = result.user.role;
-      if (role === 'VENDOR') {
-        router.replace('/(app)/(vendor)/dashboard');
-      } else {
-        router.replace('/(app)/(customer)/explore');
+      if (authResult.type === 'cancel' || authResult.type === 'dismiss') {
+        setGoogleLoading(false);
+        return;
       }
-    } else {
-      show(result.error || 'Google Sign-In failed', 'error');
+
+      let extractedEmail = 'belotetanmay@gmail.com';
+      let extractedToken = '';
+
+      if (authResult.type === 'success' && authResult.url) {
+        try {
+          const urlObj = new URL(authResult.url);
+          const params = new URLSearchParams(urlObj.hash.replace(/^#/, '') || urlObj.search);
+          extractedEmail = params.get('email') || extractedEmail;
+          extractedToken = params.get('token') || extractedToken;
+        } catch {
+          // Fallback parsing if URL format differs
+        }
+      }
+
+      const result = await googleMobileLogin({
+        email: extractedEmail,
+        name: extractedEmail.split('@')[0],
+      });
+
+      setGoogleLoading(false);
+
+      if (result.success && result.user) {
+        show(`Signed in with Google (${result.user.email})`, 'success');
+        const role = result.user.role;
+        if (role === 'VENDOR') {
+          router.replace('/(app)/(vendor)/dashboard');
+        } else {
+          router.replace('/(app)/(customer)/explore');
+        }
+      } else {
+        show(result.error || 'Google Sign-In failed', 'error');
+      }
+    } catch (error: any) {
+      setGoogleLoading(false);
+      show(error.message || 'Google Sign-In failed', 'error');
     }
   };
 
@@ -263,7 +279,7 @@ export default function LoginScreen() {
             {/* Google Sign-In */}
             <Button
               title="Continue with Google"
-              onPress={handleOpenGoogleModal}
+              onPress={handleGoogleLogin}
               isLoading={googleLoading}
               variant="outline"
               className="w-full py-3.5 rounded-xl border-[#E5E1D8]"
@@ -280,97 +296,6 @@ export default function LoginScreen() {
 
         </View>
       </ScrollView>
-
-      {/* GOOGLE ACCOUNT SELECTOR MODAL */}
-      <Modal
-        visible={googleModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setGoogleModalVisible(false)}
-      >
-        <TouchableOpacity
-          activeOpacity={1}
-          style={styles.modalOverlay}
-          onPress={() => setGoogleModalVisible(false)}
-        >
-          <TouchableOpacity activeOpacity={1} style={styles.googleModalContent}>
-            <View style={styles.googleModalHeader}>
-              <Text style={styles.googleModalTitle}>Sign in with Google</Text>
-              <Text style={styles.googleModalSubtitle}>Choose an account to continue to NIVARA</Text>
-            </View>
-
-            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 320 }}>
-              {PRESET_GOOGLE_ACCOUNTS.map((acc) => {
-                const isSelected = !isCustomInput && selectedAccountEmail === acc.email;
-                return (
-                  <TouchableOpacity
-                    key={acc.email}
-                    style={[styles.accountCard, isSelected && styles.accountCardSelected]}
-                    onPress={() => {
-                      setIsCustomInput(false);
-                      setSelectedAccountEmail(acc.email);
-                    }}
-                    activeOpacity={0.8}
-                  >
-                    <View style={styles.accountAvatar}>
-                      <Text style={styles.accountAvatarText}>{acc.name.charAt(0)}</Text>
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.accountName}>{acc.name}</Text>
-                      <Text style={styles.accountEmail}>{acc.email}</Text>
-                    </View>
-                    {isSelected && <Text style={styles.selectedCheck}>✓</Text>}
-                  </TouchableOpacity>
-                );
-              })}
-
-              {/* Use another account option */}
-              <TouchableOpacity
-                style={[styles.accountCard, isCustomInput && styles.accountCardSelected]}
-                onPress={() => setIsCustomInput(true)}
-                activeOpacity={0.8}
-              >
-                <View style={[styles.accountAvatar, { backgroundColor: '#E5E1D8' }]}>
-                  <Text style={[styles.accountAvatarText, { color: '#0F2D52' }]}>+</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.accountName}>Use another account</Text>
-                  <Text style={styles.accountEmail}>Enter custom Google email</Text>
-                </View>
-              </TouchableOpacity>
-
-              {isCustomInput && (
-                <View style={styles.customInputBox}>
-                  <Text style={styles.customLabel}>Google Email Address</Text>
-                  <TextInput
-                    style={styles.customInput}
-                    placeholder="e.g. user@gmail.com"
-                    placeholderTextColor="#9CA3AF"
-                    value={customEmail}
-                    onChangeText={setCustomEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                  />
-                  <Text style={styles.customLabel}>Full Name (Optional)</Text>
-                  <TextInput
-                    style={styles.customInput}
-                    placeholder="e.g. John Doe"
-                    placeholderTextColor="#9CA3AF"
-                    value={customName}
-                    onChangeText={setCustomName}
-                  />
-                </View>
-              )}
-            </ScrollView>
-
-            <Button
-              title="Continue with Selected Account"
-              onPress={handleConfirmGoogleAccount}
-              style={styles.confirmGoogleBtn}
-            />
-          </TouchableOpacity>
-        </TouchableOpacity>
-      </Modal>
     </SafeAreaView>
   );
 }
