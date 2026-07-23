@@ -292,7 +292,7 @@ export default function Home() {
             
             <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-yellow-400 leading-tight drop-shadow-[0_4px_16px_rgba(0,0,0,0.85)]">
               {marketingMode === 'individual' ? (
-                <>Relax. Rejuvenate.<br /><span className="text-yellow-300">Experience NIVARA.</span></>
+                <>Relax. Recharge.<br /><span className="text-yellow-300">Right at Your Doorstep.</span></>
               ) : (
                 <>Power Your Fleet.<br /><span className="text-yellow-300">Scale Your Business.</span></>
               )}
