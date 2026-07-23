@@ -13,7 +13,7 @@ import { useToast } from '../../../components/feedback/Toast';
 import { customerService, Van } from '../../../services/customer/customerService';
 import { Skeleton } from '../../../components/ui/Skeleton';
 
-const baseUri = (process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.93:3000/api').replace('/api', '');
+const baseUri = (process.env.EXPO_PUBLIC_API_URL || 'https://nivara-ten.vercel.app/api').replace('/api', '');
 
 const AMENITIES_LIST = ['Zero-Gravity Chair', 'Soundproofing', 'Aromatherapy', 'Ambient Lighting', 'Air Conditioning'];
 const SORT_OPTIONS = [

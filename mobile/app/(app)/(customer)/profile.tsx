@@ -140,25 +140,29 @@ export default function ProfileScreen() {
               <Text style={styles.arrowText}>→</Text>
             </TouchableOpacity>
 
-            <View 
-              style={[styles.menuItem, { opacity: 0.45 }]}
+            <TouchableOpacity 
+              onPress={() => router.push('/(app)/(customer)/settings/help-support' as any)}
+              style={styles.menuItem}
+              activeOpacity={0.7}
             >
               <View style={styles.menuItemLeft}>
                 <HelpCircle size={18} color="#0F2D52" style={styles.menuIcon} />
                 <Text style={styles.menuText}>Help & Support</Text>
               </View>
-              <Text style={styles.comingSoonText}>Soon</Text>
-            </View>
+              <Text style={styles.arrowText}>→</Text>
+            </TouchableOpacity>
 
-            <View 
-              style={[styles.menuItem, { opacity: 0.45, borderBottomWidth: 0 }]}
+            <TouchableOpacity 
+              onPress={() => router.push('/(app)/(customer)/settings/legal-viewer?doc=privacy' as any)}
+              style={[styles.menuItem, { borderBottomWidth: 0 }]}
+              activeOpacity={0.7}
             >
               <View style={styles.menuItemLeft}>
                 <ShieldAlert size={18} color="#0F2D52" style={styles.menuIcon} />
                 <Text style={styles.menuText}>Privacy Policy</Text>
               </View>
-              <Text style={styles.comingSoonText}>Soon</Text>
-            </View>
+              <Text style={styles.arrowText}>→</Text>
+            </TouchableOpacity>
           </Card>
 
           {/* Favorites List section */}
