@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
 import { ChevronLeft, MapPin, Upload, AlertCircle, RefreshCw } from 'lucide-react';
+import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
 
 export default function EditVanPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -16,7 +17,11 @@ export default function EditVanPage({ params }: { params: Promise<{ id: string }
   const [description, setDescription] = useState('');
   const [address, setAddress] = useState('');
   const [serviceRadius, setServiceRadius] = useState('5');
-  
+  const [latitude, setLatitude] = useState<number | ''>('');
+  const [longitude, setLongitude] = useState<number | ''>('');
+  const [mapCenter, setMapCenter] = useState({ lat: 19.0596, lng: 72.8295 });
+  const [isGeocoding, setIsGeocoding] = useState(false);
+
   // Pricing states
   const [price15, setPrice15] = useState('');
   const [price30, setPrice30] = useState('');
@@ -46,6 +51,33 @@ export default function EditVanPage({ params }: { params: Promise<{ id: string }
     'Calming Audio',
   ];
 
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: apiKey,
+    libraries: ['places'] as any,
+  });
+
+  const handleGeocode = async () => {
+    if (!address.trim()) return;
+    setIsGeocoding(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/customer/geocode?address=${encodeURIComponent(address)}`);
+      const data = await res.json();
+      if (res.ok && data.lat && data.lng) {
+        setLatitude(data.lat);
+        setLongitude(data.lng);
+        setMapCenter({ lat: data.lat, lng: data.lng });
+      } else {
+        setError('Could not geocode address automatically. Please enter coordinates manually.');
+      }
+    } catch {
+      setError('Geocoding request failed. Please check connection or enter coordinates manually.');
+    } finally {
+      setIsGeocoding(false);
+    }
+  };
+
   useEffect(() => {
     const fetchVanDetails = async () => {
       try {
@@ -64,6 +96,11 @@ export default function EditVanPage({ params }: { params: Promise<{ id: string }
           setHasAttendant(v.hasAttendant);
           setAttendantName(v.attendantName || '');
           setPhotos(v.photos || []);
+          if (v.latitude && v.longitude) {
+            setLatitude(v.latitude);
+            setLongitude(v.longitude);
+            setMapCenter({ lat: v.latitude, lng: v.longitude });
+          }
         } else {
           setError(data.error || 'Failed to load van details.');
         }
@@ -132,12 +169,14 @@ export default function EditVanPage({ params }: { params: Promise<{ id: string }
 
     try {
       const res = await fetch(`/api/vendor/vans/${id}`, {
-        method: 'PATCH',
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title,
           description,
           address,
+          latitude: latitude !== '' ? latitude : undefined,
+          longitude: longitude !== '' ? longitude : undefined,
           serviceRadius: parseFloat(serviceRadius),
           price15: parseFloat(price15),
           price30: parseFloat(price30),
@@ -243,17 +282,115 @@ export default function EditVanPage({ params }: { params: Promise<{ id: string }
                     <label htmlFor="address" className="block text-xs font-semibold text-primary mb-1">
                       Current Base Address / Parking Spot <span className="text-red-500">*</span>
                     </label>
-                    <div className="relative">
-                      <MapPin className="absolute left-2.5 top-2.5 w-4.5 h-4.5 text-muted-foreground" />
-                      <input
-                        id="address"
-                        type="text"
-                        required
-                        value={address}
-                        onChange={(e) => setAddress(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2 border border-[#E5E1D8] rounded text-xs focus:outline-none focus:border-secondary"
-                      />
+                    <div className="flex gap-2">
+                      <div className="relative flex-grow">
+                        <MapPin className="absolute left-2.5 top-2.5 w-4.5 h-4.5 text-muted-foreground" />
+                        <input
+                          id="address"
+                          type="text"
+                          required
+                          value={address}
+                          onChange={(e) => setAddress(e.target.value)}
+                          placeholder="e.g. Carter Road, Bandra West, Mumbai"
+                          className="w-full pl-9 pr-3 py-2 border border-[#E5E1D8] rounded text-xs focus:outline-none focus:border-secondary"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleGeocode}
+                        disabled={isGeocoding}
+                        className="px-3 py-2 bg-primary text-white text-xs font-bold rounded hover:bg-primary/95 transition-all flex items-center justify-center min-w-[100px] gap-1 shadow-sm"
+                      >
+                        {isGeocoding ? (
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        ) : 'Locate on Map'}
+                      </button>
                     </div>
+
+                    {/* Coordinates input overrides */}
+                    <div className="grid grid-cols-2 gap-3 mt-3">
+                      <div>
+                        <label htmlFor="latitude" className="block text-[10px] font-semibold text-[#64748B] mb-1">
+                          Latitude (Choose on map or override)
+                        </label>
+                        <input
+                          id="latitude"
+                          type="number"
+                          step="any"
+                          placeholder="e.g. 19.0596"
+                          value={latitude}
+                          onChange={(e) => {
+                            const val = e.target.value ? parseFloat(e.target.value) : '';
+                            setLatitude(val);
+                            if (typeof val === 'number') {
+                              setMapCenter(prev => ({ ...prev, lat: val }));
+                            }
+                          }}
+                          className="w-full px-3 py-2 border border-[#E5E1D8] rounded text-xs focus:outline-none focus:border-secondary"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="longitude" className="block text-[10px] font-semibold text-[#64748B] mb-1">
+                          Longitude (Choose on map or override)
+                        </label>
+                        <input
+                          id="longitude"
+                          type="number"
+                          step="any"
+                          placeholder="e.g. 72.8295"
+                          value={longitude}
+                          onChange={(e) => {
+                            const val = e.target.value ? parseFloat(e.target.value) : '';
+                            setLongitude(val);
+                            if (typeof val === 'number') {
+                              setMapCenter(prev => ({ ...prev, lng: val }));
+                            }
+                          }}
+                          className="w-full px-3 py-2 border border-[#E5E1D8] rounded text-xs focus:outline-none focus:border-secondary"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Draggable interactive Google Map */}
+                    {isLoaded ? (
+                      <div className="mt-3 border border-[#E5E1D8] rounded-xl overflow-hidden shadow-sm">
+                        <GoogleMap
+                          mapContainerClassName="w-full h-44"
+                          center={mapCenter}
+                          zoom={13}
+                          onClick={(e) => {
+                            if (e.latLng) {
+                              setLatitude(e.latLng.lat());
+                              setLongitude(e.latLng.lng());
+                            }
+                          }}
+                          options={{
+                            disableDefaultUI: true,
+                            zoomControl: true,
+                          }}
+                        >
+                          {latitude !== '' && longitude !== '' && (
+                            <Marker
+                              position={{ lat: latitude as number, lng: longitude as number }}
+                              draggable={true}
+                              onDragEnd={(e) => {
+                                if (e.latLng) {
+                                  setLatitude(e.latLng.lat());
+                                  setLongitude(e.latLng.lng());
+                                }
+                              }}
+                            />
+                          )}
+                        </GoogleMap>
+                        <p className="text-[9px] text-muted-foreground p-2 bg-[#FCF9F6] border-t border-[#E5E1D8]/40 leading-normal">
+                          📍 Drag the marker or click anywhere on the map to set the exact coordinates of your parking spot.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="mt-3 p-4 bg-slate-50 border border-[#E5E1D8] rounded-xl text-center text-xs text-muted-foreground leading-relaxed">
+                        Loading Interactive Map...
+                      </div>
+                    )}
                   </div>
 
                   {/* Service Radius */}

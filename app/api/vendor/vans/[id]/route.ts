@@ -41,10 +41,14 @@ export async function PUT(
       serviceRadius,
       hasAttendant,
       attendantName,
+      latitude,
+      longitude,
     } = body;
 
     let coords;
-    if (address !== undefined && address !== null) {
+    if (latitude !== undefined && longitude !== undefined && latitude !== null && longitude !== null) {
+      coords = { lat: parseFloat(latitude), lng: parseFloat(longitude) };
+    } else if (address !== undefined && address !== null) {
       coords = await geocodeAddress(address);
     }
 
@@ -57,7 +61,7 @@ export async function PUT(
         ...(title !== undefined && { title }),
         ...(description !== undefined && { description }),
         ...(address !== undefined && { address }),
-        ...(address !== undefined && coords && { latitude: coords.lat, longitude: coords.lng }),
+        ...(coords && { latitude: coords.lat, longitude: coords.lng }),
         ...(amenities !== undefined && { amenities }),
         ...(photos !== undefined && { photos }),
         ...(price15 !== undefined && { price15: parseFloat(price15) }),

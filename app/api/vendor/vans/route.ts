@@ -74,14 +74,21 @@ export async function POST(request: Request) {
       serviceRadius,
       hasAttendant,
       attendantName,
+      latitude,
+      longitude,
     } = body;
 
     if (!title || !description || !address || price15 === undefined || price30 === undefined || price45 === undefined || serviceRadius === undefined) {
       return NextResponse.json({ error: 'Missing required van details' }, { status: 400 });
     }
 
-    // Geocode address
-    const coords = await geocodeAddress(address);
+    // Geocode address or use provided coordinates
+    let coords;
+    if (latitude !== undefined && longitude !== undefined && latitude !== null && longitude !== null) {
+      coords = { lat: parseFloat(latitude), lng: parseFloat(longitude) };
+    } else {
+      coords = await geocodeAddress(address);
+    }
 
     const van = await db.van.create({
       data: {
