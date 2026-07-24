@@ -80,41 +80,13 @@ export async function GET(request: NextRequest) {
       <p class="subtitle">Choose an account to continue to NIVARA</p>
     </div>
 
-    <div class="account-list">
-      <a class="account-item" href="${callbackUrl}?mock_email=belotetanmay@gmail.com&name=Tanmay%20Belote&state=${role}&mobile=${isMobile}">
-        <div class="avatar">T</div>
-        <div class="details">
-          <div class="name">Tanmay Belote</div>
-          <div class="email">belotetanmay@gmail.com</div>
-        </div>
-      </a>
-
-      <a class="account-item" href="${callbackUrl}?mock_email=tanmay@gmail.com&name=Tanmay&state=${role}&mobile=${isMobile}">
-        <div class="avatar" style="background-color: #34A853;">T</div>
-        <div class="details">
-          <div class="name">Tanmay</div>
-          <div class="email">tanmay@gmail.com</div>
-        </div>
-      </a>
-
-      <a class="account-item" href="${callbackUrl}?mock_email=vikas@wellnessvans.com&name=Vikas%20Partner&state=VENDOR&mobile=${isMobile}">
-        <div class="avatar" style="background-color: #EA4335;">V</div>
-        <div class="details">
-          <div class="name">Vikas Partner (Vendor)</div>
-          <div class="email">vikas@wellnessvans.com</div>
-        </div>
-      </a>
-    </div>
-
-    <div class="divider"></div>
-
     <form action="${callbackUrl}" method="GET" class="custom-box">
       <input type="hidden" name="state" value="${role}" />
       <input type="hidden" name="mobile" value="${isMobile ? 'true' : 'false'}" />
-      <div class="input-label">Use another account</div>
-      <input type="email" name="mock_email" class="input-field" placeholder="Enter Google email address" required />
-      <input type="text" name="name" class="input-field" placeholder="Full name (optional)" />
-      <button type="submit" class="submit-btn">Continue</button>
+      <div class="input-label" style="font-size:14px; margin-bottom:4px;">Enter your Google email address</div>
+      <input type="email" name="mock_email" class="input-field" placeholder="name@example.com" required style="padding:14px; margin-bottom:10px;" />
+      <input type="text" name="name" class="input-field" placeholder="Full name (optional)" style="padding:14px; margin-bottom:14px;" />
+      <button type="submit" class="submit-btn" style="padding:14px; font-size:15px;">Continue with Google</button>
     </form>
   </div>
 </body>

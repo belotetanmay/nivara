@@ -138,18 +138,26 @@ export default function LoginScreen() {
 
       const authResult = await WebBrowser.openAuthSessionAsync(googleLoginUrl);
 
-      let extractedEmail = 'belotetanmay@gmail.com';
+      let extractedEmail = '';
       let extractedToken = '';
 
       if (authResult.type === 'success' && authResult.url) {
         try {
           const urlObj = new URL(authResult.url);
           const params = new URLSearchParams(urlObj.hash.replace(/^#/, '') || urlObj.search);
-          extractedEmail = params.get('email') || extractedEmail;
-          extractedToken = params.get('token') || extractedToken;
+          extractedEmail = params.get('email') || '';
+          extractedToken = params.get('token') || '';
         } catch {
           // Fallback parsing if URL format differs
         }
+      }
+
+      if (!extractedEmail) {
+        setGoogleLoading(false);
+        if (authResult.type !== 'cancel' && authResult.type !== 'dismiss') {
+          show('Google Sign-In was cancelled or email was not returned', 'info');
+        }
+        return;
       }
 
       const result = await googleMobileLogin({
