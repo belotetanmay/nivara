@@ -10,16 +10,16 @@ export const COMPANY_INFO = {
   appVersion: '1.0.0',
   legalEntity: 'Nivara Wellness Private Limited',
   registeredAddress: 'Mumbai, Maharashtra, India',
-  supportEmail: 'support@nivara.in',
-  privacyEmail: 'privacy@nivara.in',
-  grievanceEmail: 'grievance@nivara.in',
-  supportPhone: '+91 98765 43210',
+  supportEmail: 'support.nivara@gmail.com',
+  privacyEmail: 'support.nivara@gmail.com',
+  grievanceEmail: 'support.nivara@gmail.com',
+  supportPhone: '+91 79774 25286',
   
   grievanceOfficer: {
     name: 'Tanmay Belote',
     designation: 'Grievance Redressal Officer',
-    email: 'grievance@nivara.in',
-    phone: '+91 98765 43210',
+    email: 'support.nivara@gmail.com',
+    phone: '+91 79774 25286',
     address: 'Nivara Wellness Headquarters, Mumbai, Maharashtra, India',
   },
 

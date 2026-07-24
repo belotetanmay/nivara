@@ -4,18 +4,18 @@
     "slug": "nivara-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logonew.png",
+    "icon": "./assets/images/nivara_logo_transparent.png",
     "scheme": "nivara",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/images/logonew.png",
+      "icon": "./assets/images/nivara_logo_transparent.png",
       "bundleIdentifier": "com.nivara.app",
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#0F2D52",
-        "foregroundImage": "./assets/images/logonew.png"
+        "backgroundColor": "#FAF8F5",
+        "foregroundImage": "./assets/images/nivara_logo_transparent.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.nivara.app"
@@ -29,9 +29,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#0F2D52",
-          "image": "./assets/images/logonew.png",
-          "imageWidth": 120
+          "backgroundColor": "#FAF8F5",
+          "image": "./assets/images/nivara_logo_transparent.png",
+          "imageWidth": 160
         }
       ],
       "expo-font",
