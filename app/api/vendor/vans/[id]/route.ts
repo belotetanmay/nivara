@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { extractToken, verifyToken } from '@/lib/auth';
 import { VanStatus } from '@prisma/client';
+import { geocodeAddress } from '@/lib/services/location';
 
 export async function PUT(
   request: Request,
@@ -42,6 +43,11 @@ export async function PUT(
       attendantName,
     } = body;
 
+    let coords;
+    if (address !== undefined && address !== null) {
+      coords = await geocodeAddress(address);
+    }
+
     const updatedVan = await db.van.update({
       where: {
         id,
@@ -51,6 +57,7 @@ export async function PUT(
         ...(title !== undefined && { title }),
         ...(description !== undefined && { description }),
         ...(address !== undefined && { address }),
+        ...(address !== undefined && coords && { latitude: coords.lat, longitude: coords.lng }),
         ...(amenities !== undefined && { amenities }),
         ...(photos !== undefined && { photos }),
         ...(price15 !== undefined && { price15: parseFloat(price15) }),

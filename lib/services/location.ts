@@ -41,6 +41,9 @@ export async function geocodeAddress(address: string): Promise<{ lat: number; ln
   if (query.includes('bandra')) {
     return { lat: 19.0596, lng: 72.8295 };
   }
+  if (query.includes('panvel')) {
+    return { lat: 18.9888, lng: 73.1101 };
+  }
   if (query.includes('thane')) {
     return { lat: 19.2183, lng: 72.9781 };
   }
