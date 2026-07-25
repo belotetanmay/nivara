@@ -47,18 +47,18 @@ async function runLocalFallback(message: string, userId: string | undefined, act
     const stressLevel = stressMatch ? parseInt(stressMatch[1]) : 3;
     const timeAvailable = timeMatch ? parseInt(timeMatch[1]) : 30;
 
-    let recommendedTier = 'Basic';
-    let recommendedDuration = 15;
-    let sessionDetails = '15-minute quick refresh session';
+    let recommendedTier = 'Relaxation Base';
+    let recommendedDuration = 30;
+    let sessionDetails = '30-minute quick refresh session';
 
-    if (stressLevel >= 4 && timeAvailable >= 45) {
-      recommendedTier = 'Premium';
+    if (stressLevel >= 4 && timeAvailable >= 60) {
+      recommendedTier = 'Premium Luxury';
+      recommendedDuration = 60;
+      sessionDetails = '60-minute VIP sensory restoration experience with custom aromatherapies and warm recovery tea';
+    } else if (stressLevel >= 3 && timeAvailable >= 45) {
+      recommendedTier = 'Standard Comfort';
       recommendedDuration = 45;
-      sessionDetails = '45-minute VIP sensory restoration experience with custom aromatherapies and warm recovery tea';
-    } else if (stressLevel >= 3 && timeAvailable >= 30) {
-      recommendedTier = 'Standard';
-      recommendedDuration = 30;
-      sessionDetails = '30-minute Standard recovery session containing gentle physical massage and binaural sound treatment';
+      sessionDetails = '45-minute Standard comfort session containing gentle physical massage and binaural sound treatment';
     }
 
     // Retrieve nearest active van from DB
@@ -109,7 +109,7 @@ async function runLocalFallback(message: string, userId: string | undefined, act
       reply = `Here are the active wellness vans near you:\n` + activeVans.map(v => {
         const slot = v.availabilities[0];
         const slotLink = slot ? `\n   👉 [View Available Slots](/customer/vans/${v.id}?slotId=${slot.id})` : '';
-        return `* **${v.title}** at *${v.address}* (From ₹${v.price15}/slot)${slotLink}`;
+        return `* **${v.title}** at *${v.address}* (From ₹${v.price15} for 30 Min)${slotLink}`;
       }).join('\n');
     } else {
       reply = `No active wellness vans were found in your region. You can check availability at [Browse Fleet](/customer/search) once fleet partners register!`;
@@ -160,7 +160,7 @@ async function runLocalFallback(message: string, userId: string | undefined, act
   } else if (text.includes('cancel') || text.includes('refund')) {
     reply = `**Cancellation Policy**: Free cancellation is allowed up to 1 hour before your scheduled session. Cancellations within 1 hour or no-shows are strictly non-refundable.`;
   } else if (text.includes('price') || text.includes('pricing') || text.includes('cost')) {
-    reply = `**Nivara Pricing Tiers**:\n* **Basic (15 min)**: Entry tier for quick muscle recharge.\n* **Standard (30 min)**: Includes massage recovery and binaural beats.\n* **Premium (45 min)**: Includes custom recovery teas and VIP setups.`;
+    reply = `**Nivara Premium Wellness Pricing Tiers**:\n* **Relaxation Base (30 min)**: ₹1,499 (includes zero-gravity session, baseline ambient lighting, and standard soundscapes).\n* **Standard Comfort (45 min)**: ₹1,999 (adds premium aromatherapy and customizable therapeutic sound options).\n* **Premium Luxury (60 min)**: ₹2,499 (ultimate experience including extended duration and premium recovery details).`;
   } else if (text.includes('amenit') || text.includes('inside') || text.includes('chair')) {
     reply = `Our custom vans contain zero-gravity reclining seats, ambient light setups, full acoustic soundproofing, aromatherapy diffusers, and air conditioning.`;
   } else if (text.includes('support') || text.includes('contact') || text.includes('help')) {
@@ -305,7 +305,7 @@ export async function POST(request: Request) {
           van_id: { type: SchemaType.STRING, description: "The unique ID of the van." },
           date: { type: SchemaType.STRING, description: "The booking date in YYYY-MM-DD format." },
           slot_id: { type: SchemaType.STRING, description: "The unique ID of the selected slot." },
-          session_length: { type: SchemaType.NUMBER, description: "Session length in minutes (15, 30, or 45)." }
+          session_length: { type: SchemaType.NUMBER, description: "Session length in minutes (30, 45, or 60)." }
         },
         required: ["van_id", "date", "slot_id", "session_length"]
       }
@@ -320,7 +320,7 @@ RULES:
 2. Under no circumstances should you claim to process payments, deduct funds, or finalize bookings directly. You must explain that bookings are completed through our secure checkout page, and generate checkout deep links using your 'start_booking_draft' tool.
 3. If the user is unverified or new, explain that Nivara requires identity verification (KYC) before any booking can be placed, and direct them to their KYC Upload screen (/customer/kyc).
 4. Do not speculate or invent policies. Use the following FAQ facts:
-   - Pricing tiers: Basic (15 min, ₹slot basic) / Standard (30 min, includes massage and binaural calm beats) / Premium (45 min, includes VIP custom details and warm herbal recovery teas).
+   - Pricing tiers: Relaxation Base (30 min, ₹1,499) / Standard Comfort (45 min, ₹1,999) / Premium Luxury (60 min, ₹2,499).
    - KYC requirement: First-time users must upload a valid ID + selfie before placing their first booking. Access to booking is locked until KYC status is verified by admins.
    - Cancellation policy: Free cancellation is allowed up to 1 hour before the scheduled slot time. Late cancellations (within 1 hour) and no-shows are strictly non-refundable.
    - How it works: Open app -> pick nearby van & time slot -> checkout securely -> walk in.

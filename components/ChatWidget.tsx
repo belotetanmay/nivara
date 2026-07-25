@@ -26,7 +26,7 @@ export default function ChatWidget() {
   const [checkinStep, setCheckinStep] = useState<number | null>(null); // null means inactive, 1-3 steps active
   const [checkinAnswers, setCheckinAnswers] = useState({
     stressLevel: 0,
-    timeAvailable: 15,
+    timeAvailable: 30,
     stressCause: ''
   });
 
@@ -146,18 +146,18 @@ export default function ChatWidget() {
       setCheckinStep(null);
 
       // Perform check-in recommendation mapping
-      let recommendedTier = 'Basic';
-      let recommendedDuration = 15;
-      let sessionDetails = '15-minute quick refresh session';
+      let recommendedTier = 'Relaxation Base';
+      let recommendedDuration = 30;
+      let sessionDetails = '30-minute quick refresh session';
 
-      if (finalAnswers.stressLevel >= 4 && finalAnswers.timeAvailable >= 45) {
-        recommendedTier = 'Premium';
+      if (finalAnswers.stressLevel >= 4 && finalAnswers.timeAvailable >= 60) {
+        recommendedTier = 'Premium Luxury';
+        recommendedDuration = 60;
+        sessionDetails = '60-minute VIP sensory restoration experience with custom aromatherapies and warm recovery tea';
+      } else if (finalAnswers.stressLevel >= 3 && finalAnswers.timeAvailable >= 45) {
+        recommendedTier = 'Standard Comfort';
         recommendedDuration = 45;
-        sessionDetails = '45-minute VIP sensory restoration experience with custom aromatherapies and warm herbal tea';
-      } else if (finalAnswers.stressLevel >= 3 && finalAnswers.timeAvailable >= 30) {
-        recommendedTier = 'Standard';
-        recommendedDuration = 30;
-        sessionDetails = '30-minute Standard recovery session containing gentle physical massage and binaural sound treatment';
+        sessionDetails = '45-minute Standard comfort session containing gentle physical massage and binaural sound treatment';
       }
 
       // Display stress summary and ask LLM to find vans
@@ -306,7 +306,7 @@ export default function ChatWidget() {
                   <div className="space-y-3">
                     <p className="text-xs font-semibold text-white">How much time do you have available today?</p>
                     <div className="grid grid-cols-3 gap-2">
-                      {[15, 30, 45].map(mins => (
+                      {[30, 45, 60].map(mins => (
                         <button
                           key={mins}
                           onClick={() => handleCheckinAnswer(2, mins)}
