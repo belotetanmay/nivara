@@ -68,9 +68,19 @@ export default function VendorProfileScreen() {
         
         {/* Profile Card */}
         <View style={styles.profileCard}>
-          <Avatar name={user?.name || 'John Partner'} size="lg" className="mb-3.5" />
-          <Text style={styles.profileName}>{user?.name || 'John Partner'}</Text>
-          <Text style={styles.verifiedTag}>Verified Partner</Text>
+          <Avatar name={user?.name || 'Sanctuary Partner'} size="lg" className="mb-3.5" />
+          <Text style={styles.profileName}>{user?.name || 'Sanctuary Partner'}</Text>
+          {(() => {
+            const status: string = (user?.vendorProfile?.verificationStatus as string) || (user?.kycStatus === 'VERIFIED' ? 'APPROVED' : user?.kycStatus === 'PENDING' ? 'PENDING' : 'NOT_SUBMITTED');
+            if (status === 'APPROVED' || status === 'VERIFIED') {
+              return <Text style={styles.verifiedTag}>VERIFIED PARTNER</Text>;
+            } else if (status === 'PENDING' || status === 'UNDER_REVIEW') {
+              return <Text style={[styles.verifiedTag, { backgroundColor: '#FEF3C7', color: '#D97706' }]}>PENDING ADMIN APPROVAL</Text>;
+            } else if (status === 'REJECTED') {
+              return <Text style={[styles.verifiedTag, { backgroundColor: '#FEE2E2', color: '#DC2626' }]}>VERIFICATION REJECTED</Text>;
+            }
+            return <Text style={[styles.verifiedTag, { backgroundColor: '#E5E7EB', color: '#4B5563' }]}>KYC NOT COMPLETED</Text>;
+          })()}
           <Text style={styles.profileEmail}>{user?.email || 'vendor@example.com'}</Text>
         </View>
 
@@ -79,19 +89,35 @@ export default function VendorProfileScreen() {
         <Card style={styles.infoCard}>
           <View style={styles.infoRow}>
             <View style={styles.infoLeft}>
-              <ShieldCheck size={18} color="#16A34A" style={styles.infoIcon} />
+              <ShieldCheck size={18} color={user?.vendorProfile?.verificationStatus === 'APPROVED' ? '#16A34A' : '#D97706'} style={styles.infoIcon} />
               <Text style={styles.infoLabel}>Business KYC Verification</Text>
             </View>
-            <Text style={styles.successStatus}>Verified</Text>
+            <Text style={user?.vendorProfile?.verificationStatus === 'APPROVED' ? styles.successStatus : { color: '#D97706', fontWeight: 'bold', fontSize: 13 }}>
+              {user?.vendorProfile?.verificationStatus === 'APPROVED' ? 'Verified' : (user?.vendorProfile?.verificationStatus === 'PENDING' || user?.kycStatus === 'PENDING' ? 'Under Review' : 'Pending')}
+            </Text>
           </View>
 
           <View style={[styles.infoRow, styles.marginTop]}>
             <View style={styles.infoLeft}>
-              <Award size={18} color="#16A34A" style={styles.infoIcon} />
+              <Award size={18} color={user?.vendorProfile?.verificationStatus === 'APPROVED' ? '#16A34A' : '#D97706'} style={styles.infoIcon} />
               <Text style={styles.infoLabel}>Commercial Insurance</Text>
             </View>
-            <Text style={styles.successStatus}>Active</Text>
+            <Text style={user?.vendorProfile?.verificationStatus === 'APPROVED' ? styles.successStatus : { color: '#D97706', fontWeight: 'bold', fontSize: 13 }}>
+              {user?.vendorProfile?.verificationStatus === 'APPROVED' ? 'Active' : 'Pending Verification'}
+            </Text>
           </View>
+
+          {(!user?.vendorProfile || user?.vendorProfile?.verificationStatus !== 'APPROVED') && (
+            <TouchableOpacity
+              style={{ marginTop: 14, backgroundColor: '#0F2D52', paddingVertical: 12, borderRadius: 10, alignItems: 'center' }}
+              activeOpacity={0.85}
+              onPress={() => router.push('/(app)/(vendor)/onboarding' as any)}
+            >
+              <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: 'bold' }}>
+                {user?.vendorProfile?.verificationStatus === 'PENDING' ? 'View 4-Phase KYC Application' : 'Complete 4-Phase Business Onboarding'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </Card>
 
         {/* Financial info */}

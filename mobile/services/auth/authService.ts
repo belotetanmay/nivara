@@ -8,6 +8,12 @@ export interface User {
   phone?: string | null;
   role: 'CUSTOMER' | 'VENDOR' | 'ADMIN';
   kycStatus: 'UNVERIFIED' | 'PENDING' | 'VERIFIED' | 'REJECTED';
+  vendorProfile?: {
+    id: string;
+    businessName: string;
+    verificationStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
+    [key: string]: any;
+  } | null;
 }
 
 export interface AuthResponse {

@@ -3,9 +3,12 @@ import { db } from '@/lib/db';
 import { verifyToken, extractToken } from '@/lib/auth';
 import { Role, KYCStatus, VendorStatus, VanStatus, PaymentStatus } from '@prisma/client';
 
+import { cookies } from 'next/headers';
+
 export async function GET(request: Request) {
   try {
-    const token = extractToken(request);
+    const cookieStore = await cookies();
+    const token = extractToken(request) || cookieStore.get('auth_token')?.value;
     if (!token) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
