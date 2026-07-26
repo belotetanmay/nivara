@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { MessageSquare, X, Send, BrainCircuit, Activity, HelpCircle, ShieldAlert, Sparkles } from 'lucide-react';
 import { useAuth } from '@/components/AuthContext';
@@ -21,6 +22,19 @@ export default function ChatWidget() {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [hasInteractedWithPopup, setHasInteractedWithPopup] = useState(false);
+
+  const pathname = usePathname();
+
+  // Auto-open chatbot on homepage load if not previously skipped
+  useEffect(() => {
+    if (pathname === '/') {
+      const skipped = sessionStorage.getItem('nivara_chat_skipped');
+      if (!skipped) {
+        setIsOpen(true);
+      }
+    }
+  }, [pathname]);
 
   // Stress Check-in Flow State
   const [checkinStep, setCheckinStep] = useState<number | null>(null); // null means inactive, 1-3 steps active
@@ -256,22 +270,58 @@ export default function ChatWidget() {
             </div>
 
             {/* Conversation Messages */}
-            {messages.map((msg, index) => (
-              <div
-                key={index}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[85%] rounded-2xl p-3 text-xs leading-relaxed ${
-                    msg.role === 'user'
-                      ? 'bg-primary text-white rounded-br-none shadow-md shadow-primary/10'
-                      : 'bg-slate-950/80 border border-slate-800 text-slate-200 rounded-bl-none'
-                  }`}
-                >
-                  {renderLinkOrText(msg.content)}
+            {messages.length === 0 ? (
+              <div className="p-5 rounded-3xl bg-slate-950/80 border border-slate-800/60 space-y-4 text-center my-auto flex flex-col justify-center animate-in fade-in zoom-in-95 duration-200">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/10 border border-primary/25 text-primary flex items-center justify-center mx-auto mb-2">
+                  <BrainCircuit className="w-6 h-6 animate-pulse" />
+                </div>
+                <h4 className="font-serif text-base font-bold text-white leading-snug">
+                  Welcome to Nivara Wellness
+                </h4>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Would you like to book your premium at-home relaxation session using our guided Calm Assistant chatbot?
+                </p>
+                <div className="space-y-2.5 pt-2">
+                  <button
+                    onClick={() => {
+                      setHasInteractedWithPopup(true);
+                      startStressCheckin();
+                    }}
+                    className="w-full py-3 bg-gradient-to-r from-primary to-secondary text-white text-xs font-black rounded-xl hover:opacity-95 transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Sparkles className="w-4 h-4 text-emerald-300 fill-current" />
+                    Book Session via Chatbot
+                  </button>
+                  <button
+                    onClick={() => {
+                      setHasInteractedWithPopup(true);
+                      sessionStorage.setItem('nivara_chat_skipped', 'true');
+                      setIsOpen(false);
+                    }}
+                    className="w-full py-3 bg-slate-900 border border-slate-800 text-slate-400 hover:text-white text-xs font-bold rounded-xl transition-all cursor-pointer"
+                  >
+                    Skip & Browse Site
+                  </button>
                 </div>
               </div>
-            ))}
+            ) : (
+              messages.map((msg, index) => (
+                <div
+                  key={index}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[85%] rounded-2xl p-3 text-xs leading-relaxed ${
+                      msg.role === 'user'
+                        ? 'bg-primary text-white rounded-br-none shadow-md shadow-primary/10'
+                        : 'bg-slate-950/80 border border-slate-800 text-slate-200 rounded-bl-none'
+                    }`}
+                  >
+                    {renderLinkOrText(msg.content)}
+                  </div>
+                </div>
+              ))
+            )}
 
             {/* Stress check-in Tap Interface */}
             {checkinStep !== null && (
