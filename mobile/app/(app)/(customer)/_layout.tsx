@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View } from 'react-native';
+import { View, Platform } from 'react-native';
 import { Tabs } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Compass, Search, Calendar, User, Bell } from 'lucide-react-native';
 import { customerService } from '../../../services/customer/customerService';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -9,6 +10,10 @@ import { ChatWidget } from '../../../components/feedback/ChatWidget';
 export default function CustomerTabsLayout() {
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const { isAuthenticated } = useAuth();
+  const insets = useSafeAreaInsets();
+
+  const bottomPadding = Platform.OS === 'android' ? Math.max(insets.bottom, 12) : insets.bottom;
+  const tabHeight = 62 + bottomPadding;
 
   useEffect(() => {
     const fetchUnreadCount = async () => {
@@ -34,9 +39,9 @@ export default function CustomerTabsLayout() {
             backgroundColor: '#FFFFFF',
             borderTopWidth: 1,
             borderTopColor: '#E5E1D8',
-            height: 60,
-            paddingBottom: 8,
-            paddingTop: 8,
+            height: tabHeight,
+            paddingBottom: bottomPadding + 4,
+            paddingTop: 6,
           },
           tabBarLabelStyle: {
             fontSize: 11,

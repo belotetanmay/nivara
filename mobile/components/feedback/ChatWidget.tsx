@@ -13,6 +13,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as SecureStore from 'expo-secure-store';
 import {
   MessageSquare,
@@ -38,6 +39,10 @@ interface Message {
 export function ChatWidget() {
   const router = useRouter();
   const pathname = usePathname();
+  const insets = useSafeAreaInsets();
+
+  const bottomPadding = Platform.OS === 'android' ? Math.max(insets.bottom, 12) : insets.bottom;
+  const fabBottom = 82 + bottomPadding;
 
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -232,7 +237,7 @@ export function ChatWidget() {
       {/* Floating Action Button */}
       {!isOpen && (
         <TouchableOpacity
-          style={styles.floatingButton}
+          style={[styles.floatingButton, { bottom: fabBottom }]}
           activeOpacity={0.85}
           onPress={() => {
             setHasInteracted(true);

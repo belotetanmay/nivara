@@ -1,8 +1,14 @@
 import React from 'react';
+import { Platform } from 'react-native';
 import { Tabs } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LayoutDashboard, Truck, User } from 'lucide-react-native';
 
 export default function VendorTabsLayout() {
+  const insets = useSafeAreaInsets();
+  const bottomPadding = Platform.OS === 'android' ? Math.max(insets.bottom, 12) : insets.bottom;
+  const tabHeight = 62 + bottomPadding;
+
   return (
     <Tabs
       screenOptions={{
@@ -13,9 +19,9 @@ export default function VendorTabsLayout() {
           backgroundColor: '#FFFFFF',
           borderTopWidth: 1,
           borderTopColor: '#E5E1D8',
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
+          height: tabHeight,
+          paddingBottom: bottomPadding + 4,
+          paddingTop: 6,
         },
         tabBarLabelStyle: {
           fontSize: 11,
