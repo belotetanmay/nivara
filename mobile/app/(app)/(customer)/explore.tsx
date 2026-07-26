@@ -10,6 +10,7 @@ import { Tag } from '../../../components/ui/Tag';
 import { Button } from '../../../components/ui/Button';
 import { useToast } from '../../../components/feedback/Toast';
 import { customerService, Van } from '../../../services/customer/customerService';
+import * as Location from 'expo-location';
 import { Skeleton } from '../../../components/ui/Skeleton';
 
 const baseUri = (process.env.EXPO_PUBLIC_API_URL || 'https://nivara-ten.vercel.app/api').replace('/api', '');
@@ -23,19 +24,62 @@ export default function ExploreScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [favorites, setFavorites] = useState<any[]>([]);
+  const [locationName, setLocationName] = useState<string>('Detecting location...');
+  const [isGpsActive, setIsGpsActive] = useState<boolean>(false);
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+
+  const fetchRealGpsLocation = async () => {
+    try {
+      setIsGpsActive(true);
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setLocationName('GPS Permission Denied');
+        show('Location permission denied. Showing default vans.', 'info');
+        return null;
+      }
+
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+
+      const { latitude, longitude } = loc.coords;
+      setUserCoords({ lat: latitude, lng: longitude });
+
+      // Reverse geocode to get real area / city (e.g. Panvel, Navi Mumbai)
+      const geocoded = await Location.reverseGeocodeAsync({ latitude, longitude });
+      if (geocoded && geocoded.length > 0) {
+        const p = geocoded[0];
+        const district = p.district || p.subregion || p.name || p.city || 'Panvel';
+        const city = p.city || p.region || 'Navi Mumbai';
+        const formatted = `${district}, ${city}`;
+        setLocationName(formatted);
+      } else {
+        setLocationName(`${latitude.toFixed(3)}°, ${longitude.toFixed(3)}°`);
+      }
+
+      return { lat: latitude, lng: longitude };
+    } catch (err) {
+      console.error('Failed to obtain real GPS:', err);
+      setLocationName('Panvel, Navi Mumbai');
+      return null;
+    }
+  };
 
   const loadData = async () => {
     if (!isAuthenticated) return;
     setLoading(true);
-    
+
     // Load favorites in background
     customerService.getFavorites()
       .then(favs => setFavorites(favs))
       .catch(err => console.error('Failed to load favorites:', err));
 
-    // Load active vans list
+    // Get real GPS location
+    const coords = await fetchRealGpsLocation();
+
+    // Load active vans list passing real GPS coordinates if available
     try {
-      const vansRes = await customerService.getVans();
+      const vansRes = await customerService.getVans(coords ? { lat: coords.lat, lng: coords.lng } : undefined);
       setVans(vansRes);
     } catch (err) {
       console.error('Failed to load active vans list:', err);
@@ -49,12 +93,14 @@ export default function ExploreScreen() {
     if (!isAuthenticated) return;
     setRefreshing(true);
     try {
+      const coords = await fetchRealGpsLocation();
       const [vansRes, favsRes] = await Promise.all([
-        customerService.getVans().catch(() => []),
+        customerService.getVans(coords ? { lat: coords.lat, lng: coords.lng } : undefined).catch(() => []),
         customerService.getFavorites().catch(() => []),
       ]);
       setVans(vansRes);
       setFavorites(favsRes);
+      show('Refreshed real GPS location & nearby vans!', 'success');
     } catch (err) {
       console.error(err);
     } finally {
@@ -157,16 +203,29 @@ export default function ExploreScreen() {
           </TouchableOpacity>
 
           {/* Map Location Banner */}
-          <Card style={styles.locationCard}>
-            <View style={styles.locationIconWrapper}>
-              <MapPin size={20} color="#16A34A" />
-            </View>
-            <View style={styles.locationInfo}>
-              <Text style={styles.locationSubtitle}>Your current location</Text>
-              <Text style={styles.locationTitle}>Bandra West, Mumbai</Text>
-            </View>
-            <Text style={styles.locationAction}>GPS Active</Text>
-          </Card>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={async () => {
+              show('Updating real GPS location...', 'info');
+              const coords = await fetchRealGpsLocation();
+              if (coords) {
+                const vansRes = await customerService.getVans({ lat: coords.lat, lng: coords.lng });
+                setVans(vansRes);
+                show('GPS location and nearby vans updated!', 'success');
+              }
+            }}
+          >
+            <Card style={styles.locationCard}>
+              <View style={styles.locationIconWrapper}>
+                <MapPin size={20} color="#16A34A" />
+              </View>
+              <View style={styles.locationInfo}>
+                <Text style={styles.locationSubtitle}>Your current location</Text>
+                <Text style={styles.locationTitle}>{locationName}</Text>
+              </View>
+              <Text style={styles.locationAction}>GPS ACTIVE</Text>
+            </Card>
+          </TouchableOpacity>
 
           {/* Featured Section */}
           {featuredVans.length > 0 && (
