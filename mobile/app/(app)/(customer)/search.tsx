@@ -11,6 +11,7 @@ import { Tag } from '../../../components/ui/Tag';
 import { Button } from '../../../components/ui/Button';
 import { useToast } from '../../../components/feedback/Toast';
 import { customerService, Van } from '../../../services/customer/customerService';
+import * as Location from 'expo-location';
 import { Skeleton } from '../../../components/ui/Skeleton';
 
 const baseUri = (process.env.EXPO_PUBLIC_API_URL || 'https://nivara-ten.vercel.app/api').replace('/api', '');
@@ -38,8 +39,24 @@ export default function SearchScreen() {
   const [vans, setVans] = useState<Van[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const centerLat = 19.0596;
-  const centerLng = 72.8295;
+  const [centerLat, setCenterLat] = useState<number>(19.0596);
+  const [centerLng, setCenterLng] = useState<number>(72.8295);
+
+  useEffect(() => {
+    async function getRealGps() {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+          setCenterLat(loc.coords.latitude);
+          setCenterLng(loc.coords.longitude);
+        }
+      } catch (e) {
+        console.error('GPS search error:', e);
+      }
+    }
+    getRealGps();
+  }, []);
 
   const debounceTimer = useRef<any>(null);
 
